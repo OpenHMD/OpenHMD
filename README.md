@@ -34,7 +34,7 @@ If you're linking statically with OpenHMD using windows/mingw you have to make s
 Note that this is *only* if you're linking statically! If you're using the DLL then you *must not* define OHMD_STATIC. (If you're not sure then you're probably linking dynamically and won't have to worry about this).
 
 ## Pre-built packages
-...
+Will be available soon.
 
 ## Using OpenHMD
-Proper usage examples will be provided in the future. Right now, take a look at tests/simple project.
+Proper usage examples will be provided in the future. Right now, take a look at the tests/simple subdirectory.
