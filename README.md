@@ -22,6 +22,17 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 make
 sudo make install
 
+### Configuring udev on Linux
+To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).
+
+as root, run:
+
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2833", MODE="0666", GROUP="plugdev"' > /etc/udev/rules.d/83-hmd.rules
+    udevadm control --reload-rules
+
+You should now be able to access the Oculus Rift as a normal user.
+
+
 ### Cross compiling for windows using mingw
 export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
 PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
