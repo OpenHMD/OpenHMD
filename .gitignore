@@ -1,0 +1,13 @@
+tests/simple/hmdtest
+tests/opengl/hmd-opengl
+tests/unittests/unittests
+*.exe
+*.dll
+*.o
+*.lo
+*.a
+*.la
+*.libs
+*.deps
+.cproject
+.project

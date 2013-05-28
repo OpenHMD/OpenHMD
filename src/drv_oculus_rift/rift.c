@@ -1,0 +1,399 @@
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ * Copyright (C) 2013 Fredrik Hultin.
+ * Copyright (C) 2013 Jakob Bornecrantz.
+ * Distributed under the Boost 1.0 licence, see LICENSE for full text.
+ */
+
+/* Oculus Rift Driver - HID/USB Driver Implementation */
+
+#include <stdlib.h>
+#include <hidapi.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <assert.h>
+
+#include "rift.h"
+
+#define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
+#define KEEP_ALIVE_VALUE (10 * 1000)
+#define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
+
+
+typedef struct {
+	ohmd_device base;
+
+	hid_device* handle;
+	pkt_sensor_range sensor_range;
+	pkt_sensor_display_info display_info;
+	rift_coordinate_frame coordinate_frame, hw_coordinate_frame;
+	pkt_sensor_config sensor_config;
+	pkt_tracker_sensor sensor;
+	double last_keep_alive;
+	fusion sensor_fusion;
+	vec3f raw_mag, raw_accel, raw_gyro;
+
+	// These values are derived from the display_info struct and
+	// from user provided values.
+	struct {
+		float idp; // inter-pupillary distance, user provided.
+
+		float znear; // depth near value, user provided.
+		float zfar; // depth far value, user provided.
+
+		float proj_offset; // lens offset on screen
+		mat4x4f proj_base; // base projection matrix
+		mat4x4f proj_left; // adjusted projection matrix for left screen
+		mat4x4f proj_right; // adjusted projection matrix for right screen
+
+		float full_ratio; // screen ratio for the entire device
+
+		float stereo_fov; // horizontal fov for one sub screen
+		float stereo_ratio; // screen ratio for one sub screen
+	} calc_values;
+} rift_priv;
+
+static rift_priv* rift_priv_get(ohmd_device* device)
+{
+	return (rift_priv*)device;
+}
+
+
+static int get_feature_report(rift_priv* priv, rift_sensor_feature_cmd cmd, unsigned char* buf)
+{
+	memset(buf, 0, FEATURE_BUFFER_SIZE);
+	buf[0] = (unsigned char)cmd;
+	return hid_get_feature_report(priv->handle, buf, FEATURE_BUFFER_SIZE);
+}
+
+static int send_feature_report(rift_priv* priv, const unsigned char *data, size_t length)
+{
+	return hid_send_feature_report(priv->handle, data, length);
+}
+
+static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordframe)
+{
+	priv->coordinate_frame = coordframe;
+
+	// set the RIFT_SCF_SENSOR_COORDINATES in the sensor config to match whether coordframe is hmd or sensor
+	SETFLAG(priv->sensor_config.flags, RIFT_SCF_SENSOR_COORDINATES, coordframe == RIFT_CF_SENSOR);
+
+	// encode send the new config to the Rift 
+	unsigned char buf[FEATURE_BUFFER_SIZE];
+	int size = encode_sensor_config(buf, &priv->sensor_config);
+	if(send_feature_report(priv, buf, size) == -1){
+		ohmd_set_error(priv->base.ctx, "send_feature_report failed in set_coordinate frame");
+		return;
+	}
+
+	// read the state again, set the hw_coordinate_frame to match what
+	// the hardware actually is set to just incase it doesn't stick.
+	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
+	if(size <= 0){
+		LOGW("could not set coordinate frame");
+		priv->hw_coordinate_frame = RIFT_CF_HMD;
+		return;
+	}
+
+	decode_sensor_config(&priv->sensor_config, buf, size);
+	priv->hw_coordinate_frame = (priv->sensor_config.flags & RIFT_SCF_SENSOR_COORDINATES) ? RIFT_CF_SENSOR : RIFT_CF_HMD;
+
+	if(priv->hw_coordinate_frame != coordframe) {
+		LOGW("coordinate frame didn't stick");
+	}
+}
+
+static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
+{
+	if(!decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+		LOGE("couldn't decode tracker sensor message");
+	}
+
+	pkt_tracker_sensor* s = &priv->sensor;
+
+	dump_packet_tracker_sensor(s);
+
+	// TODO handle missed samples etc.
+
+	float dt = s->num_samples > 3 ? (s->num_samples - 2) * TICK_LEN : TICK_LEN;
+
+	int32_t mag32[] = { s->mag[0], s->mag[1], s->mag[2] };
+	vec3f_from_rift_vec(mag32, &priv->raw_mag);
+
+	for(int i = 0; i < OHMD_MIN(s->num_samples, 3); i++){
+		vec3f_from_rift_vec(s->samples[i].accel, &priv->raw_accel);
+		vec3f_from_rift_vec(s->samples[i].gyro, &priv->raw_gyro);
+
+		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &priv->raw_mag);
+
+		// reset dt to tick_len for the last samples if there were more than one sample
+		dt = TICK_LEN;
+	}
+}
+
+static void update_device(ohmd_device* device)
+{
+	rift_priv* priv = rift_priv_get(device);
+	unsigned char buffer[FEATURE_BUFFER_SIZE];
+
+	// Handle keep alive messages
+	double t = ohmd_get_tick();
+	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0 - .2){
+		// send keep alive message
+		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
+		int ka_size = encode_keep_alive(buffer, &keep_alive);
+		send_feature_report(priv, buffer, ka_size);
+
+		// Update the time of the last keep alive we have sent.
+		priv->last_keep_alive = t;
+	}
+
+	// Read all the messages from the device.
+	while(true){
+		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
+		if(size < 0){
+			LOGE("error reading from device");
+			return;
+		} else if(size == 0) {
+			return; // No more messages, return.
+		}
+
+		// currently the only message type the hardware supports (I think)
+		if(buffer[0] == RIFT_IRQ_SENSORS){
+			handle_tracker_sensor_msg(priv, buffer, size);
+		}else{
+			LOGE("unknown message type: %u", buffer[0]);
+		}
+	}
+}
+
+static void calc_derived_values(rift_priv *priv)
+{
+	priv->calc_values.idp = 0.061f; // TODO settable.
+	priv->calc_values.znear = 0.1f; // TODO settable.
+	priv->calc_values.zfar = 1000.0f; // TODO settable.
+
+	priv->calc_values.stereo_fov = DEG_TO_RAD(125.5144f); // TODO calculate.
+
+
+	// Calculate the screen ratio of each subscreen.
+	float full_ratio = (float)priv->display_info.h_resolution /
+	                   (float)priv->display_info.v_resolution;
+	float ratio = full_ratio / 2.0f;
+
+	priv->calc_values.stereo_ratio = ratio;
+
+
+	// Calculate where the lens is on each screen,
+	// and with the given value offset the projection matrix.
+	float screen_center = priv->display_info.h_screen_size / 4.0f;
+	float lens_shift = screen_center - priv->display_info.lens_separation / 2.0f;
+	float proj_offset = 4.0f * lens_shift / priv->display_info.h_screen_size;
+
+	priv->calc_values.proj_offset = proj_offset;
+
+
+	// Setup the base projection matrix. Each eye mostly have the
+	// same projection matrix with the exception of the offset.
+	omat4x4f_init_perspective(&priv->calc_values.proj_base,
+	                          priv->calc_values.stereo_fov,
+	                          priv->calc_values.stereo_ratio,
+	                          priv->calc_values.znear,
+	                          priv->calc_values.zfar);
+
+
+	// Setup the two adjusted projection matricies. Each is setup to deal
+	// with the fact that the lens is not in the center of the screen.
+	// These matrices only change of the hardware changes, so static.
+	mat4x4f translate;
+
+	omat4x4f_init_translate(&translate, proj_offset, 0, 0);
+	omat4x4f_mult(&translate,
+	              &priv->calc_values.proj_base,
+	              &priv->calc_values.proj_left);
+
+	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
+	omat4x4f_mult(&translate,
+	              &priv->calc_values.proj_base,
+	              &priv->calc_values.proj_right);
+}
+	
+static int getf(ohmd_device* device, ohmd_float_value type, float* out)
+{
+	rift_priv* priv = rift_priv_get(device);
+
+	switch(type){
+	case OHMD_ROTATION_QUAT: {
+			*(quatf*)out = priv->sensor_fusion.orient;
+			break;
+		}
+	case OHMD_MAT4X4_LEFT_EYE_GL_MODELVIEW: {
+			vec3f point = {{0, 0, 0}};
+			mat4x4f orient, world_shift, result;
+			omat4x4f_init_look_at(&orient, &priv->sensor_fusion.orient, &point);
+			omat4x4f_init_translate(&world_shift, +(priv->calc_values.idp / 2.0f), 0, 0);
+			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_transpose(&result, (mat4x4f*)out);
+			break;
+		}
+	case OHMD_MAT4X4_RIGHT_EYE_GL_MODELVIEW: {
+			vec3f point = {{0, 0, 0}};
+			mat4x4f orient, world_shift, result;
+			omat4x4f_init_look_at(&orient, &priv->sensor_fusion.orient, &point);
+			omat4x4f_init_translate(&world_shift, -(priv->calc_values.idp / 2.0f), 0, 0);
+			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_transpose(&result, (mat4x4f*)out);
+			break;
+		}
+	case OHMD_MAT4X4_LEFT_EYE_GL_PROJECTION: {
+			omat4x4f_transpose(&priv->calc_values.proj_left, (mat4x4f*)out);
+			break;
+		}
+	case OHMD_MAT4X4_RIGHT_EYE_GL_PROJECTION: {
+			omat4x4f_transpose(&priv->calc_values.proj_right, (mat4x4f*)out);
+			break;
+		}
+	default:
+		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%d)", type);
+		return -1;
+		break;
+	}
+
+	return 0;
+}
+
+static void close_device(ohmd_device* device)
+{
+	LOGD("closing device");
+	rift_priv* priv = rift_priv_get(device);
+	hid_close(priv->handle);
+	free(priv);
+}
+
+static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+{
+	rift_priv* priv = ohmd_alloc(driver->ctx, sizeof(rift_priv));
+	if(!priv)
+		goto cleanup;
+
+	priv->base.ctx = driver->ctx;
+
+	// Open the HID device
+	priv->handle = hid_open_path(desc->path);
+
+	if(!priv->handle)
+		goto cleanup;
+	
+	if(hid_set_nonblocking(priv->handle, 1) == -1){
+		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
+		goto cleanup;
+	}
+
+	unsigned char buf[FEATURE_BUFFER_SIZE];
+	
+	int size;
+
+	// Read and decode the sensor range
+	size = get_feature_report(priv, RIFT_CMD_RANGE, buf);
+	decode_sensor_range(&priv->sensor_range, buf, size);
+	dump_packet_sensor_range(&priv->sensor_range);
+
+	// Read and decode display information
+	size = get_feature_report(priv, RIFT_CMD_DISPLAY_INFO, buf);
+	decode_sensor_display_info(&priv->display_info, buf, size);
+	dump_packet_sensor_display_info(&priv->display_info);
+
+	// Read and decode the sensor config
+	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
+	decode_sensor_config(&priv->sensor_config, buf, size);
+	dump_packet_sensor_config(&priv->sensor_config);
+
+	// if the sensor has display info data, use HMD coordinate frame
+	priv->coordinate_frame = priv->display_info.distortion_type != RIFT_DT_NONE ? RIFT_CF_HMD : RIFT_CF_SENSOR;
+
+	// apply sensor config
+	set_coordinate_frame(priv, priv->coordinate_frame);
+
+	// set keep alive interval to n seconds
+	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
+	size = encode_keep_alive(buf, &keep_alive);
+	send_feature_report(priv, buf, size);
+
+	// Update the time of the last keep alive we have sent.
+	priv->last_keep_alive = ohmd_get_tick();
+
+	// update sensor settings with new keep alive value
+	// (which will have been ignored in favor of the default 1000 ms one)
+	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
+	decode_sensor_config(&priv->sensor_config, buf, size);
+	dump_packet_sensor_config(&priv->sensor_config);
+
+
+	calc_derived_values(priv);
+
+	priv->base.update = update_device;
+	priv->base.close = close_device;
+	priv->base.getf = getf;
+
+	ofusion_init(&priv->sensor_fusion);
+
+	return &priv->base;
+
+cleanup:
+	if(priv)
+		free(priv);
+
+	return NULL;
+}
+
+static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
+{
+	// enumerate HID devices and add any Rifts found to the device list
+#define OCULUS_VR_INC_ID 0x2833
+#define RIFT_DEVKIT_ID 0x0001
+
+	struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, RIFT_DEVKIT_ID);
+	struct hid_device_info* cur_dev = devs;
+
+	if(devs == NULL)
+		return;
+
+	while (cur_dev) {
+		ohmd_device_desc* desc = &list->devices[list->num_devices++];
+
+		strcpy(desc->driver, "OpenHMD Rift Driver");
+		strcpy(desc->vendor, "Oculus VR, Inc.");
+		strcpy(desc->product, "Rift (Devkit)");
+
+		strcpy(desc->path, cur_dev->path);
+
+		desc->driver_ptr = driver;
+
+		cur_dev = cur_dev->next;
+	}
+	hid_free_enumeration(devs);
+}
+
+static void destroy_driver(ohmd_driver* drv)
+{
+	LOGD("shutting down driver");
+	hid_exit();
+	free(drv);
+}
+
+ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
+{
+	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
+	if(drv == NULL)
+		return NULL;
+
+	drv->get_device_list = get_device_list;
+	drv->open_device = open_device;
+	drv->ctx = ctx;
+	drv->get_device_list = get_device_list;
+	drv->open_device = open_device;
+	drv->destroy = destroy_driver;
+
+	return drv;
+}

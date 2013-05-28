@@ -1,0 +1,324 @@
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ * Copyright (C) 2013 Fredrik Hultin.
+ * Copyright (C) 2013 Jakob Bornecrantz.
+ * Distributed under the Boost 1.0 licence, see LICENSE for full text.
+ */
+
+/* Math Code Implementation */
+
+#include <string.h>
+#include "openhmdi.h"
+
+// vector
+
+float ovec3f_get_length(const vec3f* me)
+{
+	return sqrtf(POW2(me->x) + POW2(me->y) + POW2(me->z));
+}
+
+void ovec3f_normalize_me(vec3f* me)
+{
+	if(me->x == 0 && me->x == 0 && me->z == 0)
+		return;
+
+	float len = ovec3f_get_length(me);
+	me->x /= len;
+	me->y /= len;
+	me->z /= len;
+}
+
+float ovec3f_get_dot(const vec3f* me, const vec3f* vec)
+{
+	return me->x * vec->x + me->y * vec->y + me->z * vec->z;
+}
+
+float ovec3f_get_angle(const vec3f* me, const vec3f* vec)
+{
+	float dot = ovec3f_get_dot(me, vec);
+	float lengths = ovec3f_get_length(me) * ovec3f_get_length(vec);
+
+	if(lengths == 0)
+		return 0;
+
+	return acosf(dot / lengths);
+}
+
+
+// quaternion
+
+void oquatf_init_axis(quatf* me, const vec3f* vec, float angle)
+{
+	vec3f norm = *vec;
+	ovec3f_normalize_me(&norm);
+
+	me->x = norm.x * sinf(angle / 2.0f);
+	me->y = norm.y * sinf(angle / 2.0f);
+	me->z = norm.z * sinf(angle / 2.0f);
+	me->w = cosf(angle / 2.0f);
+}
+
+void oquatf_get_rotated(const quatf* me, const vec3f* vec, vec3f* out_vec)
+{
+	quatf q = {{vec->x * me->w + vec->z * me->y - vec->y * me->z,
+	            vec->y * me->w + vec->x * me->z - vec->z * me->x,
+	            vec->z * me->w + vec->y * me->x - vec->x * me->y,
+	            vec->x * me->x + vec->y * me->y + vec->z * me->z}};
+
+	out_vec->x = me->w * q.x + me->x * q.w + me->y * q.z - me->z * q.y;
+	out_vec->y = me->w * q.y + me->y * q.w + me->z * q.x - me->x * q.z;
+	out_vec->z = me->w * q.z + me->z * q.w + me->x * q.y - me->y * q.x;
+}
+
+void oquatf_mult(const quatf* me, const quatf* q, quatf* out_q)
+{
+	out_q->x = me->w * q->x + me->x * q->w + me->y * q->z - me->z * q->y;
+	out_q->y = me->w * q->y - me->x * q->z + me->y * q->w + me->z * q->x;
+	out_q->z = me->w * q->z + me->x * q->y - me->y * q->x + me->z * q->w;
+	out_q->w = me->w * q->w - me->x * q->x - me->y * q->y - me->z * q->z;
+}
+
+void oquatf_mult_me(quatf* me, const quatf* q)
+{
+	quatf tmp = *me;
+	oquatf_mult(&tmp, q, me);
+}
+
+void oquatf_normalize_me(quatf* me)
+{
+	float len = oquatf_get_length(me);
+	me->x /= len;
+	me->y /= len;
+	me->z /= len;
+	me->w /= len;
+}
+
+float oquatf_get_length(const quatf* me)
+{
+	return sqrtf(me->x * me->x + me->y * me->y + me->z * me->z + me->w * me->w);
+}
+
+void oquatf_get_mat3x3(const quatf* me, float mat[9])
+{
+	float xx = me->x * me->x;
+	float xy = me->x * me->y;
+	float xz = me->x * me->z;
+	float xw = me->x * me->w;
+
+	float yy = me->y * me->y;
+	float yz = me->y * me->z;
+	float yw = me->y * me->w;
+
+	float zz = me->z * me->z;
+	float zw = me->z * me->w;
+
+	mat[0] = 1 - 2 * ( yy + zz );
+	mat[1] =     2 * ( xy - zw );
+	mat[2] =     2 * ( xz + yw );
+
+	mat[3] =     2 * ( xy + zw );
+	mat[4] = 1 - 2 * ( xx + zz );
+	mat[5] =     2 * ( yz - xw );
+
+	mat[6] =     2 * ( xz - yw );
+	mat[7] =     2 * ( yz + xw );
+	mat[8] = 1 - 2 * ( xx + yy );
+}
+
+void omat3x3_get_scales(const float mat[9], float scales[3])
+{
+	for(int i = 0; i < 3; i++)
+		scales[i] = sqrtf(mat[3 * i] * mat[3 * i] + mat[3 * i + 1] * mat[ 3 * i + 1] + mat[ 3 * i + 2] * mat[ 3 * i + 2]);
+}
+
+void omat3x3_get_euler_angles(const float mat[9], vec3f* angles)
+{
+	float scales[3];
+	omat3x3_get_scales(mat, scales);
+
+	angles->x = RAD_TO_DEG(asinf(mat[5] / scales[1]));
+	if(mat[4] != 0.0f){
+		angles->y = RAD_TO_DEG(atan2f(-mat[2] / scales[0], mat[8] / scales[2]));
+		angles->z = RAD_TO_DEG(atan2f(-mat[3] / scales[1], mat[4] / scales[1]));
+	}else{
+		angles->y = 0.0f;
+		angles->z = RAD_TO_DEG(atan2f(mat[1] / scales[0], mat[0] / scales[0]));
+	}
+}
+
+void oquatf_get_mat4x4(const quatf* me, const vec3f* point, float mat[4][4])
+{
+	mat[0][0] = 1 - 2 * me->y * me->y - 2 * me->z * me->z;
+	mat[0][1] =     2 * me->x * me->y - 2 * me->w * me->z;
+	mat[0][2] =     2 * me->x * me->z + 2 * me->w * me->y;
+	mat[0][3] = point->x;
+
+	mat[1][0] =     2 * me->x * me->y + 2 * me->w * me->z;
+	mat[1][1] = 1 - 2 * me->x * me->x - 2 * me->z * me->z;
+	mat[1][2] =     2 * me->y * me->z - 2 * me->w * me->x;
+	mat[1][3] = point->y;
+
+	mat[2][0] =     2 * me->x * me->z - 2 * me->w * me->y;
+	mat[2][1] =     2 * me->y * me->z + 2 * me->w * me->x;
+	mat[2][2] = 1 - 2 * me->x * me->x - 2 * me->y * me->y;
+	mat[2][3] = point->z;
+
+	mat[3][0] = 0;
+	mat[3][1] = 0;
+	mat[3][2] = 0;
+	mat[3][3] = 1;
+}
+
+
+// matrix
+
+void omat4x4f_init_ident(mat4x4f* me)
+{
+	memset(me, 0, sizeof(*me));
+	me->m[0][0] = 1.0f;
+	me->m[1][1] = 1.0f;
+	me->m[2][2] = 1.0f;
+	me->m[3][3] = 1.0f;
+}
+
+void omat4x4f_init_perspective(mat4x4f* me, float fovy_rad, float aspect, float znear, float zfar)
+{
+	float sine, cotangent, delta, half_fov;
+
+	half_fov = fovy_rad / 2.0f;
+	delta = zfar - znear;
+	sine = sinf(half_fov);
+
+	if ((delta == 0.0f) || (sine == 0.0f) || (aspect == 0.0f)) {
+		omat4x4f_init_ident(me);
+		return;
+	}
+
+	cotangent = cosf(half_fov) / sine;
+
+	me->m[0][0] = cotangent / aspect;
+	me->m[0][1] = 0;
+	me->m[0][2] = 0;
+	me->m[0][3] = 0;
+
+	me->m[1][0] = 0;
+	me->m[1][1] = cotangent;
+	me->m[1][2] = 0;
+	me->m[1][3] = 0;
+
+	me->m[2][0] = 0;
+	me->m[2][1] = 0;
+	me->m[2][2] = -(zfar + znear) / delta;
+	me->m[2][3] = -2.0f * znear * zfar / delta;
+
+	me->m[3][0] = 0;
+	me->m[3][1] = 0;
+	me->m[3][2] = -1.0f;
+	me->m[3][3] = 0;
+}
+
+void omat4x4f_init_look_at(mat4x4f* me, const quatf* rot, const vec3f* eye)
+{
+	quatf q;
+	vec3f p;
+
+	q.x = -rot->x;
+	q.y = -rot->y;
+	q.z = -rot->z;
+	q.w =  rot->w;
+
+	p.x = -eye->x;
+	p.y = -eye->y;
+	p.z = -eye->z;
+
+	me->m[0][0] = 1 - 2 * q.y * q.y - 2 * q.z * q.z;
+	me->m[0][1] =     2 * q.x * q.y - 2 * q.w * q.z;
+	me->m[0][2] =     2 * q.x * q.z + 2 * q.w * q.y;
+	me->m[0][3] = p.x * me->m[0][0] + p.y * me->m[0][1] + p.z * me->m[0][2];
+
+	me->m[1][0] =     2 * q.x * q.y + 2 * q.w * q.z;
+	me->m[1][1] = 1 - 2 * q.x * q.x - 2 * q.z * q.z;
+	me->m[1][2] =     2 * q.y * q.z - 2 * q.w * q.x;
+	me->m[1][3] = p.x * me->m[1][0] + p.y * me->m[1][1] + p.z * me->m[1][2];
+
+	me->m[2][0] =     2 * q.x * q.z - 2 * q.w * q.y;
+	me->m[2][1] =     2 * q.y * q.z + 2 * q.w * q.x;
+	me->m[2][2] = 1 - 2 * q.x * q.x - 2 * q.y * q.y;
+	me->m[2][3] = p.x * me->m[2][0] + p.y * me->m[2][1] + p.z * me->m[2][2];
+
+	me->m[3][0] = 0;
+	me->m[3][1] = 0;
+	me->m[3][2] = 0;
+	me->m[3][3] = 1;
+}
+
+void omat4x4f_init_translate(mat4x4f* me, float x, float y, float z)
+{
+	omat4x4f_init_ident(me);
+	me->m[0][3] = x;
+	me->m[1][3] = y;
+	me->m[2][3] = z;
+}
+
+void omat4x4f_transpose(const mat4x4f* m, mat4x4f* o)
+{
+	o->m[0][0] = m->m[0][0];
+	o->m[1][0] = m->m[0][1];
+	o->m[2][0] = m->m[0][2];
+	o->m[3][0] = m->m[0][3];
+
+	o->m[0][1] = m->m[1][0];
+	o->m[1][1] = m->m[1][1];
+	o->m[2][1] = m->m[1][2];
+	o->m[3][1] = m->m[1][3];
+
+	o->m[0][2] = m->m[2][0];
+	o->m[1][2] = m->m[2][1];
+	o->m[2][2] = m->m[2][2];
+	o->m[3][2] = m->m[2][3];
+
+	o->m[0][3] = m->m[3][0];
+	o->m[1][3] = m->m[3][1];
+	o->m[2][3] = m->m[3][2];
+	o->m[3][3] = m->m[3][3];
+}
+
+void omat4x4f_mult(const mat4x4f* l, const mat4x4f* r, mat4x4f *o)
+{
+	for(int i = 0; i < 4; i++){
+		float a0 = l->m[i][0], a1 = l->m[i][1], a2 = l->m[i][2], a3 = l->m[i][3];
+		o->m[i][0] = a0 * r->m[0][0] + a1 * r->m[1][0] + a2 * r->m[2][0] + a3 * r->m[3][0];
+		o->m[i][1] = a0 * r->m[0][1] + a1 * r->m[1][1] + a2 * r->m[2][1] + a3 * r->m[3][1];
+		o->m[i][2] = a0 * r->m[0][2] + a1 * r->m[1][2] + a2 * r->m[2][2] + a3 * r->m[3][2];
+		o->m[i][3] = a0 * r->m[0][3] + a1 * r->m[1][3] + a2 * r->m[2][3] + a3 * r->m[3][3];
+	}
+}
+
+
+// filter queue
+
+void ofq_init(filter_queue* me, int size)
+{
+	memset(me, 0, sizeof(filter_queue));
+	me->size = size;
+}
+
+void ofq_add(filter_queue* me, const vec3f* vec)
+{
+	me->elems[me->at] = *vec;
+	me->at = ((me->at + 1) % me->size);
+}
+
+void ofq_get_mean(const filter_queue* me, vec3f* vec)
+{
+	vec->x = vec->y = vec->z = 0;
+	for(int i = 0; i < me->size; i++){
+		vec->x += me->elems[i].x;
+		vec->y += me->elems[i].y;
+		vec->z += me->elems[i].z;
+	}
+
+	vec->x /= (float)me->size;
+	vec->y /= (float)me->size;
+	vec->z /= (float)me->size;
+}
