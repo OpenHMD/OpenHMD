@@ -18,7 +18,7 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
     * https://github.com/signal11/hidapi/
 
 ## Compiling and Installing
-./configure
+./configure [--enable-openglexample]
 make
 sudo make install
 
@@ -37,4 +37,4 @@ Note that this is *only* if you're linking statically! If you're using the DLL t
 Will be available soon.
 
 ## Using OpenHMD
-Proper usage examples will be provided in the future. Right now, take a look at the tests/simple subdirectory.
+See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL, glew and OpenGL.

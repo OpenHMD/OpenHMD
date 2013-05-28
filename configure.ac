@@ -36,17 +36,17 @@ esac
 
 PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)
 
-# Do we build OpenGL test?
-AC_ARG_ENABLE([opengltest],
-        [AS_HELP_STRING([--enable-opengltest],
-                [enable building of OpenGL test (default n)])],
-        [opengltest_enabled=$enableval],
-        [opengltest_enabled='no'])
+# Do we build OpenGL example?
+AC_ARG_ENABLE([openglexample],
+        [AS_HELP_STRING([--enable-openglexample],
+                [enable building of OpenGL example (default n)])],
+        [openglexample_enabled=$enableval],
+        [openglexample_enabled='no'])
 
-AM_CONDITIONAL([BUILD_OPENGL_TEST], [test "x$opengltest_enabled" != "xno"])
+AM_CONDITIONAL([BUILD_OPENGL_EXAMPLE], [test "x$openglexample_enabled" != "xno"])
 
 # Libs required by OpenGL test
-if test "x$opengltest_enabled" != "xno"; then
+if test "x$openglexample_enabled" != "xno"; then
 	PKG_CHECK_MODULES([sdl], [sdl])
 
 	# Try to find OpenGL with pkg-config
@@ -78,5 +78,5 @@ AC_PROG_CC_C99
 
 AC_CONFIG_HEADERS([config.h])
 
-AC_OUTPUT([Makefile src/Makefile tests/Makefile tests/simple/Makefile tests/unittests/Makefile tests/opengl/Makefile])
+AC_OUTPUT([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
 AC_OUTPUT 
