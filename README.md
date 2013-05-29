@@ -17,6 +17,9 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
     * http://www.signal11.us/oss/hidapi/
     * https://github.com/signal11/hidapi/
 
+## Other FOSS HMD Drivers
+  * libvr - http://hg.sitedethib.com/libvr
+
 ## Compiling and Installing
 ./configure [--enable-openglexample]
 make
@@ -49,3 +52,5 @@ Will be available soon.
 
 ## Using OpenHMD
 See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL, glew and OpenGL.
+
+
