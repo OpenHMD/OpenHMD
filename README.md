@@ -33,7 +33,7 @@ as root, run:
     echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2833", MODE="0666", GROUP="plugdev"' > /etc/udev/rules.d/83-hmd.rules
     udevadm control --reload-rules
 
-You should now be able to access the Oculus Rift as a normal user.
+After this you have to unplug your Rift and plug it back in. You should now be able to access the Oculus Rift as a normal user.
 
 
 ### Cross compiling for windows using mingw
