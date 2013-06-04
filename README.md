@@ -10,7 +10,7 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 ## Supported Platforms
   * Linux
   * Windows
-  * Mac Os X
+  * OS X
 
 ## Requirements
   * HIDAPI
