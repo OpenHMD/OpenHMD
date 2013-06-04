@@ -1,8 +1,8 @@
 # OpenHMD
-This project aims to provide a Free and Open Source API and drivers for immersive technology, such as head mounted displays with built in head tracking.
+This project aims to provide a free and Open Source API and drivers for immersive technology, such as head mounted displays with built in head tracking.
 
 ## License
-OpenHMD is released under the permissive Boost Software License (see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very appriciated.
+OpenHMD is released under the permissive Boost Software License (OSI approved, see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very much appreciated.
 
 ## Supported Devices
   * Oculus Rift (SDK)
