@@ -16,6 +16,7 @@ double ohmd_get_tick();
 
 int main(int argc, char** argv)
 {
+	float fval; int ival;
 	(void)argc; (void)argv;
 	ohmd_context* ctx = ohmd_ctx_create();
 
@@ -34,6 +35,25 @@ int main(int argc, char** argv)
 	}
 
 	ohmd_device* hmd = ohmd_list_open_device(ctx, 0);
+
+	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, &ival);
+	printf("hres: %i\n", ival);
+	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, &ival);
+	printf("vres: %i\n", ival);
+
+	ohmd_device_getf(hmd, OHMD_SCREEN_HORIZONTAL_SIZE, &fval);
+	printf("hsize: %f\n", fval);
+	ohmd_device_getf(hmd, OHMD_SCREEN_VERTICAL_SIZE, &fval);
+	printf("vsize: %f\n", fval);
+
+	ohmd_device_getf(hmd, OHMD_LENS_HORIZONTAL_SEPERATION, &fval);
+	printf("lens seperation: %f\n", fval);
+	ohmd_device_getf(hmd, OHMD_LENS_VERTICAL_POSITION, &fval);
+	printf("lens vcenter: %f\n", fval);
+	ohmd_device_getf(hmd, OHMD_LEFT_EYE_FOV, &fval);
+	printf("fov: %f\n", fval);
+	ohmd_device_getf(hmd, OHMD_LEFT_EYE_ASPECT_RATIO, &fval);
+	printf("aspect: %f\n", fval);
 
 	if(!hmd){
 		printf("failed to open device: %s\n", ohmd_ctx_get_error(ctx));

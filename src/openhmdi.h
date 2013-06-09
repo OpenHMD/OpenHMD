@@ -48,6 +48,23 @@ struct ohmd_driver {
 };
 
 struct ohmd_device {
+	struct {
+		int hres;
+		int vres;
+		float hsize;
+		float vsize;
+
+		float lens_sep;
+		float lens_vpos;
+
+		float fov;
+		float ratio;
+
+		float idp;
+		float zfar;
+		float znear;
+	} properties;
+
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
 	void (*update)(ohmd_device* device);
 	void (*close)(ohmd_device* device);
@@ -65,6 +82,9 @@ struct ohmd_context {
 
 	char error_msg[OHMD_STR_SIZE];
 };
+
+// helper functions
+void ohmd_set_default_device_properties(ohmd_device* device);
 
 // drivers
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);

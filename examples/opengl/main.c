@@ -145,11 +145,11 @@ int main(int argc, char** argv)
 
 		// set hmd rotation, for left eye.
 		glMatrixMode(GL_PROJECTION);
-		ohmd_device_getf(hmd, OHMD_MAT4X4_LEFT_EYE_GL_PROJECTION, matrix);
+		ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_PROJECTION_MATRIX, matrix);
 		glLoadMatrixf(matrix);
 
 		glMatrixMode(GL_MODELVIEW);
-		ohmd_device_getf(hmd, OHMD_MAT4X4_LEFT_EYE_GL_MODELVIEW, matrix);
+		ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX, matrix);
 		glLoadMatrixf(matrix);
 
 		// Draw scene into framebuffer.
@@ -162,11 +162,11 @@ int main(int argc, char** argv)
 
 		// set hmd rotation, for right eye.
 		glMatrixMode(GL_PROJECTION);
-		ohmd_device_getf(hmd, OHMD_MAT4X4_RIGHT_EYE_GL_PROJECTION, matrix);
+		ohmd_device_getf(hmd, OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX, matrix);
 		glLoadMatrixf(matrix);
 
 		glMatrixMode(GL_MODELVIEW);
-		ohmd_device_getf(hmd, OHMD_MAT4X4_RIGHT_EYE_GL_MODELVIEW, matrix);
+		ohmd_device_getf(hmd, OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX, matrix);
 		glLoadMatrixf(matrix);
 
 		// Draw scene into framebuffer.

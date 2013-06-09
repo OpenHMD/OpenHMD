@@ -96,7 +96,74 @@ OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index)
 
 OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
-	return device->getf(device, type, out);
+	switch(type){
+	case OHMD_SCREEN_HORIZONTAL_SIZE:
+		*out = device->properties.hsize;
+		return 0;
+	case OHMD_SCREEN_VERTICAL_SIZE:
+		*out = device->properties.vsize;
+		return 0;
+
+	case OHMD_LENS_HORIZONTAL_SEPERATION:
+		*out = device->properties.lens_sep;
+		return 0;
+	case OHMD_LENS_VERTICAL_POSITION:
+		*out = device->properties.lens_vpos;
+		return 0;
+
+	case OHMD_RIGHT_EYE_FOV:
+	case OHMD_LEFT_EYE_FOV:
+		*out = device->properties.fov;
+		return 0;
+	case OHMD_RIGHT_EYE_ASPECT_RATIO:
+	case OHMD_LEFT_EYE_ASPECT_RATIO:
+		*out = device->properties.fov;
+		return 0;
+
+	case OHMD_EYE_IDP:
+		*out = device->properties.idp;
+		return 0;
+
+	case OHMD_PROJECTION_ZFAR:
+		*out = device->properties.zfar;
+		return 0;
+	case OHMD_PROJECTION_ZNEAR:
+		*out = device->properties.znear;
+		return 0;
+	default:
+		return device->getf(device, type, out);
+	}
+}
+
+OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in)
+{
+	switch(type){
+	case OHMD_EYE_IDP:
+		device->properties.idp = *in;
+		return 0;
+	case OHMD_PROJECTION_ZFAR:
+		device->properties.zfar = *in;
+		return 0;
+	case OHMD_PROJECTION_ZNEAR:
+		device->properties.znear = *in;
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+OHMD_APIENTRY int ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
+{
+	switch(type){
+	case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
+		*out = device->properties.hres;
+		return 0;
+	case OHMD_SCREEN_VERTICAL_RESOLUTION:
+		*out = device->properties.vres;
+		return 0;
+	default:
+		return -1;
+	}
 }
 
 void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)
@@ -105,4 +172,11 @@ void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)
 	if(!ret)
 		ohmd_set_error(ctx, "%s", e_msg);
 	return ret;
+}
+
+void ohmd_set_default_device_properties(ohmd_device* device)
+{
+	device->properties.idp = 0.061f;
+	device->properties.znear = 0.1f;
+	device->properties.zfar = 1000.0f;
 }

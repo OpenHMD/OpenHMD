@@ -29,23 +29,46 @@ extern "C" {
 #define OHMD_STR_SIZE 256
 
 typedef enum {
-	OHMD_VENDOR,
-	OHMD_PRODUCT,
-	OHMD_PATH,
+	OHMD_VENDOR    = 0,
+	OHMD_PRODUCT   = 1,
+	OHMD_PATH      = 2,
 } ohmd_string_value;
 
 typedef enum {
-	OHMD_ROTATION_EULER,
-	OHMD_ROTATION_QUAT,
+	OHMD_ROTATION_EULER                   =  0,
+	OHMD_ROTATION_QUAT                    =  1,
 
-	OHMD_MAT4X4_LEFT_EYE_GL_MODELVIEW,
-	OHMD_MAT4X4_RIGHT_EYE_GL_MODELVIEW,
+	OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX     =  2,
+	OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX    =  3,
 
-	OHMD_MAT4X4_LEFT_EYE_GL_PROJECTION,
-	OHMD_MAT4X4_RIGHT_EYE_GL_PROJECTION,
+	OHMD_LEFT_EYE_GL_PROJECTION_MATRIX    =  4,
+	OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX   =  5,
 
-	OHMD_POSITION_VEC
+	OHMD_POSITION_VECTOR                  =  6,
+
+	OHMD_SCREEN_HORIZONTAL_SIZE           =  7,
+	OHMD_SCREEN_VERTICAL_SIZE             =  8,
+
+	OHMD_LENS_HORIZONTAL_SEPERATION       =  9,
+	OHMD_LENS_VERTICAL_POSITION           = 10,
+
+	OHMD_LEFT_EYE_FOV                     = 11,
+	OHMD_LEFT_EYE_ASPECT_RATIO            = 12,
+	OHMD_RIGHT_EYE_FOV                    = 13,
+	OHMD_RIGHT_EYE_ASPECT_RATIO           = 14,
+
+	OHMD_EYE_IDP                          = 15,
+
+	OHMD_PROJECTION_ZFAR                  = 16,
+	OHMD_PROJECTION_ZNEAR                 = 17,
+
 } ohmd_float_value;
+
+typedef enum {
+	OHMD_SCREEN_HORIZONTAL_RESOLUTION     =  0,
+	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
+
+} ohmd_int_value;
 
 typedef struct ohmd_context ohmd_context;
 typedef struct ohmd_device ohmd_device;
@@ -60,6 +83,8 @@ OHMD_APIENTRY const char* ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index);
 
 OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out);
+OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in);
+OHMD_APIENTRY int ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out);
 
 #ifdef __cplusplus
 }

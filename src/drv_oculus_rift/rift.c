@@ -37,20 +37,12 @@ typedef struct {
 	// These values are derived from the display_info struct and
 	// from user provided values.
 	struct {
-		float idp; // inter-pupillary distance, user provided.
-
-		float znear; // depth near value, user provided.
-		float zfar; // depth far value, user provided.
-
 		float proj_offset; // lens offset on screen
 		mat4x4f proj_base; // base projection matrix
 		mat4x4f proj_left; // adjusted projection matrix for left screen
 		mat4x4f proj_right; // adjusted projection matrix for right screen
 
 		float full_ratio; // screen ratio for the entire device
-
-		float stereo_fov; // horizontal fov for one sub screen
-		float stereo_ratio; // screen ratio for one sub screen
 	} calc_values;
 } rift_priv;
 
@@ -170,11 +162,14 @@ static void update_device(ohmd_device* device)
 
 static void calc_derived_values(rift_priv *priv)
 {
-	priv->calc_values.idp = 0.061f; // TODO settable.
-	priv->calc_values.znear = 0.1f; // TODO settable.
-	priv->calc_values.zfar = 1000.0f; // TODO settable.
+	priv->base.properties.hsize = priv->display_info.h_screen_size;
+	priv->base.properties.vsize = priv->display_info.v_screen_size;
+	priv->base.properties.hres = priv->display_info.h_resolution;
+	priv->base.properties.vres = priv->display_info.v_resolution;
+	priv->base.properties.lens_sep = priv->display_info.lens_separation;
+	priv->base.properties.lens_vpos = priv->display_info.v_center;
 
-	priv->calc_values.stereo_fov = DEG_TO_RAD(125.5144f); // TODO calculate.
+	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
 
 
 	// Calculate the screen ratio of each subscreen.
@@ -182,7 +177,7 @@ static void calc_derived_values(rift_priv *priv)
 	                   (float)priv->display_info.v_resolution;
 	float ratio = full_ratio / 2.0f;
 
-	priv->calc_values.stereo_ratio = ratio;
+	priv->base.properties.ratio = ratio;
 
 
 	// Calculate where the lens is on each screen,
@@ -197,10 +192,10 @@ static void calc_derived_values(rift_priv *priv)
 	// Setup the base projection matrix. Each eye mostly have the
 	// same projection matrix with the exception of the offset.
 	omat4x4f_init_perspective(&priv->calc_values.proj_base,
-	                          priv->calc_values.stereo_fov,
-	                          priv->calc_values.stereo_ratio,
-	                          priv->calc_values.znear,
-	                          priv->calc_values.zfar);
+	                          priv->base.properties.fov,
+	                          priv->base.properties.ratio,
+	                          priv->base.properties.znear,
+	                          priv->base.properties.zfar);
 
 
 	// Setup the two adjusted projection matricies. Each is setup to deal
@@ -228,29 +223,29 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 			*(quatf*)out = priv->sensor_fusion.orient;
 			break;
 		}
-	case OHMD_MAT4X4_LEFT_EYE_GL_MODELVIEW: {
+	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &priv->sensor_fusion.orient, &point);
-			omat4x4f_init_translate(&world_shift, +(priv->calc_values.idp / 2.0f), 0, 0);
+			omat4x4f_init_translate(&world_shift, +(priv->base.properties.idp / 2.0f), 0, 0);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			break;
 		}
-	case OHMD_MAT4X4_RIGHT_EYE_GL_MODELVIEW: {
+	case OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &priv->sensor_fusion.orient, &point);
-			omat4x4f_init_translate(&world_shift, -(priv->calc_values.idp / 2.0f), 0, 0);
+			omat4x4f_init_translate(&world_shift, -(priv->base.properties.idp / 2.0f), 0, 0);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			break;
 		}
-	case OHMD_MAT4X4_LEFT_EYE_GL_PROJECTION: {
+	case OHMD_LEFT_EYE_GL_PROJECTION_MATRIX: {
 			omat4x4f_transpose(&priv->calc_values.proj_left, (mat4x4f*)out);
 			break;
 		}
-	case OHMD_MAT4X4_RIGHT_EYE_GL_PROJECTION: {
+	case OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX: {
 			omat4x4f_transpose(&priv->calc_values.proj_right, (mat4x4f*)out);
 			break;
 		}
@@ -294,6 +289,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	
 	int size;
 
+	// Set default values.
+	ohmd_set_default_device_properties(&priv->base);
+
 	// Read and decode the sensor range
 	size = get_feature_report(priv, RIFT_CMD_RANGE, buf);
 	decode_sensor_range(&priv->sensor_range, buf, size);
@@ -329,7 +327,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	decode_sensor_config(&priv->sensor_config, buf, size);
 	dump_packet_sensor_config(&priv->sensor_config);
 
-
+	// Also sets the exported values.
 	calc_derived_values(priv);
 
 	priv->base.update = update_device;
