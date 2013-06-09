@@ -11,6 +11,7 @@
 #define OPENHMDI_H
 
 #include "openhmd.h"
+#include "omath.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -63,6 +64,9 @@ struct ohmd_device {
 		float idp;
 		float zfar;
 		float znear;
+
+		mat4x4f proj_left; // adjusted projection matrix for left screen
+		mat4x4f proj_right; // adjusted projection matrix for right screen
 	} properties;
 
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);

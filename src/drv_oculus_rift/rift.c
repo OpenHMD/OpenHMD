@@ -39,8 +39,6 @@ typedef struct {
 	struct {
 		float proj_offset; // lens offset on screen
 		mat4x4f proj_base; // base projection matrix
-		mat4x4f proj_left; // adjusted projection matrix for left screen
-		mat4x4f proj_right; // adjusted projection matrix for right screen
 
 		float full_ratio; // screen ratio for the entire device
 	} calc_values;
@@ -206,12 +204,12 @@ static void calc_derived_values(rift_priv *priv)
 	omat4x4f_init_translate(&translate, proj_offset, 0, 0);
 	omat4x4f_mult(&translate,
 	              &priv->calc_values.proj_base,
-	              &priv->calc_values.proj_left);
+	              &priv->base.properties.proj_left);
 
 	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
 	omat4x4f_mult(&translate,
 	              &priv->calc_values.proj_base,
-	              &priv->calc_values.proj_right);
+	              &priv->base.properties.proj_right);
 }
 	
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -227,32 +225,6 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		}
 	case OHMD_ROTATION_QUAT: {
 			*(quatf*)out = priv->sensor_fusion.orient;
-			break;
-		}
-	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
-			vec3f point = {{0, 0, 0}};
-			mat4x4f orient, world_shift, result;
-			omat4x4f_init_look_at(&orient, &priv->sensor_fusion.orient, &point);
-			omat4x4f_init_translate(&world_shift, +(priv->base.properties.idp / 2.0f), 0, 0);
-			omat4x4f_mult(&world_shift, &orient, &result);
-			omat4x4f_transpose(&result, (mat4x4f*)out);
-			break;
-		}
-	case OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX: {
-			vec3f point = {{0, 0, 0}};
-			mat4x4f orient, world_shift, result;
-			omat4x4f_init_look_at(&orient, &priv->sensor_fusion.orient, &point);
-			omat4x4f_init_translate(&world_shift, -(priv->base.properties.idp / 2.0f), 0, 0);
-			omat4x4f_mult(&world_shift, &orient, &result);
-			omat4x4f_transpose(&result, (mat4x4f*)out);
-			break;
-		}
-	case OHMD_LEFT_EYE_GL_PROJECTION_MATRIX: {
-			omat4x4f_transpose(&priv->calc_values.proj_left, (mat4x4f*)out);
-			break;
-		}
-	case OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX: {
-			omat4x4f_transpose(&priv->calc_values.proj_right, (mat4x4f*)out);
 			break;
 		}
 	default:

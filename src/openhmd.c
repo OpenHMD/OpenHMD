@@ -97,6 +97,35 @@ OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index)
 OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
 	switch(type){
+	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
+			vec3f point = {{0, 0, 0}};
+			quatf rot;
+			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
+			mat4x4f orient, world_shift, result;
+			omat4x4f_init_look_at(&orient, &rot, &point);
+			omat4x4f_init_translate(&world_shift, +(device->properties.idp / 2.0f), 0, 0);
+			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_transpose(&result, (mat4x4f*)out);
+			return 0;
+		}
+	case OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX: {
+			vec3f point = {{0, 0, 0}};
+			quatf rot;
+			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
+			mat4x4f orient, world_shift, result;
+			omat4x4f_init_look_at(&orient, &rot, &point);
+			omat4x4f_init_translate(&world_shift, -(device->properties.idp / 2.0f), 0, 0);
+			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_transpose(&result, (mat4x4f*)out);
+			return 0;
+		}
+	case OHMD_LEFT_EYE_GL_PROJECTION_MATRIX:
+		omat4x4f_transpose(&device->properties.proj_left, (mat4x4f*)out);
+		return 0;
+	case OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX:
+		omat4x4f_transpose(&device->properties.proj_right, (mat4x4f*)out);
+		return 0;
+
 	case OHMD_SCREEN_HORIZONTAL_SIZE:
 		*out = device->properties.hsize;
 		return 0;
