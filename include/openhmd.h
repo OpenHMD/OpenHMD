@@ -62,6 +62,8 @@ typedef enum {
 	OHMD_PROJECTION_ZFAR                  = 16,
 	OHMD_PROJECTION_ZNEAR                 = 17,
 
+	OHMD_DISTORTION_K                     = 18,
+
 } ohmd_float_value;
 
 typedef enum {

@@ -219,6 +219,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	rift_priv* priv = rift_priv_get(device);
 
 	switch(type){
+	case OHMD_DISTORTION_K: {
+			for (int i = 0; i < 6; i++) {
+				out[i] = priv->display_info.distortion_k[i];
+			}
+			break;
+		}
 	case OHMD_ROTATION_QUAT: {
 			*(quatf*)out = priv->sensor_fusion.orient;
 			break;
