@@ -149,7 +149,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 		*out = device->properties.fov;
 		return 0;
 
-	case OHMD_EYE_IDP:
+	case OHMD_EYE_IPD:
 		*out = device->properties.idp;
 		return 0;
 
@@ -167,7 +167,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in)
 {
 	switch(type){
-	case OHMD_EYE_IDP:
+	case OHMD_EYE_IPD:
 		device->properties.idp = *in;
 		return 0;
 	case OHMD_PROJECTION_ZFAR:

@@ -27,7 +27,7 @@ case "$host" in
 	hidapi="hidapi-libusb"
 
 	#link with realtime lib on linux for clock_gettime
-	AC_SUBST(EXTRA_LD_FLAGS, "-lrt")
+	AC_SUBST(EXTRA_LD_FLAGS, "-lrt -lpthread")
 	;;
 *-freebsd*)
 	AC_SUBST(PKG_CONFIG_EXTRA_PATH, "libdata/")

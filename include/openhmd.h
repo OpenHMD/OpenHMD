@@ -57,7 +57,7 @@ typedef enum {
 	OHMD_RIGHT_EYE_FOV                    = 13,
 	OHMD_RIGHT_EYE_ASPECT_RATIO           = 14,
 
-	OHMD_EYE_IDP                          = 15,
+	OHMD_EYE_IPD                          = 15,
 
 	OHMD_PROJECTION_ZFAR                  = 16,
 	OHMD_PROJECTION_ZNEAR                 = 17,
