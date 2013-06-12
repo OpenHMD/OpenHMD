@@ -101,6 +101,8 @@ int main(int argc, char** argv)
 	gl_ctx gl;
 	init_gl(&gl, TEST_WIDTH, TEST_HEIGHT);
 
+	SDL_ShowCursor(SDL_DISABLE);
+
 	char* vertex = read_file("shaders/test1.vert.glsl");
 	char* fragment = read_file("shaders/test1.frag.glsl");
 
