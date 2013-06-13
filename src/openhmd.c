@@ -103,7 +103,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
-			omat4x4f_init_translate(&world_shift, +(device->properties.idp / 2.0f), 0, 0);
+			omat4x4f_init_translate(&world_shift, +(device->properties.ipd / 2.0f), 0, 0);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return 0;
@@ -114,7 +114,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
-			omat4x4f_init_translate(&world_shift, -(device->properties.idp / 2.0f), 0, 0);
+			omat4x4f_init_translate(&world_shift, -(device->properties.ipd / 2.0f), 0, 0);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return 0;
@@ -150,7 +150,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 		return 0;
 
 	case OHMD_EYE_IPD:
-		*out = device->properties.idp;
+		*out = device->properties.ipd;
 		return 0;
 
 	case OHMD_PROJECTION_ZFAR:
@@ -168,7 +168,7 @@ OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 {
 	switch(type){
 	case OHMD_EYE_IPD:
-		device->properties.idp = *in;
+		device->properties.ipd = *in;
 		return 0;
 	case OHMD_PROJECTION_ZFAR:
 		device->properties.zfar = *in;
@@ -205,7 +205,7 @@ void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)
 
 void ohmd_set_default_device_properties(ohmd_device* device)
 {
-	device->properties.idp = 0.061f;
+	device->properties.ipd = 0.061f;
 	device->properties.znear = 0.1f;
 	device->properties.zfar = 1000.0f;
 }

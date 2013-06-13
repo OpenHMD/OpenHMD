@@ -61,7 +61,7 @@ struct ohmd_device {
 		float fov;
 		float ratio;
 
-		float idp;
+		float ipd;
 		float zfar;
 		float znear;
 
