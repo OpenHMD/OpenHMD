@@ -35,7 +35,6 @@ typedef enum {
 } ohmd_string_value;
 
 typedef enum {
-	OHMD_ROTATION_EULER                   =  0,
 	OHMD_ROTATION_QUAT                    =  1,
 
 	OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX     =  2,
@@ -49,7 +48,7 @@ typedef enum {
 	OHMD_SCREEN_HORIZONTAL_SIZE           =  7,
 	OHMD_SCREEN_VERTICAL_SIZE             =  8,
 
-	OHMD_LENS_HORIZONTAL_SEPERATION       =  9,
+	OHMD_LENS_HORIZONTAL_SEPARATION       =  9,
 	OHMD_LENS_VERTICAL_POSITION           = 10,
 
 	OHMD_LEFT_EYE_FOV                     = 11,

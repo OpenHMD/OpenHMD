@@ -20,7 +20,6 @@
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
 
-
 typedef struct {
 	ohmd_device base;
 
@@ -33,15 +32,6 @@ typedef struct {
 	double last_keep_alive;
 	fusion sensor_fusion;
 	vec3f raw_mag, raw_accel, raw_gyro;
-
-	// These values are derived from the display_info struct and
-	// from user provided values.
-	struct {
-		float proj_offset; // lens offset on screen
-		mat4x4f proj_base; // base projection matrix
-
-		float full_ratio; // screen ratio for the entire device
-	} calc_values;
 } rift_priv;
 
 static rift_priv* rift_priv_get(ohmd_device* device)
@@ -158,60 +148,6 @@ static void update_device(ohmd_device* device)
 	}
 }
 
-static void calc_derived_values(rift_priv *priv)
-{
-	priv->base.properties.hsize = priv->display_info.h_screen_size;
-	priv->base.properties.vsize = priv->display_info.v_screen_size;
-	priv->base.properties.hres = priv->display_info.h_resolution;
-	priv->base.properties.vres = priv->display_info.v_resolution;
-	priv->base.properties.lens_sep = priv->display_info.lens_separation;
-	priv->base.properties.lens_vpos = priv->display_info.v_center;
-
-	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
-
-
-	// Calculate the screen ratio of each subscreen.
-	float full_ratio = (float)priv->display_info.h_resolution /
-	                   (float)priv->display_info.v_resolution;
-	float ratio = full_ratio / 2.0f;
-
-	priv->base.properties.ratio = ratio;
-
-
-	// Calculate where the lens is on each screen,
-	// and with the given value offset the projection matrix.
-	float screen_center = priv->display_info.h_screen_size / 4.0f;
-	float lens_shift = screen_center - priv->display_info.lens_separation / 2.0f;
-	float proj_offset = 4.0f * lens_shift / priv->display_info.h_screen_size;
-
-	priv->calc_values.proj_offset = proj_offset;
-
-
-	// Setup the base projection matrix. Each eye mostly have the
-	// same projection matrix with the exception of the offset.
-	omat4x4f_init_perspective(&priv->calc_values.proj_base,
-	                          priv->base.properties.fov,
-	                          priv->base.properties.ratio,
-	                          priv->base.properties.znear,
-	                          priv->base.properties.zfar);
-
-
-	// Setup the two adjusted projection matricies. Each is setup to deal
-	// with the fact that the lens is not in the center of the screen.
-	// These matrices only change of the hardware changes, so static.
-	mat4x4f translate;
-
-	omat4x4f_init_translate(&translate, proj_offset, 0, 0);
-	omat4x4f_mult(&translate,
-	              &priv->calc_values.proj_base,
-	              &priv->base.properties.proj_left);
-
-	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
-	omat4x4f_mult(&translate,
-	              &priv->calc_values.proj_base,
-	              &priv->base.properties.proj_right);
-}
-	
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
 	rift_priv* priv = rift_priv_get(device);
@@ -223,10 +159,16 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 			}
 			break;
 		}
+
 	case OHMD_ROTATION_QUAT: {
 			*(quatf*)out = priv->sensor_fusion.orient;
 			break;
 		}
+
+	case OHMD_POSITION_VECTOR:
+		out[0] = out[1] = out[2] = 0;
+		break;
+
 	default:
 		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%d)", type);
 		return -1;
@@ -267,9 +209,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	
 	int size;
 
-	// Set default values.
-	ohmd_set_default_device_properties(&priv->base);
-
 	// Read and decode the sensor range
 	size = get_feature_report(priv, RIFT_CMD_RANGE, buf);
 	decode_sensor_range(&priv->sensor_range, buf, size);
@@ -305,13 +244,28 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	decode_sensor_config(&priv->sensor_config, buf, size);
 	dump_packet_sensor_config(&priv->sensor_config);
 
-	// Also sets the exported values.
-	calc_derived_values(priv);
+	// Set default device properties
+	ohmd_set_default_device_properties(&priv->base.properties);
 
+	// Set device properties
+	priv->base.properties.hsize = priv->display_info.h_screen_size;
+	priv->base.properties.vsize = priv->display_info.v_screen_size;
+	priv->base.properties.hres = priv->display_info.h_resolution;
+	priv->base.properties.vres = priv->display_info.v_resolution;
+	priv->base.properties.lens_sep = priv->display_info.lens_separation;
+	priv->base.properties.lens_vpos = priv->display_info.v_center;
+	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
+	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
+
+	// calculate projection eye projection matrices from the device properties
+	ohmd_calc_default_proj_matrices(&priv->base.properties);
+
+	// set up device callbacks
 	priv->base.update = update_device;
 	priv->base.close = close_device;
 	priv->base.getf = getf;
 
+	// initialize sensor fusion
 	ofusion_init(&priv->sensor_fusion);
 
 	return &priv->base;

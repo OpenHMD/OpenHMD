@@ -12,8 +12,10 @@
 bool vec3f_eq(vec3f v1, vec3f v2, float t)
 {
 	for(int i = 0; i < 3; i++)
-		if(!float_eq(v1.arr[i], v2.arr[i], t))
+		if(!float_eq(v1.arr[i], v2.arr[i], t)){
+			printf("\nvec.arr[%d] == %f, expected %f\n", i, v1.arr[i], v2.arr[i]);
 			return false;
+		}
 
 	return true;
 }

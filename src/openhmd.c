@@ -21,6 +21,9 @@ OHMD_APIENTRY ohmd_context* ohmd_ctx_create()
 
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
 
+	// add dummy driver last to make it the lowest priority
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
+
 	return ctx;
 }
 
@@ -133,7 +136,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 		*out = device->properties.vsize;
 		return 0;
 
-	case OHMD_LENS_HORIZONTAL_SEPERATION:
+	case OHMD_LENS_HORIZONTAL_SEPARATION:
 		*out = device->properties.lens_sep;
 		return 0;
 	case OHMD_LENS_VERTICAL_POSITION:
@@ -203,9 +206,35 @@ void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)
 	return ret;
 }
 
-void ohmd_set_default_device_properties(ohmd_device* device)
+void ohmd_set_default_device_properties(ohmd_device_properties* props)
 {
-	device->properties.ipd = 0.061f;
-	device->properties.znear = 0.1f;
-	device->properties.zfar = 1000.0f;
+	props->ipd = 0.061f;
+	props->znear = 0.1f;
+	props->zfar = 1000.0f;
+}
+
+void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
+{
+	mat4x4f proj_base; // base projection matrix
+
+	// Calculate where the lens is on each screen,
+	// and with the given value offset the projection matrix.
+	float screen_center = props->hsize / 4.0f;
+	float lens_shift = screen_center - props->lens_sep / 2.0f;
+	float proj_offset = 4.0f * lens_shift / props->hsize;
+
+	// Setup the base projection matrix. Each eye mostly have the
+	// same projection matrix with the exception of the offset.
+	omat4x4f_init_perspective(&proj_base, props->fov, props->ratio, props->znear, props->zfar);
+
+	// Setup the two adjusted projection matricies. Each is setup to deal
+	// with the fact that the lens is not in the center of the screen.
+	// These matrices only change of the hardware changes, so static.
+	mat4x4f translate;
+
+	omat4x4f_init_translate(&translate, proj_offset, 0, 0);
+	omat4x4f_mult(&translate, &proj_base, &props->proj_left);
+
+	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
+	omat4x4f_mult(&translate, &proj_base, &props->proj_right);
 }

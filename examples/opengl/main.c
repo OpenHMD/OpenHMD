@@ -82,8 +82,6 @@ void draw_scene(GLuint list)
 
 int main(int argc, char** argv)
 {
-	(void)argc; (void) argv;
-
 	ohmd_context* ctx = ohmd_ctx_create();
 	int num_devices = ohmd_ctx_probe(ctx);
 	if(num_devices < 0){

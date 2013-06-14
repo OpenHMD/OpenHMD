@@ -14,8 +14,10 @@ static const float t = 0.001;
 bool quatf_eq(quatf q1, quatf q2, float t)
 {
 	for(int i = 0; i < 4; i++)
-		if(!float_eq(q1.arr[i], q2.arr[i], t))
+		if(!float_eq(q1.arr[i], q2.arr[i], t)){
+			printf("\nquat.arr[%d] == %f, expected %f\n", i, q1.arr[i], q2.arr[i]);
 			return false;
+		}
 
 	return true;
 }
@@ -73,30 +75,22 @@ void test_oquatf_get_rotated()
 	}
 }
 
+// TODO test_oquatf_mult
 void test_oquatf_mult()
 {
 }
 
+// TODO test_oquatf_normalize
 void test_oquatf_normalize()
 {
 }
 
+// TODO test_oquatf_get_length
 void test_oquatf_get_length()
 {
 }
 
+// TODO test_oquatf_get_mat4x4
 void test_oquatf_get_mat4x4()
-{
-}
-
-void test_oquatf_get_mat3x3()
-{
-}
-
-void test_omat3x3_get_scales()
-{
-}
-
-void test_omat3x3_get_euler_angles()
 {
 }

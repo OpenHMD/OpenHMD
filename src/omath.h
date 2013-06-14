@@ -54,11 +54,6 @@ void oquatf_normalize_me(quatf* me);
 float oquatf_get_length(const quatf* me);
 
 void oquatf_get_mat4x4(const quatf* me, const vec3f* point, float mat[4][4]);
-void oquatf_get_mat3x3(const quatf* me, float mat[9]);
-
-void omat3x3_get_scales(const float mat[9], float scales[3]);
-void omat3x3_get_euler_angles(const float mat[9], vec3f* angles);
-
 
 // matrix
 

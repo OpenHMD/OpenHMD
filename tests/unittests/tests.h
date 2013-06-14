@@ -36,9 +36,5 @@ void test_oquatf_normalize();
 void test_oquatf_get_length();
 
 void test_oquatf_get_mat4x4();
-void test_oquatf_get_mat3x3();
-void test_omat3x3_get_scales();
-void test_omat3x3_get_euler_angles();
-
 
 #endif

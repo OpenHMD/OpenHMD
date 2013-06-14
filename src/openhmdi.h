@@ -48,8 +48,7 @@ struct ohmd_driver {
 	ohmd_context* ctx;
 };
 
-struct ohmd_device {
-	struct {
+typedef struct {
 		int hres;
 		int vres;
 		float hsize;
@@ -67,11 +66,15 @@ struct ohmd_device {
 
 		mat4x4f proj_left; // adjusted projection matrix for left screen
 		mat4x4f proj_right; // adjusted projection matrix for right screen
-	} properties;
+} ohmd_device_properties;
+
+struct ohmd_device {
+	ohmd_device_properties properties;
 
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
 	void (*update)(ohmd_device* device);
 	void (*close)(ohmd_device* device);
+
 	ohmd_context* ctx;
 };
 
@@ -88,9 +91,11 @@ struct ohmd_context {
 };
 
 // helper functions
-void ohmd_set_default_device_properties(ohmd_device* device);
+void ohmd_set_default_device_properties(ohmd_device_properties* props);
+void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 
 // drivers
+ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
 
 #include "log.h"

@@ -98,54 +98,6 @@ float oquatf_get_length(const quatf* me)
 	return sqrtf(me->x * me->x + me->y * me->y + me->z * me->z + me->w * me->w);
 }
 
-void oquatf_get_mat3x3(const quatf* me, float mat[9])
-{
-	float xx = me->x * me->x;
-	float xy = me->x * me->y;
-	float xz = me->x * me->z;
-	float xw = me->x * me->w;
-
-	float yy = me->y * me->y;
-	float yz = me->y * me->z;
-	float yw = me->y * me->w;
-
-	float zz = me->z * me->z;
-	float zw = me->z * me->w;
-
-	mat[0] = 1 - 2 * ( yy + zz );
-	mat[1] =     2 * ( xy - zw );
-	mat[2] =     2 * ( xz + yw );
-
-	mat[3] =     2 * ( xy + zw );
-	mat[4] = 1 - 2 * ( xx + zz );
-	mat[5] =     2 * ( yz - xw );
-
-	mat[6] =     2 * ( xz - yw );
-	mat[7] =     2 * ( yz + xw );
-	mat[8] = 1 - 2 * ( xx + yy );
-}
-
-void omat3x3_get_scales(const float mat[9], float scales[3])
-{
-	for(int i = 0; i < 3; i++)
-		scales[i] = sqrtf(mat[3 * i] * mat[3 * i] + mat[3 * i + 1] * mat[ 3 * i + 1] + mat[ 3 * i + 2] * mat[ 3 * i + 2]);
-}
-
-void omat3x3_get_euler_angles(const float mat[9], vec3f* angles)
-{
-	float scales[3];
-	omat3x3_get_scales(mat, scales);
-
-	angles->x = RAD_TO_DEG(asinf(mat[5] / scales[1]));
-	if(mat[4] != 0.0f){
-		angles->y = RAD_TO_DEG(atan2f(-mat[2] / scales[0], mat[8] / scales[2]));
-		angles->z = RAD_TO_DEG(atan2f(-mat[3] / scales[1], mat[4] / scales[1]));
-	}else{
-		angles->y = 0.0f;
-		angles->z = RAD_TO_DEG(atan2f(mat[1] / scales[0], mat[0] / scales[0]));
-	}
-}
-
 void oquatf_get_mat4x4(const quatf* me, const vec3f* point, float mat[4][4])
 {
 	mat[0][0] = 1 - 2 * me->y * me->y - 2 * me->z * me->z;
