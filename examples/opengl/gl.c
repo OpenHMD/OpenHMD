@@ -70,8 +70,6 @@ void init_gl(gl_ctx* ctx, int w, int h)
 	glLoadIdentity();
 
 	glViewport(0, 0, ctx->screen->w, ctx->screen->h);
-
-	perspective(ctx);
 }
 
 void ortho(gl_ctx* ctx)
@@ -89,32 +87,6 @@ void ortho(gl_ctx* ctx)
 	glDisable(GL_DEPTH);
 
 	glDisable(GL_MULTISAMPLE);
-}
-
-void calculate_frustum(double fovy, double aspect, double znear, double zfar)
-{
-	float fh = tan(fovy / 360 * M_PI) * znear;
-	float fw = fh * aspect;
-	glFrustum(-fw, fw, -fh, fh, znear, zfar);
-}
-
-void perspective(gl_ctx* ctx)
-{
-	glViewport(0, 0, ctx->screen->w, ctx->screen->h);
-	
-	glMatrixMode(GL_PROJECTION);
-
-	glLoadIdentity();
-	calculate_frustum(90, ctx->screen->w / ctx->screen->h, .1, 5000);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glEnable(GL_DEPTH);
-	glEnable(GL_MULTISAMPLE_ARB);
-
-	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void draw_cube()
