@@ -13,17 +13,19 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
   * OS X
 
 ## Requirements
+  * GNU Autotools (if you're building from the git repository)
   * HIDAPI
     * http://www.signal11.us/oss/hidapi/
     * https://github.com/signal11/hidapi/
-
+  
 ## Other FOSS HMD Drivers
   * libvr - http://hg.sitedethib.com/libvr
 
 ## Compiling and Installing
-./configure [--enable-openglexample]
-make
-sudo make install
+    ./autogen.sh # (if you're building from the git repository)
+    ./configure [--enable-openglexample]
+    make
+    sudo make install
 
 ### Configuring udev on Linux
 To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).
