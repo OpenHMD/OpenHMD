@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 library_includedir=$(includedir)/openhmd
 library_include_HEADERS = $(top_srcdir)/include/openhmd.h
 
