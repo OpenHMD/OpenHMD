@@ -39,9 +39,9 @@ After this you have to unplug your Rift and plug it back in. You should now be a
 
 
 ### Cross compiling for windows using mingw
-export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
-PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
-make
+    export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
+    PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
+    make
 the library will end up in the .lib directory, you can use microsoft's lib.exe to make a .lib file for it
 
 ### Static linking on windows
