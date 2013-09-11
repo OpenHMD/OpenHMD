@@ -8,8 +8,8 @@ m4_define([OH_NAME], [openhmd])
 
 AC_PREREQ([2.13])
 AC_INIT([OH_NAME], [OH_VERSION_STRING], [noname@nurd.se])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
-AM_PROG_AR
+AM_INIT_AUTOMAKE([foreign -Wall])
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_INIT
 AC_CANONICAL_HOST
 

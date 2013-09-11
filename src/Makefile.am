@@ -14,4 +14,4 @@ libopenhmd_la_SOURCES = \
 	fusion.c
 
 libopenhmd_la_LDFLAGS = $(hidapi_LIBS) -no-undefined -version-info 0:0:0 $(EXTRA_LD_FLAGS)
-libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include $(hidapi_CFLAGS) -Wall -Werror
+libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include $(hidapi_CFLAGS) -Wall 
