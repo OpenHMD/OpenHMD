@@ -21,7 +21,7 @@
 
 char* read_file(const char* filename)
 {
-	FILE* f = fopen(filename, "r");
+	FILE* f = fopen(filename, "rb");
 	fseek(f, 0, SEEK_END);
 	long len = ftell(f);
 	fseek(f, 0, SEEK_SET);
