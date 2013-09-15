@@ -1,0 +1,6 @@
+PROJECT_NAME           = "OpenHMD"
+OPTIMIZE_OUTPUT_FOR_C  = YES
+INPUT                  = include/
+STRIP_CODE_COMMENTS    = NO
+ALPHABETICAL_INDEX     = NO
+IGNORE_PREFIX          = ohmd_ OHMD_
