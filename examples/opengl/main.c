@@ -29,7 +29,8 @@ char* read_file(const char* filename)
 	char* buffer = calloc(1, len + 1);
 	assert(buffer);
 
-	assert( fread(buffer, len, 1, f) ); 
+	size_t ret = fread(buffer, len, 1, f);
+	assert(ret);
 
 	fclose(f);
 
