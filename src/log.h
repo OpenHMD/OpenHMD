@@ -30,6 +30,10 @@ void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size);
 #define LOGW(...) LOG(3, "WW", __VA_ARGS__)
 #define LOGE(...) LOG(4, "EE", __VA_ARGS__)
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 #define ohmd_set_error(_ctx, ...) { snprintf((_ctx)->error_msg, OHMD_STR_SIZE, __VA_ARGS__); LOGE(__VA_ARGS__); }
 
 #endif

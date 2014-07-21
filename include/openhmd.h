@@ -18,16 +18,20 @@ extern "C" {
 
 #ifdef _WIN32
 #ifdef DLL_EXPORT
-#define OHMD_APIENTRY __cdecl __declspec( dllexport )
+#define OHMD_APIENTRY __cdecl 
+#define OHMD_APIENTRYDLL __declspec( dllexport )
 #else
 #ifdef OHMD_STATIC
 #define OHMD_APIENTRY __cdecl
+#define OHMD_APIENTRYDLL
 #else
-#define OHMD_APIENTRY __cdecl __declspec( dllimport )
+#define OHMD_APIENTRY __cdecl
+#define OHMD_APIENTRYDLL __declspec( dllimport )
 #endif
 #endif
 #else
 #define OHMD_APIENTRY
+#define OHMD_APIENTRYDLL
 #endif
 
 /** Maximum length of a string, including termination, in OpenHMD. */
@@ -121,7 +125,7 @@ typedef struct ohmd_device ohmd_device;
  *
  * @return a pointer to an allocated ohmd_context on success or NULL if it fails
  */
-OHMD_APIENTRY ohmd_context* ohmd_ctx_create();
+OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
 
 /**
  * Destroy an OpenHMD context. 
@@ -130,7 +134,7 @@ OHMD_APIENTRY ohmd_context* ohmd_ctx_create();
  *  
  * @param ctx The context to destroy.
  */
-OHMD_APIENTRY void ohmd_ctx_destroy(ohmd_context* ctx);
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx);
 
 /**
  * Get the last error as a human readable string. 
@@ -141,7 +145,7 @@ OHMD_APIENTRY void ohmd_ctx_destroy(ohmd_context* ctx);
  * @param ctx The context to retreive the error message from.
  * @return a pointer to the error message
  */
-OHMD_APIENTRY const char* ohmd_ctx_get_error(ohmd_context* ctx);
+OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx);
 
 /**
  * Update a context.
@@ -154,7 +158,7 @@ OHMD_APIENTRY const char* ohmd_ctx_get_error(ohmd_context* ctx);
  * 
  * @param ctx The context that needs updating.
  */
-OHMD_APIENTRY void ohmd_ctx_update(ohmd_context* ctx);
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
 
 /**
  * Probe for devices.
@@ -164,7 +168,7 @@ OHMD_APIENTRY void ohmd_ctx_update(ohmd_context* ctx);
  * @param ctx A context with no currently open devices.
  * @return number of devices found on the system
  */
-OHMD_APIENTRY int ohmd_ctx_probe(ohmd_context* ctx);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
 
 /**
  * Get device description from enumeration list index.
@@ -181,7 +185,7 @@ OHMD_APIENTRY int ohmd_ctx_probe(ohmd_context* ctx);
  * @param type The type of data to fetch. One of OHMD_VENDOR, OHMD_PRODUCT and OHMD_PATH.
  * @return a string with a human readable device name
  */
-OHMD_APIENTRY const char* ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type);
+OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type);
 
 /**
  * Open a device.
@@ -195,7 +199,7 @@ OHMD_APIENTRY const char* ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
  * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
  * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
  */
-OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index);
+OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index);
 
 /**
  * Get a floating point value from a device.
@@ -206,7 +210,7 @@ OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index);
  * @param[out] out A pointer to a float, or float array where the retreived value should be written.
  * @return 0 on success, <0 on failure.
  */
-OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out);
 
 /**
  * Set a floating point value for a device.
@@ -216,7 +220,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
  * @param in A pointer to a float, or float array where the new value is stored.
  * @return 0 on success, <0 on failure.
  */
-OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in);
 
 /**
  * Get an integer value from a device. 
@@ -226,7 +230,7 @@ OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
  * @param[out] out A pointer to an integer, or integer array where the retreived value should be written.
  * @return 0 on success, <0 on failure.
  */
-OHMD_APIENTRY int ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out);
 
 #ifdef __cplusplus
 }
