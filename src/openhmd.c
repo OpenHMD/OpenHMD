@@ -10,8 +10,10 @@
 #include "openhmdi.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-OHMD_APIENTRY ohmd_context* ohmd_ctx_create()
+
+ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
 {
 	ohmd_context* ctx = calloc(1, sizeof(ohmd_context));
 	if(!ctx){
@@ -27,7 +29,7 @@ OHMD_APIENTRY ohmd_context* ohmd_ctx_create()
 	return ctx;
 }
 
-OHMD_APIENTRY void ohmd_ctx_destroy(ohmd_context* ctx)
+void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 {
 	for(int i = 0; i < ctx->num_active_devices; i++){
 		ctx->active_devices[i]->close(ctx->active_devices[i]);
@@ -40,18 +42,18 @@ OHMD_APIENTRY void ohmd_ctx_destroy(ohmd_context* ctx)
 	free(ctx);
 }
 
-OHMD_APIENTRY void ohmd_ctx_update(ohmd_context* ctx)
+void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
 {
 	for(int i = 0; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->update(ctx->active_devices[i]);
 }
 
-OHMD_APIENTRY const char* ohmd_ctx_get_error(ohmd_context* ctx)
+const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx)
 {
 	return ctx->error_msg;
 }
 
-OHMD_APIENTRY int ohmd_ctx_probe(ohmd_context* ctx)
+int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 {
 	memset(&ctx->list, 0, sizeof(ohmd_device_list));
 	for(int i = 0; i < ctx->num_drivers; i++){
@@ -61,7 +63,7 @@ OHMD_APIENTRY int ohmd_ctx_probe(ohmd_context* ctx)
 	return ctx->list.num_devices;
 }
 
-OHMD_APIENTRY const char* ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
+const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
 {
 	if(index >= ctx->list.num_devices)
 		return NULL;
@@ -78,7 +80,7 @@ OHMD_APIENTRY const char* ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 	}
 }
 
-OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index)
+ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 {
 	if(index >= 0 && index < ctx->list.num_devices){
 
@@ -97,7 +99,7 @@ OHMD_APIENTRY ohmd_device* ohmd_list_open_device(ohmd_context* ctx, int index)
 	return NULL;
 }
 
-OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
+int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
 	switch(type){
 	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
@@ -167,7 +169,7 @@ OHMD_APIENTRY int ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 	}
 }
 
-OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in)
+int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in)
 {
 	switch(type){
 	case OHMD_EYE_IPD:
@@ -184,7 +186,7 @@ OHMD_APIENTRY int ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 	}
 }
 
-OHMD_APIENTRY int ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
+int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
 {
 	switch(type){
 	case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
