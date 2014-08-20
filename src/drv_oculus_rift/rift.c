@@ -277,32 +277,42 @@ cleanup:
 	return NULL;
 }
 
+#define OCULUS_VR_INC_ID 0x2833
+
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
 	// enumerate HID devices and add any Rifts found to the device list
-#define OCULUS_VR_INC_ID 0x2833
-#define RIFT_DEVKIT_ID 0x0001
 
-	struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, RIFT_DEVKIT_ID);
-	struct hid_device_info* cur_dev = devs;
+	int ids[] = {
+		0x0001 /* DK1 */, 
+		0x0021 /* DK2 */
+	};
 
-	if(devs == NULL)
-		return;
+	for(int i = 0; i < 2; i++){
+		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, ids[i]);
+		struct hid_device_info* cur_dev = devs;
 
-	while (cur_dev) {
-		ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		if(devs == NULL)
+			continue;
 
-		strcpy(desc->driver, "OpenHMD Rift Driver");
-		strcpy(desc->vendor, "Oculus VR, Inc.");
-		strcpy(desc->product, "Rift (Devkit)");
+		while (cur_dev) {
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-		strcpy(desc->path, cur_dev->path);
+			strcpy(desc->driver, "OpenHMD Rift Driver");
+			strcpy(desc->vendor, "Oculus VR, Inc.");
+			strcpy(desc->product, "Rift (Devkit)");
+			
+			desc->revision = i;
 
-		desc->driver_ptr = driver;
+			strcpy(desc->path, cur_dev->path);
 
-		cur_dev = cur_dev->next;
+			desc->driver_ptr = driver;
+
+			cur_dev = cur_dev->next;
+		}
+
+		hid_free_enumeration(devs);
 	}
-	hid_free_enumeration(devs);
 }
 
 static void destroy_driver(ohmd_driver* drv)
