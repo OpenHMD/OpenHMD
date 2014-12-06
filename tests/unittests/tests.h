@@ -37,4 +37,8 @@ void test_oquatf_get_length();
 
 void test_oquatf_get_mat4x4();
 
+// high-level tests
+void test_highlevel_open_close_device();
+void test_highlevel_open_close_many_devices();
+
 #endif

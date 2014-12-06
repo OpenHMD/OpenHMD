@@ -77,6 +77,7 @@ struct ohmd_device {
 	void (*close)(ohmd_device* device);
 
 	ohmd_context* ctx;
+	int active_device_idx; // index into ohmd_device->active_devices[]
 };
 
 struct ohmd_context {

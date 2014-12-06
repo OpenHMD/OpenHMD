@@ -131,6 +131,7 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
  * Destroy an OpenHMD context. 
  *
  * ohmd_ctx_destroy de-initializes and de-allocates an OpenHMD context allocated with ohmd_ctx_create.
+ * All devices associated with the context are automatically closed.
  *  
  * @param ctx The context to destroy.
  */
@@ -200,6 +201,17 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int
  * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
  */
 OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index);
+
+/**
+ * Close a device.
+ *
+ * Closes a device opened by ohmd_list_open_device. Note that ohmd_ctx_destroy automatically closes any open devices
+ * assoiciated with the context being destroyed.
+ *
+ * @param The open device.
+ * @return 0 on success, <0 on failure.
+ */
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device);
 
 /**
  * Get a floating point value from a device.

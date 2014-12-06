@@ -91,12 +91,32 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 		if (device == NULL)
 			return NULL;
 
+		device->ctx = ctx;
+		device->active_device_idx = ctx->num_active_devices;
 		ctx->active_devices[ctx->num_active_devices++] = device;
 		return device;
 	}
 
 	ohmd_set_error(ctx, "no device with index: %d", index);
 	return NULL;
+}
+
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
+{
+	ohmd_context* ctx = device->ctx;
+	int idx = device->active_device_idx;
+
+	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1, 
+		sizeof(ohmd_device*) * (ctx->num_active_devices - idx - 1));
+	
+	device->close(device);
+	
+	ctx->num_active_devices--;
+
+	for(int i = idx; i < ctx->num_active_devices; i++)
+		ctx->active_devices[i]->active_device_idx--;
+
+	return 0;
 }
 
 int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)

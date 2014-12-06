@@ -30,6 +30,11 @@ int main()
 	Test(test_oquatf_get_rotated);
 	printf("\n");
 
+	printf("high level tests\n");
+	Test(test_highlevel_open_close_device);
+	Test(test_highlevel_open_close_many_devices);
+	printf("\n");
+
 	printf("all a-ok\n");
 	return 0;
 }
