@@ -34,6 +34,9 @@ void test_oquatf_mult();
 void test_oquatf_mult_me();
 void test_oquatf_normalize();
 void test_oquatf_get_length();
+void test_oquatf_get_dot();
+void test_oquatf_inverse();
+void test_oquatf_diff();
 
 void test_oquatf_get_mat4x4();
 

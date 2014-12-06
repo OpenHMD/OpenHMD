@@ -98,6 +98,30 @@ float oquatf_get_length(const quatf* me)
 	return sqrtf(me->x * me->x + me->y * me->y + me->z * me->z + me->w * me->w);
 }
 
+float oquatf_get_dot(const quatf* me, const quatf* q)
+{
+	return me->x * q->x + me->y * q->y + me->z * q->z + me->w * q->w;
+}
+
+void oquatf_inverse(quatf* me)
+{
+	float dot = oquatf_get_dot(me, me);
+
+	// conjugate
+	for(int i = 0; i < 3; i++)
+		me->arr[i] = -me->arr[i];
+	
+	for(int i = 0; i < 4; i++)
+		me->arr[i] /= dot;
+}
+
+void oquatf_diff(const quatf* me, const quatf* q, quatf* out_q)
+{
+	quatf inv = *me;
+	oquatf_inverse(&inv);
+	oquatf_mult(&inv, q, out_q);
+}
+
 void oquatf_get_mat4x4(const quatf* me, const vec3f* point, float mat[4][4])
 {
 	mat[0][0] = 1 - 2 * me->y * me->y - 2 * me->z * me->z;
