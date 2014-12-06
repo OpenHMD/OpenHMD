@@ -208,7 +208,7 @@ OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* 
  * Closes a device opened by ohmd_list_open_device. Note that ohmd_ctx_destroy automatically closes any open devices
  * assoiciated with the context being destroyed.
  *
- * @param The open device.
+ * @param device The open device.
  * @return 0 on success, <0 on failure.
  */
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device);
