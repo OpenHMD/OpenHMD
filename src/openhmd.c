@@ -204,6 +204,18 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 		*(quatf*)out = tmp;
 		return 0;
 	}
+	case OHMD_POSITION_VECTOR:
+	{
+		int ret = device->getf(device, OHMD_POSITION_VECTOR, out);
+
+		if(ret != 0)
+			return ret;
+
+		for(int i = 0; i < 3; i++)
+			out[i] += device->position_correction.arr[i];
+
+		return 0;
+	}
 		
 	default:
 		return device->getf(device, type, out);
@@ -233,6 +245,21 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 			}
 
 			oquatf_diff(&q, (quatf*)in, &device->rotation_correction);
+			return 0;
+		}
+	case OHMD_POSITION_VECTOR:
+		{
+			// adjust position correction
+			vec3f v;
+			int ret = device->getf(device, OHMD_POSITION_VECTOR, (float*)&v);
+
+			if(ret != 0){
+				return ret;
+			}
+
+			for(int i = 0; i < 3; i++)
+				device->position_correction.arr[i] = in[i] - v.arr[i];
+
 			return 0;
 		}
 	default:
