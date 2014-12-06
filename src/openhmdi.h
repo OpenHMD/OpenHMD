@@ -72,6 +72,9 @@ typedef struct {
 struct ohmd_device {
 	ohmd_device_properties properties;
 
+	quatf rotation_correction;
+	vec3f position_correction;
+
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
 	void (*update)(ohmd_device* device);
 	void (*close)(ohmd_device* device);
