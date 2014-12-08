@@ -88,6 +88,8 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 		ohmd_driver* driver = (ohmd_driver*)desc->driver_ptr;
 		ohmd_device* device = driver->open_device(driver, desc);
 
+		device->rotation_correction.w = 1;
+
 		if (device == NULL)
 			return NULL;
 
@@ -126,6 +128,9 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 			vec3f point = {{0, 0, 0}};
 			quatf rot;
 			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
+			quatf tmp = device->rotation_correction;
+			oquatf_mult_me(&tmp, &rot);
+			rot = tmp;
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
 			omat4x4f_init_translate(&world_shift, +(device->properties.ipd / 2.0f), 0, 0);
@@ -137,6 +142,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 			vec3f point = {{0, 0, 0}};
 			quatf rot;
 			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
+			oquatf_mult_me(&rot, &device->rotation_correction);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
 			omat4x4f_init_translate(&world_shift, -(device->properties.ipd / 2.0f), 0, 0);
@@ -184,6 +190,33 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 	case OHMD_PROJECTION_ZNEAR:
 		*out = device->properties.znear;
 		return 0;
+
+	case OHMD_ROTATION_QUAT:
+	{
+		int ret = device->getf(device, OHMD_ROTATION_QUAT, out);
+
+		if(ret != 0)
+			return ret;
+
+		oquatf_mult_me((quatf*)out, &device->rotation_correction);
+		quatf tmp = device->rotation_correction;
+		oquatf_mult_me(&tmp, (quatf*)out);
+		*(quatf*)out = tmp;
+		return 0;
+	}
+	case OHMD_POSITION_VECTOR:
+	{
+		int ret = device->getf(device, OHMD_POSITION_VECTOR, out);
+
+		if(ret != 0)
+			return ret;
+
+		for(int i = 0; i < 3; i++)
+			out[i] += device->position_correction.arr[i];
+
+		return 0;
+	}
+		
 	default:
 		return device->getf(device, type, out);
 	}
@@ -201,6 +234,34 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 	case OHMD_PROJECTION_ZNEAR:
 		device->properties.znear = *in;
 		return 0;
+	case OHMD_ROTATION_QUAT:
+		{
+			// adjust rotation correction
+			quatf q;
+			int ret = device->getf(device, OHMD_ROTATION_QUAT, (float*)&q);
+
+			if(ret != 0){
+				return ret;
+			}
+
+			oquatf_diff(&q, (quatf*)in, &device->rotation_correction);
+			return 0;
+		}
+	case OHMD_POSITION_VECTOR:
+		{
+			// adjust position correction
+			vec3f v;
+			int ret = device->getf(device, OHMD_POSITION_VECTOR, (float*)&v);
+
+			if(ret != 0){
+				return ret;
+			}
+
+			for(int i = 0; i < 3; i++)
+				device->position_correction.arr[i] = in[i] - v.arr[i];
+
+			return 0;
+		}
 	default:
 		return -1;
 	}

@@ -94,3 +94,61 @@ void test_oquatf_get_length()
 void test_oquatf_get_mat4x4()
 {
 }
+
+typedef struct {
+	quatf q1, q2;
+	float f;
+} quat2_float;
+
+void test_oquatf_get_dot()
+{
+	// TODO add more test cases
+	quat2_float list[] = {
+		{ {{1, 2, 3, 1}}, {{4, 3, 2, .5}}, 16.5 },
+	};
+
+	int sz = sizeof(quat2_float);
+
+	for(int i = 0; i < sizeof(list) / sz; i++){
+		TAssert(float_eq(oquatf_get_dot(&list[i].q1, &list[i].q2), list[i].f, t));
+	}
+}
+
+typedef struct {
+	quatf q1, q2;
+} quat2;
+
+void test_oquatf_inverse()
+{
+	// TODO add more test cases
+	quat2 list[] = {
+		{ {{1, 2, 3, 1}}, {{-0.06666666666666667, -0.13333333333333333, -0.2, 0.06666666666666667}} },
+	};
+
+	int sz = sizeof(quat2);
+
+	for(int i = 0; i < sizeof(list) / sz; i++){
+		oquatf_inverse(&list[i].q1);
+		TAssert(quatf_eq(list[i].q1, list[i].q2, t));
+	}
+}
+
+typedef struct {
+	quatf q1, q2, q3;
+} quat3;
+
+void test_oquatf_diff()
+{
+	// TODO add more test cases
+	quat3 list[] = {
+		{ {{1, 2, 3, 1}}, {{5, 3, 2, .1}}, {{0.660000, -0.680000, 0.580000, 1.140000}} },
+	};
+
+	int sz = sizeof(quat3);
+
+	for(int i = 0; i < sizeof(list) / sz; i++){
+		quatf q;
+		oquatf_diff(&list[i].q1, &list[i].q2, &q);
+		TAssert(quatf_eq(q, list[i].q3, t));
+	}
+}
