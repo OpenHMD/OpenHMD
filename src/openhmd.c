@@ -118,7 +118,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 	for(int i = idx; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->active_device_idx--;
 
-	return 0;
+	return OHMD_S_OK;
 }
 
 int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -136,7 +136,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 			omat4x4f_init_translate(&world_shift, +(device->properties.ipd / 2.0f), 0, 0);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
-			return 0;
+			return OHMD_S_OK;
 		}
 	case OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
@@ -148,48 +148,48 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 			omat4x4f_init_translate(&world_shift, -(device->properties.ipd / 2.0f), 0, 0);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
-			return 0;
+			return OHMD_S_OK;
 		}
 	case OHMD_LEFT_EYE_GL_PROJECTION_MATRIX:
 		omat4x4f_transpose(&device->properties.proj_left, (mat4x4f*)out);
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX:
 		omat4x4f_transpose(&device->properties.proj_right, (mat4x4f*)out);
-		return 0;
+		return OHMD_S_OK;
 
 	case OHMD_SCREEN_HORIZONTAL_SIZE:
 		*out = device->properties.hsize;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_SCREEN_VERTICAL_SIZE:
 		*out = device->properties.vsize;
-		return 0;
+		return OHMD_S_OK;
 
 	case OHMD_LENS_HORIZONTAL_SEPARATION:
 		*out = device->properties.lens_sep;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_LENS_VERTICAL_POSITION:
 		*out = device->properties.lens_vpos;
-		return 0;
+		return OHMD_S_OK;
 
 	case OHMD_RIGHT_EYE_FOV:
 	case OHMD_LEFT_EYE_FOV:
 		*out = device->properties.fov;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_RIGHT_EYE_ASPECT_RATIO:
 	case OHMD_LEFT_EYE_ASPECT_RATIO:
 		*out = device->properties.ratio;
-		return 0;
+		return OHMD_S_OK;
 
 	case OHMD_EYE_IPD:
 		*out = device->properties.ipd;
-		return 0;
+		return OHMD_S_OK;
 
 	case OHMD_PROJECTION_ZFAR:
 		*out = device->properties.zfar;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_PROJECTION_ZNEAR:
 		*out = device->properties.znear;
-		return 0;
+		return OHMD_S_OK;
 
 	case OHMD_ROTATION_QUAT:
 	{
@@ -202,7 +202,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 		quatf tmp = device->rotation_correction;
 		oquatf_mult_me(&tmp, (quatf*)out);
 		*(quatf*)out = tmp;
-		return 0;
+		return OHMD_S_OK;
 	}
 	case OHMD_POSITION_VECTOR:
 	{
@@ -214,7 +214,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 		for(int i = 0; i < 3; i++)
 			out[i] += device->position_correction.arr[i];
 
-		return 0;
+		return OHMD_S_OK;
 	}
 		
 	default:
@@ -227,13 +227,13 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 	switch(type){
 	case OHMD_EYE_IPD:
 		device->properties.ipd = *in;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_PROJECTION_ZFAR:
 		device->properties.zfar = *in;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_PROJECTION_ZNEAR:
 		device->properties.znear = *in;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_ROTATION_QUAT:
 		{
 			// adjust rotation correction
@@ -245,7 +245,7 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 			}
 
 			oquatf_diff(&q, (quatf*)in, &device->rotation_correction);
-			return 0;
+			return OHMD_S_OK;
 		}
 	case OHMD_POSITION_VECTOR:
 		{
@@ -260,10 +260,10 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 			for(int i = 0; i < 3; i++)
 				device->position_correction.arr[i] = in[i] - v.arr[i];
 
-			return 0;
+			return OHMD_S_OK;
 		}
 	default:
-		return -1;
+		return OHMD_S_INVALID_PARAMETER;
 	}
 }
 
@@ -272,12 +272,12 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 	switch(type){
 	case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
 		*out = device->properties.hres;
-		return 0;
+		return OHMD_S_OK;
 	case OHMD_SCREEN_VERTICAL_RESOLUTION:
 		*out = device->properties.vres;
-		return 0;
+		return OHMD_S_OK;
 	default:
-		return -1;
+		return OHMD_S_INVALID_PARAMETER;
 	}
 }
 
