@@ -37,6 +37,16 @@ extern "C" {
 /** Maximum length of a string, including termination, in OpenHMD. */
 #define OHMD_STR_SIZE 256
 
+/** Return status codes, used for all functions that can return an error. */
+typedef enum {
+	OHMD_S_OK = 0,
+	OHMD_S_UNKNOWN_ERROR = -1,
+	OHMD_S_INVALID_PARAMETER = -2,
+
+	/** OHMD_S_USER_RESERVED and below can be used for user purposes, such as errors within ohmd wrappers, etc. */
+	OHMD_S_USER_RESERVED = -16384,
+} ohmd_status;
+
 /** A collection of string value information types used for getting information with ohmd_list_gets(). */
 typedef enum {
 	OHMD_VENDOR    = 0,
