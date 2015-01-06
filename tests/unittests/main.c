@@ -7,6 +7,7 @@
 
 /* Unit Tests - Main */
 
+#include <string.h>
 #include "tests.h"
 
 bool float_eq(float a, float b, float t)
@@ -14,7 +15,7 @@ bool float_eq(float a, float b, float t)
 	return fabsf(a - b) < t;
 }
 
-#define Test(_t) printf("   "#_t); _t(); printf("           \tok\n");
+#define Test(_t) printf("   "#_t); _t(); printf("%*sok\n", 50 - (int)strlen(#_t), "");
 
 int main()
 {
@@ -28,6 +29,14 @@ int main()
 	printf("quatf tests\n");
 	Test(test_oquatf_init_axis);
 	Test(test_oquatf_get_rotated);
+	Test(test_oquatf_get_dot);
+	Test(test_oquatf_inverse);
+	Test(test_oquatf_diff);
+	printf("\n");
+
+	printf("high level tests\n");
+	Test(test_highlevel_open_close_device);
+	Test(test_highlevel_open_close_many_devices);
 	printf("\n");
 
 	printf("all a-ok\n");

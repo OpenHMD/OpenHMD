@@ -37,6 +37,16 @@ extern "C" {
 /** Maximum length of a string, including termination, in OpenHMD. */
 #define OHMD_STR_SIZE 256
 
+/** Return status codes, used for all functions that can return an error. */
+typedef enum {
+	OHMD_S_OK = 0,
+	OHMD_S_UNKNOWN_ERROR = -1,
+	OHMD_S_INVALID_PARAMETER = -2,
+
+	/** OHMD_S_USER_RESERVED and below can be used for user purposes, such as errors within ohmd wrappers, etc. */
+	OHMD_S_USER_RESERVED = -16384,
+} ohmd_status;
+
 /** A collection of string value information types used for getting information with ohmd_list_gets(). */
 typedef enum {
 	OHMD_VENDOR    = 0,
@@ -131,6 +141,7 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
  * Destroy an OpenHMD context. 
  *
  * ohmd_ctx_destroy de-initializes and de-allocates an OpenHMD context allocated with ohmd_ctx_create.
+ * All devices associated with the context are automatically closed.
  *  
  * @param ctx The context to destroy.
  */
@@ -200,6 +211,17 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int
  * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
  */
 OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index);
+
+/**
+ * Close a device.
+ *
+ * Closes a device opened by ohmd_list_open_device. Note that ohmd_ctx_destroy automatically closes any open devices
+ * assoiciated with the context being destroyed.
+ *
+ * @param device The open device.
+ * @return 0 on success, <0 on failure.
+ */
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device);
 
 /**
  * Get a floating point value from a device.

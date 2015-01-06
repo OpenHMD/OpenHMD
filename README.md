@@ -17,6 +17,12 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
   * HIDAPI
     * http://www.signal11.us/oss/hidapi/
     * https://github.com/signal11/hidapi/
+
+## Language Bindings
+  * Perl bindings by CandyAngel
+    * https://bitbucket.org/CandyAngel/perl-openhmd
+  * Python bindings by Lubosz Sarnecki
+    * https://github.com/lubosz/python-rift
   
 ## Other FOSS HMD Drivers
   * libvr - http://hg.sitedethib.com/libvr

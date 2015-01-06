@@ -34,7 +34,14 @@ void test_oquatf_mult();
 void test_oquatf_mult_me();
 void test_oquatf_normalize();
 void test_oquatf_get_length();
+void test_oquatf_get_dot();
+void test_oquatf_inverse();
+void test_oquatf_diff();
 
 void test_oquatf_get_mat4x4();
+
+// high-level tests
+void test_highlevel_open_close_device();
+void test_highlevel_open_close_many_devices();
 
 #endif
