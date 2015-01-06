@@ -133,6 +133,14 @@ int main(int argc, char** argv)
 				case SDLK_F1:
 					SDL_WM_ToggleFullScreen(gl.screen);
 					break;
+				case SDLK_F2:
+					{
+						// reset rotation and position
+						float zero[] = {0, 0, 0, 1};
+						ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
+						ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
+					}
+					break;
 				default:
 					break;
 				}
