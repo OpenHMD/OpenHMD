@@ -32,6 +32,10 @@ case "$host" in
 *-freebsd*)
 	AC_SUBST(PKG_CONFIG_EXTRA_PATH, "libdata/")
 	;;
+*-mingw*)
+	#link with winsocks2 
+	AC_SUBST(EXTRA_LD_FLAGS, "-lws2_32")
+	;;
 esac
 
 PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)
