@@ -1,5 +1,5 @@
 name='openhmd'
-version='0.0.1'
+version='0.1.1'
 library_interface_version='0:0:0'
 email='noname@nurd.se'
 
@@ -34,7 +34,19 @@ case "$host" in
 	;;
 esac
 
-PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)
+# Oculus Rift Driver
+AC_ARG_ENABLE([driver-oculus-rift],
+        [AS_HELP_STRING([--enable-driver-oculus-rift],
+                [enable building of Oculus Rift driver (default y)])],
+        [driver_oculus_rift_enabled=$enableval],
+        [driver_oculus_rift_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_OCULUS_RIFT], [test "x$driver_oculus_rift_enabled" != "xno"])
+
+# Libs required by Oculus Rift Driver
+if test "x$driver_oculus_rift_enabled" != "xno"; then
+	PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)
+fi
 
 # Do we build OpenGL example?
 AC_ARG_ENABLE([openglexample],

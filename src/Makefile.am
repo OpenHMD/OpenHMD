@@ -8,6 +8,7 @@ libopenhmd_la_SOURCES = \
 	platform-win32.c \
 	drv_oculus_rift/rift.c \
 	drv_oculus_rift/packet.c \
+	drv_android/android.c \
 	drv_dummy/dummy.c \
 	omath.c \
 	platform-posix.c \

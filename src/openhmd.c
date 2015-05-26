@@ -21,8 +21,12 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
 		return NULL;
 	}
 
+#if DRIVER_OCULUS_RIFT
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
-
+#endif
+#if DRIVER_ANDROID
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
+#endif
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
 
