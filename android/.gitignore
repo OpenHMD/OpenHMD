@@ -1,0 +1,5 @@
+bin/*
+libs/*
+local.properties
+obj/*
+proguard-project.txt
