@@ -20,8 +20,8 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
+#define ALOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
+#define ALOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
 struct engine {
     struct android_app* app;
@@ -191,7 +191,7 @@ void android_main(struct android_app* state) {
 								priv->raw_accel.x = event.acceleration.x;                    			
 								priv->raw_accel.y = event.acceleration.y;
                         		priv->raw_accel.z = event.acceleration.z;
-                        		LOGI("RAW accelerometer: x=%f y=%f z=%f", event.acceleration.x, event.acceleration.y, event.acceleration.z);
+                        		ALOGI("RAW accelerometer: x=%f y=%f z=%f", event.acceleration.x, event.acceleration.y, event.acceleration.z);
                     }
                 }
             }
