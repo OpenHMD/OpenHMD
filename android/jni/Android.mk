@@ -5,7 +5,7 @@ include $(CLEAR_VARS)
 OHMD_PATH := ../$(LOCAL_PATH)/../..
 
 TARGET_PLATFORM := 19
-LOCAL_MODULE    := AndroidTest
+LOCAL_MODULE    := NativeExample
 LOCAL_CFLAGS    := -std=c99 -Wall -I$(LOCAL_PATH)/../../src -I$(LOCAL_PATH)/../../include
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
