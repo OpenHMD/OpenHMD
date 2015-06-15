@@ -11,35 +11,10 @@
 #include <string.h>
 #include "../openhmdi.h"
 
-/* Android specific includes, should be available in the API */
-#include <jni.h>
-//#include <errno.h>
-//#include <math.h>
-
-#include <android/sensor.h>
-#include <android/log.h>
-#include <android_native_app_glue.h>
-
-#define ALOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
-#define ALOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
-
-struct engine {
-    struct android_app* app;
-
-    ASensorManager* sensorManager;
-    const ASensor* accelerometerSensor;
-    ASensorEventQueue* sensorEventQueue;
-	ALooper* looper;
-};
-/* end of android thingy's */
-
 typedef struct {
 	ohmd_device base;
-	vec3f raw_mag, raw_accel, raw_gyr;
-	struct engine droidengine;
+	fusion sensor_fusion;
 } android_priv;
-
-static android_priv* adpriv = 0;
 
 static void update_device(ohmd_device* device)
 {
@@ -50,26 +25,43 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	android_priv* priv = (android_priv*)device;
 
 	switch(type){
-	case OHMD_ROTATION_QUAT: 
-		out[0] = priv->raw_accel.x;
-		out[1] = priv->raw_accel.y;
-		out[2] = priv->raw_accel.z;
-		out[3] = 1.0f;
-		break;
+		case OHMD_ROTATION_QUAT: {
+				*(quatf*)out = priv->sensor_fusion.orient;
+				break;
+			}
 
-	case OHMD_POSITION_VECTOR:
-		out[0] = out[1] = out[2] = 0;
-		break;
+		case OHMD_POSITION_VECTOR:
+			out[0] = out[1] = out[2] = 0;
+			break;
 
-	case OHMD_DISTORTION_K:
-		// TODO this should be set to the equivalent of no distortion
-		memset(out, 0, sizeof(float) * 6);
-		break;
+		case OHMD_DISTORTION_K:
+			// TODO this should be set to the equivalent of no distortion
+			memset(out, 0, sizeof(float) * 6);
+			break;
 
-	default:
-		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%d)", type);
-		return -1;
-		break;
+		default:
+			ohmd_set_error(priv->base.ctx, "invalid type given to getf (%d)", type);
+			return -1;
+			break;
+	}
+
+	return 0;
+}
+
+static int setf(ohmd_device* device, ohmd_float_value type, float* in)
+{
+	android_priv* priv = (android_priv*)device;
+
+	switch(type){
+		case OHMD_EXTERNAL_SENSOR_FUSION: {
+				ofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 1), (vec3f*)(in + 4), (vec3f*)(in + 7));
+			}
+			break;
+
+		default:
+			ohmd_set_error(priv->base.ctx, "invalid type given to setf (%d)", type);
+			return -1;
+			break;
 	}
 
 	return 0;
@@ -86,19 +78,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	android_priv* priv = ohmd_alloc(driver->ctx, sizeof(android_priv));
 	if(!priv)
 		return NULL;
-	
-	//Set android specific variables
-	//struct engine engine;
-	    
-    //memset(&engine, 0, sizeof(engine));
-    memset(&priv->droidengine, 0, sizeof(priv->droidengine));
-
-	// Prepare to monitor accelerometer
-    priv->droidengine.sensorManager = ASensorManager_getInstance();
-    priv->droidengine.accelerometerSensor = ASensorManager_getDefaultSensor(priv->droidengine.sensorManager,
-            ASENSOR_TYPE_ACCELEROMETER);
-    priv->droidengine.sensorEventQueue = ASensorManager_createEventQueue(priv->droidengine.sensorManager,
-            priv->droidengine.looper, LOOPER_ID_USER, NULL, NULL);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
@@ -122,10 +101,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.update = update_device;
 	priv->base.close = close_device;
 	priv->base.getf = getf;
+	priv->base.setf = setf;
 	
-	//set global priv for sharing with android code
-	adpriv = priv;
-	
+	ofusion_init(&priv->sensor_fusion);
+
 	return (ohmd_device*)priv;
 }
 
@@ -161,39 +140,4 @@ ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx)
 	drv->destroy = destroy_driver;
 
 	return drv;
-}
-
-void android_main(struct android_app* state) {		
-		// Make sure glue isn't stripped.
-	    app_dummy();
-
-		android_priv* priv = adpriv;//(android_priv*)device;
-		
-		//local vars
-        int ident;
-        int events;
-        struct android_poll_source* source;
-		
-		//Poll android device for sensors
-		while ((ident=ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0) {
-
-            // Process this event.
-            if (source != NULL) {
-                source->process(state, source);
-            }
-
-            // If a sensor has data, process it now.
-            if (ident == LOOPER_ID_USER) {
-                if (priv->droidengine.accelerometerSensor != NULL) {
-                    ASensorEvent event;
-                    
-                    while (ASensorEventQueue_getEvents(priv->droidengine.sensorEventQueue, &event, 1) > 0) {
-								priv->raw_accel.x = event.acceleration.x;                    			
-								priv->raw_accel.y = event.acceleration.y;
-                        		priv->raw_accel.z = event.acceleration.z;
-                        		ALOGI("RAW accelerometer: x=%f y=%f z=%f", event.acceleration.x, event.acceleration.y, event.acceleration.z);
-                    }
-                }
-            }
-}
 }

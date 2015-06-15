@@ -76,6 +76,8 @@ struct ohmd_device {
 	vec3f position_correction;
 
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
+	int (*setf)(ohmd_device* device, ohmd_float_value type, float* in);
+
 	void (*update)(ohmd_device* device);
 	void (*close)(ohmd_device* device);
 
@@ -104,17 +106,9 @@ ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx);
 
-//Don't use log when compiling for android due to incompatibility with
-//Android native log functions
-#if DRIVER_ANDROID
-#include "platform.h"
-#include "omath.h"
-#include "fusion.h"
-#else
 #include "log.h"
 #include "platform.h"
 #include "omath.h"
 #include "fusion.h"
-#endif
 
 #endif
