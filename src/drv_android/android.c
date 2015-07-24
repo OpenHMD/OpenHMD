@@ -8,8 +8,7 @@
 
 /* Android Driver */
 
-#include <string.h>
-#include "../openhmdi.h"
+#include "android.h"
 
 typedef struct {
 	ohmd_device base;
@@ -102,7 +101,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.close = close_device;
 	priv->base.getf = getf;
 	priv->base.setf = setf;
-	
+
 	ofusion_init(&priv->sensor_fusion);
 
 	return (ohmd_device*)priv;
@@ -140,4 +139,32 @@ ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx)
 	drv->destroy = destroy_driver;
 
 	return drv;
+}
+
+/* Android specific functions */
+static void set_android_properties(ohmd_driver* driver, ohmd_device_properties* props)
+{
+    android_priv* priv = (android_priv*)device;
+
+	priv->base.properties.hsize = props->hsize;
+	priv->base.properties.vsize = props->vsize;
+	priv->base.properties.hres = props->hres;
+	priv->base.properties.vres = props->vres;
+	priv->base.properties.lens_sep = props->lens_sep;
+	priv->base.properties.lens_vpos = props->lens_vpos;
+	priv->base.properties.fov = DEG_TO_RAD(props->fov);
+	priv->base.properties.ratio = props->ratio;
+}
+
+static void set_android_profile(ohmd_driver* driver, android_hmd_profile profile)
+{
+    switch(profile){
+        case DROID_DUROVIS_OPEN_DIVE: break;
+        case DROID_DUROVIS_DIVE_5: break;
+        case DROID_DUROVIS_DIVE_7: break;
+        case DROID_CARL_ZEISS_VRONE: break;
+        case DROID_GOOGLE_CARDBOARD: break;
+        case DROID_NONE:
+        default: break;
+    }
 }
