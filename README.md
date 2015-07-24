@@ -6,14 +6,17 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 
 ## Supported Devices
   * Oculus Rift DK1 and DK2 (rotation only)
+  * Android based devices
 
 ## Supported Platforms
   * Linux
   * Windows
   * OS X
+  * Android
 
 ## Requirements
-  * GNU Autotools (if you're building from the git repository)
+  * Option 1: GNU Autotools (if you're building from the git repository)
+  * Option 2: CMake
   * HIDAPI
     * http://www.signal11.us/oss/hidapi/
     * https://github.com/signal11/hidapi/
@@ -28,10 +31,15 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
   * libvr - http://hg.sitedethib.com/libvr
 
 ## Compiling and Installing
+Using make
     ./autogen.sh # (if you're building from the git repository)
     ./configure [--enable-openglexample]
     make
     sudo make install
+
+Using CMake
+    CMake .
+    make
 
 ### Configuring udev on Linux
 To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).
