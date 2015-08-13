@@ -104,8 +104,10 @@ static int setf(ohmd_device* device, ohmd_float_value type, float* in)
 
 	switch(type){
 		case OHMD_EXTERNAL_SENSOR_FUSION: {
-				//ofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 1), (vec3f*)(in + 4), (vec3f*)(in + 7));
-				nofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 4));
+				if (priv->base.properties.accel_only == 1)
+					nofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 4));
+				else
+					ofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 1), (vec3f*)(in + 4), (vec3f*)(in + 7));
 			}
 			break;
 
@@ -116,6 +118,28 @@ static int setf(ohmd_device* device, ohmd_float_value type, float* in)
 	}
 
 	return 0;
+}
+
+static int seti(ohmd_device* device, ohmd_int_value type, int* in)
+{
+	android_priv* priv = (android_priv*)device;
+
+	switch(type){
+		case OHMD_ACCELERATION_ONLY_FALLBACK: {
+			priv->base.properties.accel_only = &in;
+			
+			if(priv->base.properties.accel_only = 1)
+				nofusion_init(&priv->sensor_fusion); //re-init with different smoothing
+		}
+		break;
+		
+		default:
+			ohmd_set_error(priv->base.ctx, "invalid type given to seti (%i)", type);
+			return -1;
+			break;
+		}
+		
+		return 0;		
 }
 
 static void close_device(ohmd_device* device)
@@ -153,8 +177,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.close = close_device;
 	priv->base.getf = getf;
 	priv->base.setf = setf;
+	priv->base.seti = seti;
 	
-	nofusion_init(&priv->sensor_fusion);
+	ofusion_init(&priv->sensor_fusion);
 
 	return (ohmd_device*)priv;
 }

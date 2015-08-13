@@ -125,6 +125,9 @@ typedef enum {
 	/** int[1], get
 	      Physical vertical resolution of the device screen. */
 	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
+	/** int[1], get
+		  Acceleration only fallback non-fusion (Android driver) */
+	OHMD_ACCELERATION_ONLY_FALLBACK		  =	 2,
 
 } ohmd_int_value;
 
@@ -257,6 +260,16 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_fl
  * @return 0 on success, <0 on failure.
  */
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out);
+
+/**
+ * Set an integer value from a device.
+ *
+ * @param device An open device to retreive the value from.
+ * @param type What type of value to retreive, ohmd_int_value section for more information.
+ * @param[out] out A pointer to an integer, or integer array where the retreived value should be written.
+ * @return 0 on success, <0 on failure.
+ */
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in);
 
 #ifdef __cplusplus
 }
