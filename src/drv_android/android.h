@@ -14,13 +14,13 @@
 #include "../openhmdi.h"
 
 typedef enum {
-    DROID_DUROVIS_OPEN_DIVE   = 1;
-    DROID_DUROVIS_DIVE_5      = 2;
-    DROID_DUROVIS_DIVE_7      = 3;
-    DROID_CARL_ZEISS_VRONE    = 4;
-    DROID_GOOGLE_CARDBOARD    = 5;
+    DROID_DUROVIS_OPEN_DIVE   = 1,
+    DROID_DUROVIS_DIVE_5      = 2,
+    DROID_DUROVIS_DIVE_7      = 3,
+    DROID_CARL_ZEISS_VRONE    = 4,
+    DROID_GOOGLE_CARDBOARD    = 5,
 
-    DROID_NONE                = 0;
+    DROID_NONE                = 0,
 } android_hmd_profile;
 
 #endif // ANDROID_H
