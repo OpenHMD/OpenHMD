@@ -32,13 +32,18 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 
 ## Compiling and Installing
 Using make
+
     ./autogen.sh # (if you're building from the git repository)
     ./configure [--enable-openglexample]
     make
     sudo make install
 
 Using CMake
-    CMake .
+With CMake, you can enable and disable drivers to compile OpenHMD with.
+
+Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT and OPENHMD_DRIVER_ANDROID
+
+    cmake -DOPENHMD_DRIVER_ANDROID=ON .
     make
 
 ### Configuring udev on Linux
