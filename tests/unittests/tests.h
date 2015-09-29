@@ -16,7 +16,7 @@
 
 #include "openhmdi.h"
 
-#define TAssert(_v) if((!_v)){ printf("\ntest failed: %s @ %s:%d\n", __func__, __FILE__, __LINE__); exit(1); }
+#define TAssert(_v) if(!(_v)){ printf("\ntest failed: %s @ %s:%d\n", __func__, __FILE__, __LINE__); exit(1); }
 
 bool float_eq(float a, float b, float t);
 bool vec3f_eq(vec3f v1, vec3f v2, float t);
