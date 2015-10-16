@@ -19,6 +19,8 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
     * https://github.com/signal11/hidapi/
 
 ## Language Bindings
+  * Java bindings by Joey Ferwerda and Koen Mertens
+    * https://github.com/OpenHMD/OpenHMD-Java
   * Perl bindings by CandyAngel
     * https://bitbucket.org/CandyAngel/perl-openhmd
   * Python bindings by Lubosz Sarnecki
