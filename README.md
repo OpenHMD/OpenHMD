@@ -6,11 +6,13 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 
 ## Supported Devices
   * Oculus Rift DK1 and DK2 (rotation only)
+  * External Sensor (passthrough for external sensors)
 
 ## Supported Platforms
   * Linux
   * Windows
   * OS X
+  * FreeBSD
 
 ## Requirements
   * GNU Autotools (if you're building from the git repository)
@@ -22,7 +24,7 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
   * Java bindings by Joey Ferwerda and Koen Mertens
     * https://github.com/OpenHMD/OpenHMD-Java
   * Perl bindings by CandyAngel
-    * https://bitbucket.org/CandyAngel/perl-openhmd
+    * https://github.com/CandyAngel/perl-openhmd
   * Python bindings by Lubosz Sarnecki
     * https://github.com/lubosz/python-rift
   
