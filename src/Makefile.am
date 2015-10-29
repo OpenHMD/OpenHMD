@@ -25,4 +25,10 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_EXTERNAL
+
+libopenhmd_la_SOURCES += \
+	drv_external/external.c
+endif
+
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)

@@ -122,6 +122,62 @@ void oquatf_diff(const quatf* me, const quatf* q, quatf* out_q)
 	oquatf_mult(&inv, q, out_q);
 }
 
+void oquatf_slerp (float fT, const quatf* rkP, const quatf* rkQ, bool shortestPath, quatf* out_q)
+{
+	float fCos =  oquatf_get_dot(rkP, rkQ);
+	quatf rkT;
+
+	// Do we need to invert rotation?
+	if (fCos < 0.0f && shortestPath)
+	{
+		fCos = -fCos;
+		rkT = *rkQ;
+		oquatf_inverse(&rkT);
+	}
+	else
+	{
+		rkT = *rkQ;
+	}
+
+	if (fabsf(fCos) < 1 - 0.001f)
+	{
+		// Standard case (slerp)
+		float fSin = sqrtf(1 - (fCos*fCos));
+		float fAngle = atan2f(fSin, fCos); 
+		float fInvSin = 1.0f / fSin;
+		float fCoeff0 = sin((1.0f - fT) * fAngle) * fInvSin;
+		float fCoeff1 = sin(fT * fAngle) * fInvSin;
+		
+		out_q->x = fCoeff0 * rkP->x + fCoeff1 * rkT.x;
+		out_q->y = fCoeff0 * rkP->y + fCoeff1 * rkT.y;
+		out_q->z = fCoeff0 * rkP->z + fCoeff1 * rkT.z;
+		out_q->w = fCoeff0 * rkP->w + fCoeff1 * rkT.w;
+			
+		//return fCoeff0 * rkP + fCoeff1 * rkT;
+	}
+	else
+	{
+		// There are two situations:
+		// 1. "rkP" and "rkQ" are very close (fCos ~= +1), so we can do a linear
+		//    interpolation safely.
+		// 2. "rkP" and "rkQ" are almost inverse of each other (fCos ~= -1), there
+		//    are an infinite number of possibilities interpolation. but we haven't
+		//    have method to fix this case, so just use linear interpolation here.
+		//Quaternion t = (1.0f - fT) * rkP + fT * rkT;
+		
+		out_q->x = (1.0f - fT) * rkP->x + fT * rkT.x;
+		out_q->y = (1.0f - fT) * rkP->y + fT * rkT.y;
+		out_q->z = (1.0f - fT) * rkP->z + fT * rkT.z;
+		out_q->w = (1.0f - fT) * rkP->w + fT * rkT.w;
+			
+		oquatf_normalize_me(out_q);
+		
+		// taking the complement requires renormalisation
+		//t.normalise();
+		//return t;
+	}
+}
+
 void oquatf_get_mat4x4(const quatf* me, const vec3f* point, float mat[4][4])
 {
 	mat[0][0] = 1 - 2 * me->y * me->y - 2 * me->z * me->z;

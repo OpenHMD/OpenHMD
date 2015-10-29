@@ -12,7 +12,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
 ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
 {
 	ohmd_context* ctx = calloc(1, sizeof(ohmd_context));
@@ -23,6 +22,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
 
 #if DRIVER_OCULUS_RIFT
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
+#endif
+
+#if DRIVER_EXTERNAL
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
 
 	// add dummy driver last to make it the lowest priority
@@ -263,6 +266,13 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, f
 				device->position_correction.arr[i] = in[i] - v.arr[i];
 
 			return OHMD_S_OK;
+		}
+	case OHMD_EXTERNAL_SENSOR_FUSION:
+		{
+			if(device->setf == NULL)
+				return OHMD_S_UNSUPPORTED;
+
+			return device->setf(device, type, in);
 		}
 	default:
 		return OHMD_S_INVALID_PARAMETER;

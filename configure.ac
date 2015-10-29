@@ -43,6 +43,15 @@ AC_ARG_ENABLE([driver-oculus-rift],
 
 AM_CONDITIONAL([BUILD_DRIVER_OCULUS_RIFT], [test "x$driver_oculus_rift_enabled" != "xno"])
 
+# External Driver
+AC_ARG_ENABLE([driver-external],
+        [AS_HELP_STRING([--enable-driver-external],
+                [enable building of External driver (default y)])],
+        [driver_external_enabled=$enableval],
+        [driver_external_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_EXTERNAL], [test "x$driver_external_enabled" != "xno"])
+
 # Libs required by Oculus Rift Driver
 if test "x$driver_oculus_rift_enabled" != "xno"; then
 	PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)

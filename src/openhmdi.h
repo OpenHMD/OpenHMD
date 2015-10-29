@@ -76,6 +76,8 @@ struct ohmd_device {
 	vec3f position_correction;
 
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
+	int (*setf)(ohmd_device* device, ohmd_float_value type, float* in);
+
 	void (*update)(ohmd_device* device);
 	void (*close)(ohmd_device* device);
 
@@ -102,6 +104,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx);
 
 #include "log.h"
 #include "platform.h"
