@@ -113,11 +113,11 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 	ohmd_context* ctx = device->ctx;
 	int idx = device->active_device_idx;
 
-	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1, 
+	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1,
 		sizeof(ohmd_device*) * (ctx->num_active_devices - idx - 1));
-	
+
 	device->close(device);
-	
+
 	ctx->num_active_devices--;
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
@@ -221,7 +221,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 
 		return OHMD_S_OK;
 	}
-		
+
 	default:
 		return device->getf(device, type, out);
 	}
@@ -307,6 +307,18 @@ int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int
 	default:
 		return OHMD_S_INVALID_PARAMETER;
 	}
+}
+
+int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in);
+{
+    switch(type){
+    case OHMD_DRIVER_DATA:{
+        return OHMD_S_OK;
+    }
+    break;
+    default:
+        return OHMD_S_INVALID_PARAMETER;
+    }
 }
 
 void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)

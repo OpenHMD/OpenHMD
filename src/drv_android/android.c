@@ -10,46 +10,106 @@
 
 #include "android.h"
 
+#ifdev __ANDROID__
+    #include <android/sensor.h>
+#endif // __ANDROID__
+
 typedef struct {
 	ohmd_device base;
 	fusion sensor_fusion;
+
+	//Android specific
+	#ifdev __ANDROID__
+    android_app* state;
+    ASensorManager* sensorManager;
+    const ASensor* accelerometerSensor;
+    const ASensor* gyroscopeSensor;
+    ASensorEventQueue* sensorEventQueue;
+	AAssetManager* assetMgr;
+    #endif
 } android_priv;
 
 static void update_device(ohmd_device* device)
 {
+    android_priv* priv = (android_priv*)device;
+    int ident, events;
+    struct android_poll_source* source;
+
+    while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
+    {
+        if (source != NULL)
+            source->process(state, source);
+
+		// If a sensor has data, process it now.
+		if (ident == LOOPER_ID_USER)
+		{
+			if (priv->accelerometerSensor != NULL)
+			{
+				ASensorEvent event;
+				vec3f gyro;
+				vec3f accel;
+				vec3f mag;
+				while (ASensorEventQueue_getEvents(priv->sensorEventQueue, &event, 1) > 0)
+				{
+
+					if (event.type == ASENSOR_TYPE_ACCELEROMETER)
+					{
+						accel[0] = event.acceleration.y;
+						accel[1] = -event.acceleration.x;
+						accel[2] = event.acceleration.z;
+
+						//LOGI("accelerometer: x=%f y=%f z=%f",accel[0],accel[1],accel[2]);
+					}
+					if (event.type == ASENSOR_TYPE_GYROSCOPE)
+					{
+						gyro[0] = -event.data[1];
+						gyro[1] = event.data[0];
+						gyro[2] = event.data[2];
+					}
+					//TODO: Implement mag when available
+					mag[0] = 0.0f;
+					mag[1] = 0.0f;
+					mag[2] = 0.0f;
+
+                    //apply data to the fusion
+                    ofusion_update(&priv->sensor_fusion, 100, gyro, accel, mag);
+				}
+			}
+		}
+    }
 }
 
 static void nofusion_update(fusion* me, float dt, const vec3f* accel)
-{	
+{
 	//avg raw accel data to smooth jitter, and normalise
 	ofq_add(&me->accel_fq, accel);
 	vec3f accel_mean;
 	ofq_get_mean(&me->accel_fq, &accel_mean);
 	vec3f acc_n = accel_mean;
 	ovec3f_normalize_me(&acc_n);
-	
-	
+
+
 	//reference vectors for axis-angle
-	vec3f xyzv[3] = { 
+	vec3f xyzv[3] = {
 		{1,0,0},
 		{0,1,0},
 		{0,0,1}
 	};
 	quatf roll, pitch;
-	
+
 	//pitch is rot around x, based on gravity in z and y axes
-	oquatf_init_axis(&pitch, xyzv+0, atan2f(-acc_n.z, -acc_n.y)); 
-	
+	oquatf_init_axis(&pitch, xyzv+0, atan2f(-acc_n.z, -acc_n.y));
+
 	//roll is rot around z, based on gravity in x and y axes
 	//note we need to invert the values when the device is upside down (y < 0) for proper results
-	oquatf_init_axis(&roll, xyzv+2, acc_n.y < 0 ? atan2f(-acc_n.x, -acc_n.y) : atan2f(acc_n.x, acc_n.y)); 
-	
-			
-	
+	oquatf_init_axis(&roll, xyzv+2, acc_n.y < 0 ? atan2f(-acc_n.x, -acc_n.y) : atan2f(acc_n.x, acc_n.y));
+
+
+
 	quatf or = {0,0,0,1};
 	//order of applying is yaw-pitch-roll
 	//yaw is not possible using only accel
-	oquatf_mult_me(&or, &pitch); 
+	oquatf_mult_me(&or, &pitch);
 	oquatf_mult_me(&or, &roll);
 
 	me->orient = or;
@@ -127,19 +187,38 @@ static int seti(ohmd_device* device, ohmd_int_value type, int* in)
 	switch(type){
 		case OHMD_ACCELERATION_ONLY_FALLBACK: {
 			priv->base.properties.accel_only = &in;
-			
+
 			if(priv->base.properties.accel_only = 1)
 				nofusion_init(&priv->sensor_fusion); //re-init with different smoothing
 		}
 		break;
-		
+
 		default:
 			ohmd_set_error(priv->base.ctx, "invalid type given to seti (%i)", type);
 			return -1;
 			break;
 		}
-		
-		return 0;		
+
+		return 0;
+}
+
+static int set_data(ohmd_device* device, ohmd_data_value type, void* in)
+{
+	android_priv* priv = (android_priv*)device;
+
+	switch(type){
+		case OHMD_DRIVER_DATA: {
+		    priv->state = (android_app*)in;
+		}
+		break;
+
+		default:
+			ohmd_set_error(priv->base.ctx, "invalid type given to set_data (%i)", type);
+			return -1;
+			break;
+		}
+
+		return 0;
 }
 
 static void close_device(ohmd_device* device)
@@ -178,7 +257,19 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.getf = getf;
 	priv->base.setf = setf;
 	priv->base.seti = seti;
-	
+	priv->base.set_data = set_data;
+
+    //init Android sensors
+    priv->accelerometerSensor = ASensorManager_getDefaultSensor(priv->sensorManager,
+            ASENSOR_TYPE_ACCELEROMETER);
+    priv->gyroscopeSensor = ASensorManager_getDefaultSensor(priv->sensorManager,
+            ASENSOR_TYPE_GYROSCOPE);
+    priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
+            anData->state->looper, LOOPER_ID_USER, NULL, NULL);
+
+    //if (!priv->gyroscopeSensor)
+        //set accel only
+
 	ofusion_init(&priv->sensor_fusion);
 
 	return (ohmd_device*)priv;
