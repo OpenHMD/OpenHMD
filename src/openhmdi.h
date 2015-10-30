@@ -80,7 +80,7 @@ struct ohmd_device {
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
 	int (*setf)(ohmd_device* device, ohmd_float_value type, float* in);
 
-	int (*seti)(ohmd_device* device, ohmd_int_value type, int in);
+	int (*seti)(ohmd_device* device, ohmd_int_value type, int* in);
 
 	int (*set_data)(ohmd_device* device, ohmd_data_value type, void* in);
 

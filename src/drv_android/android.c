@@ -10,7 +10,7 @@
 
 #include "android.h"
 
-#ifdev __ANDROID__
+#ifdef __ANDROID__
     #include <android/sensor.h>
 #endif // __ANDROID__
 
@@ -19,7 +19,7 @@ typedef struct {
 	fusion sensor_fusion;
 
 	//Android specific
-	#ifdev __ANDROID__
+	#ifdef __ANDROID__
     android_app* state;
     ASensorManager* sensorManager;
     const ASensor* accelerometerSensor;
@@ -38,7 +38,7 @@ static void update_device(ohmd_device* device)
     while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
     {
         if (source != NULL)
-            source->process(state, source);
+            source->process(priv->state, source);
 
 		// If a sensor has data, process it now.
 		if (ident == LOOPER_ID_USER)
@@ -54,25 +54,25 @@ static void update_device(ohmd_device* device)
 
 					if (event.type == ASENSOR_TYPE_ACCELEROMETER)
 					{
-						accel[0] = event.acceleration.y;
-						accel[1] = -event.acceleration.x;
-						accel[2] = event.acceleration.z;
+						accel.x = event.acceleration.y;
+						accel.y = -event.acceleration.x;
+						accel.z = event.acceleration.z;
 
 						//LOGI("accelerometer: x=%f y=%f z=%f",accel[0],accel[1],accel[2]);
 					}
 					if (event.type == ASENSOR_TYPE_GYROSCOPE)
 					{
-						gyro[0] = -event.data[1];
-						gyro[1] = event.data[0];
-						gyro[2] = event.data[2];
+						gyro.x = -event.data[1];
+						gyro.y = event.data[0];
+						gyro.z = event.data[2];
 					}
 					//TODO: Implement mag when available
-					mag[0] = 0.0f;
-					mag[1] = 0.0f;
-					mag[2] = 0.0f;
+					mag.x = 0.0f;
+					mag.y = 0.0f;
+					mag.z = 0.0f;
 
                     //apply data to the fusion
-                    ofusion_update(&priv->sensor_fusion, 100, gyro, accel, mag);
+                    ofusion_update(&priv->sensor_fusion, 100, &gyro, &accel, &mag);
 				}
 			}
 		}
@@ -186,7 +186,7 @@ static int seti(ohmd_device* device, ohmd_int_value type, int* in)
 
 	switch(type){
 		case OHMD_ACCELERATION_ONLY_FALLBACK: {
-			priv->base.properties.accel_only = &in;
+			priv->base.properties.accel_only = in[0];
 
 			if(priv->base.properties.accel_only = 1)
 				nofusion_init(&priv->sensor_fusion); //re-init with different smoothing
@@ -265,7 +265,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
     priv->gyroscopeSensor = ASensorManager_getDefaultSensor(priv->sensorManager,
             ASENSOR_TYPE_GYROSCOPE);
     priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
-            anData->state->looper, LOOPER_ID_USER, NULL, NULL);
+            priv->state->looper, LOOPER_ID_USER, NULL, NULL);
 
     //if (!priv->gyroscopeSensor)
         //set accel only

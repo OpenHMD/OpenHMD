@@ -300,7 +300,7 @@ int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int
 {
 	switch(type){
 	case OHMD_ACCELERATION_ONLY_FALLBACK: {
-		device->properties.accel_only = *in;
+		device->properties.accel_only = in[0];
 		return OHMD_S_OK;
 	}
 	break;
@@ -309,7 +309,7 @@ int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in);
+int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in)
 {
     switch(type){
     case OHMD_DRIVER_DATA:{
