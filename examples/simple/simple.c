@@ -73,6 +73,11 @@ int main(int argc, char** argv)
 	// Ask for n rotation quaternions
 	for(int i = 0; i < 10000; i++){
 		ohmd_ctx_update(ctx);
+
+		float zero[] = {.0, .1, .2, 1};
+		ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
+		ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
+
 		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
 		ohmd_sleep(.01);
 	}
