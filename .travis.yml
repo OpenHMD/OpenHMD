@@ -4,9 +4,9 @@ language: c
 compiler: gcc
 
 before_install:
-	- sudo apt-get update -qq
-	- sudo apt-get install -qq libhidapi-dev
-	- ./autogen.sh
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libhidapi-dev
+  - ./autogen.sh
 
 install: true # skip install step
 
