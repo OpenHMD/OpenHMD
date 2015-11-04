@@ -1,4 +1,8 @@
 # This is the project file for the automated build system travis (travis-ci.com).
+sudo: required
+
+dist: trusty
+
 language: c
 
 compiler: gcc
