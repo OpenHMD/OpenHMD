@@ -26,56 +26,82 @@ typedef struct {
     const ASensor* gyroscopeSensor;
     ASensorEventQueue* sensorEventQueue;
 	AAssetManager* assetMgr;
+	short firstRun;
     #endif
 } android_priv;
+
+static float timestamp;
+
+static int android_sensor_callback(int fd, int events, void* data)
+{
+    android_priv* priv = (android_priv*)data;
+
+    if (priv->accelerometerSensor != NULL)
+    {
+        ASensorEvent event;
+        vec3f gyro;
+        vec3f accel;
+        vec3f mag;
+        float lastevent_timestamp;
+        while (ASensorEventQueue_getEvents(priv->sensorEventQueue, &event, 1) > 0)
+        {
+            if (event.type == ASENSOR_TYPE_ACCELEROMETER)
+            {
+                accel.x = event.acceleration.y;
+                accel.y = -event.acceleration.x;
+                accel.z = event.acceleration.z;
+            }
+            if (event.type == ASENSOR_TYPE_GYROSCOPE)
+            {
+                gyro.x = -event.data[1];
+                gyro.y = event.data[0];
+                gyro.z = event.data[2];
+            }
+            ///TODO: Implement mag when available
+            mag.x = 0.0f;
+            mag.y = 0.0f;
+            mag.z = 0.0f;
+
+            lastevent_timestamp = event.timestamp;
+        }
+            //apply data to the fusion
+            float dT = 0.0f;
+            if (timestamp != 0)
+                dT= (lastevent_timestamp - timestamp) * (1.0f / 1000000000.0f);
+
+            ofusion_update(&priv->sensor_fusion, dT, &gyro, &accel, &mag);
+            timestamp = lastevent_timestamp;
+    }
+    return 1;
+}
 
 static void update_device(ohmd_device* device)
 {
     android_priv* priv = (android_priv*)device;
-    int ident, events;
-    struct android_poll_source* source;
 
-    while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
+    if(!priv->state)
+        return;
+
+    //We need this since during init the android_app state is not set yet
+    if (priv->firstRun == 1)
     {
-        if (source != NULL)
-            source->process(priv->state, source);
+        priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
+                                priv->state->looper, LOOPER_ID_USER, android_sensor_callback, (void*)priv);
 
-		// If a sensor has data, process it now.
-		if (ident == LOOPER_ID_USER)
-		{
-			if (priv->accelerometerSensor != NULL)
-			{
-				ASensorEvent event;
-				vec3f gyro;
-				vec3f accel;
-				vec3f mag;
-				while (ASensorEventQueue_getEvents(priv->sensorEventQueue, &event, 1) > 0)
-				{
-
-					if (event.type == ASENSOR_TYPE_ACCELEROMETER)
-					{
-						accel.x = event.acceleration.y;
-						accel.y = -event.acceleration.x;
-						accel.z = event.acceleration.z;
-
-						//LOGI("accelerometer: x=%f y=%f z=%f",accel[0],accel[1],accel[2]);
-					}
-					if (event.type == ASENSOR_TYPE_GYROSCOPE)
-					{
-						gyro.x = -event.data[1];
-						gyro.y = event.data[0];
-						gyro.z = event.data[2];
-					}
-					//TODO: Implement mag when available
-					mag.x = 0.0f;
-					mag.y = 0.0f;
-					mag.z = 0.0f;
-
-                    //apply data to the fusion
-                    ofusion_update(&priv->sensor_fusion, 100, &gyro, &accel, &mag);
-				}
-			}
-		}
+        // Start sensors in case this was not done already.
+        if (priv->accelerometerSensor != NULL)
+        {
+            ASensorEventQueue_enableSensor(priv->sensorEventQueue, priv->accelerometerSensor);
+            // We'd like to get 60 events per second (in us).
+            ASensorEventQueue_setEventRate(priv->sensorEventQueue, priv->accelerometerSensor, (1000L/60)*1000);
+        }
+        if (priv->gyroscopeSensor != NULL)
+        {
+            ASensorEventQueue_enableSensor(priv->sensorEventQueue, priv->gyroscopeSensor);
+            // We'd like to get 60 events per second (in us).
+            ASensorEventQueue_setEventRate(priv->sensorEventQueue, priv->gyroscopeSensor, (1000L/60)*1000);
+        }
+        priv->firstRun = 0;
     }
 }
 
@@ -260,13 +286,15 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.set_data = set_data;
 
     //init Android sensors
+    priv->sensorManager = ASensorManager_getInstance();
     priv->accelerometerSensor = ASensorManager_getDefaultSensor(priv->sensorManager,
             ASENSOR_TYPE_ACCELEROMETER);
     priv->gyroscopeSensor = ASensorManager_getDefaultSensor(priv->sensorManager,
             ASENSOR_TYPE_GYROSCOPE);
-    priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
-            priv->state->looper, LOOPER_ID_USER, NULL, NULL);
 
+    priv->firstRun = 1; //need this since ASensorManager_createEventQueue requires a set android_app
+
+    ///TODO: Use ASensorManager_getSensorList to set accel only fallback
     //if (!priv->gyroscopeSensor)
         //set accel only
 
