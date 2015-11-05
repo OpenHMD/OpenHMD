@@ -30,81 +30,6 @@ typedef struct {
     #endif
 } android_priv;
 
-static float timestamp;
-
-static int android_sensor_callback(int fd, int events, void* data)
-{
-    android_priv* priv = (android_priv*)data;
-
-    if (priv->accelerometerSensor != NULL)
-    {
-        ASensorEvent event;
-        vec3f gyro;
-        vec3f accel;
-        vec3f mag;
-        float lastevent_timestamp;
-        while (ASensorEventQueue_getEvents(priv->sensorEventQueue, &event, 1) > 0)
-        {
-            if (event.type == ASENSOR_TYPE_ACCELEROMETER)
-            {
-                accel.x = event.acceleration.y;
-                accel.y = -event.acceleration.x;
-                accel.z = event.acceleration.z;
-            }
-            if (event.type == ASENSOR_TYPE_GYROSCOPE)
-            {
-                gyro.x = -event.data[1];
-                gyro.y = event.data[0];
-                gyro.z = event.data[2];
-            }
-            ///TODO: Implement mag when available
-            mag.x = 0.0f;
-            mag.y = 0.0f;
-            mag.z = 0.0f;
-
-            lastevent_timestamp = event.timestamp;
-        }
-            //apply data to the fusion
-            float dT = 0.0f;
-            if (timestamp != 0)
-                dT= (lastevent_timestamp - timestamp) * (1.0f / 1000000000.0f);
-
-            ofusion_update(&priv->sensor_fusion, dT, &gyro, &accel, &mag);
-            timestamp = lastevent_timestamp;
-    }
-    return 1;
-}
-
-static void update_device(ohmd_device* device)
-{
-    android_priv* priv = (android_priv*)device;
-
-    if(!priv->state)
-        return;
-
-    //We need this since during init the android_app state is not set yet
-    if (priv->firstRun == 1)
-    {
-        priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
-                                priv->state->looper, LOOPER_ID_USER, android_sensor_callback, (void*)priv);
-
-        // Start sensors in case this was not done already.
-        if (priv->accelerometerSensor != NULL)
-        {
-            ASensorEventQueue_enableSensor(priv->sensorEventQueue, priv->accelerometerSensor);
-            // We'd like to get 60 events per second (in us).
-            ASensorEventQueue_setEventRate(priv->sensorEventQueue, priv->accelerometerSensor, (1000L/60)*1000);
-        }
-        if (priv->gyroscopeSensor != NULL)
-        {
-            ASensorEventQueue_enableSensor(priv->sensorEventQueue, priv->gyroscopeSensor);
-            // We'd like to get 60 events per second (in us).
-            ASensorEventQueue_setEventRate(priv->sensorEventQueue, priv->gyroscopeSensor, (1000L/60)*1000);
-        }
-        priv->firstRun = 0;
-    }
-}
-
 static void nofusion_update(fusion* me, float dt, const vec3f* accel)
 {
 	//avg raw accel data to smooth jitter, and normalise
@@ -142,7 +67,7 @@ static void nofusion_update(fusion* me, float dt, const vec3f* accel)
 }
 
 //shorter buffers for frame smoothing
-void nofusion_init(fusion* me)
+static void nofusion_init(fusion* me)
 {
 	memset(me, 0, sizeof(fusion));
 	me->orient.w = 1.0f;
@@ -155,6 +80,87 @@ void nofusion_init(fusion* me)
 	me->grav_gain = 0.05f;
 }
 
+//Static variable for timeDelta;
+static float timestamp;
+
+//Android callback for the sensor event queue
+static int android_sensor_callback(int fd, int events, void* data)
+{
+    android_priv* priv = (android_priv*)data;
+
+    if (priv->accelerometerSensor != NULL)
+    {
+        ASensorEvent event;
+        vec3f gyro;
+        vec3f accel;
+        vec3f mag;
+        float lastevent_timestamp;
+        while (ASensorEventQueue_getEvents(priv->sensorEventQueue, &event, 1) > 0)
+        {
+            if (event.type == ASENSOR_TYPE_ACCELEROMETER)
+            {
+                accel.x = event.acceleration.y;
+                accel.y = -event.acceleration.x;
+                accel.z = event.acceleration.z;
+            }
+            if (event.type == ASENSOR_TYPE_GYROSCOPE)
+            {
+                gyro.x = -event.data[1];
+                gyro.y = event.data[0];
+                gyro.z = event.data[2];
+            }
+            ///TODO: Implement mag when available
+            mag.x = 0.0f;
+            mag.y = 0.0f;
+            mag.z = 0.0f;
+
+            lastevent_timestamp = event.timestamp;
+        }
+            //apply data to the fusion
+            float dT = 0.0f;
+            if (timestamp != 0)
+                dT= (lastevent_timestamp - timestamp) * (1.0f / 1000000000.0f);
+
+            //Check if accelerometer only fallback is required
+            if (!priv->gyroscopeSensor)
+                nofusion_update(&priv->sensor_fusion, dT, &accel);
+            else
+                ofusion_update(&priv->sensor_fusion, dT, &gyro, &accel, &mag); //default
+
+            timestamp = lastevent_timestamp;
+    }
+    return 1;
+}
+
+static void update_device(ohmd_device* device)
+{
+    android_priv* priv = (android_priv*)device;
+
+    if(!priv->state)
+        return;
+
+    //We need this since during init the android_app state is not set yet
+    if (priv->firstRun == 1)
+    {
+        priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
+                                priv->state->looper, LOOPER_ID_USER, android_sensor_callback, (void*)priv);
+
+        // Start sensors in case this was not done already.
+        if (priv->accelerometerSensor != NULL)
+        {
+            ASensorEventQueue_enableSensor(priv->sensorEventQueue, priv->accelerometerSensor);
+            // We'd like to get 60 events per second (in us).
+            ASensorEventQueue_setEventRate(priv->sensorEventQueue, priv->accelerometerSensor, (1000L/60)*1000);
+        }
+        if (priv->gyroscopeSensor != NULL)
+        {
+            ASensorEventQueue_enableSensor(priv->sensorEventQueue, priv->gyroscopeSensor);
+            // We'd like to get 60 events per second (in us).
+            ASensorEventQueue_setEventRate(priv->sensorEventQueue, priv->gyroscopeSensor, (1000L/60)*1000);
+        }
+        priv->firstRun = 0;
+    }
+}
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
@@ -248,11 +254,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
     priv->firstRun = 1; //need this since ASensorManager_createEventQueue requires a set android_app*
 
-    ///TODO: Use ASensorManager_getSensorList to set accel only fallback
-    //if (!priv->gyroscopeSensor)
-        //set accel only
-
-	ofusion_init(&priv->sensor_fusion);
+    //Check if accelerometer only fallback is required
+    if (!priv->gyroscopeSensor)
+        nofusion_init(&priv->sensor_fusion);
+    else
+        ofusion_init(&priv->sensor_fusion); //Default when all sensors are available
 
 	return (ohmd_device*)priv;
 }
