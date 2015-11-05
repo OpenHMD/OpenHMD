@@ -184,50 +184,6 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	return 0;
 }
 
-static int setf(ohmd_device* device, ohmd_float_value type, float* in)
-{
-	android_priv* priv = (android_priv*)device;
-
-	switch(type){
-		case OHMD_EXTERNAL_SENSOR_FUSION: {
-				if (priv->base.properties.accel_only == 1)
-					nofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 4));
-				else
-					ofusion_update(&priv->sensor_fusion, *in, (vec3f*)(in + 1), (vec3f*)(in + 4), (vec3f*)(in + 7));
-			}
-			break;
-
-		default:
-			ohmd_set_error(priv->base.ctx, "invalid type given to setf (%d)", type);
-			return -1;
-			break;
-	}
-
-	return 0;
-}
-
-static int seti(ohmd_device* device, ohmd_int_value type, int* in)
-{
-	android_priv* priv = (android_priv*)device;
-
-	switch(type){
-		case OHMD_ACCELERATION_ONLY_FALLBACK: {
-			priv->base.properties.accel_only = in[0];
-
-			if(priv->base.properties.accel_only = 1)
-				nofusion_init(&priv->sensor_fusion); //re-init with different smoothing
-		}
-		break;
-
-		default:
-			ohmd_set_error(priv->base.ctx, "invalid type given to seti (%i)", type);
-			return -1;
-			break;
-		}
-
-		return 0;
-}
-
 static int set_data(ohmd_device* device, ohmd_data_value type, void* in)
 {
 	android_priv* priv = (android_priv*)device;
@@ -281,8 +237,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.update = update_device;
 	priv->base.close = close_device;
 	priv->base.getf = getf;
-	priv->base.setf = setf;
-	priv->base.seti = seti;
 	priv->base.set_data = set_data;
 
     //init Android sensors
@@ -292,7 +246,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
     priv->gyroscopeSensor = ASensorManager_getDefaultSensor(priv->sensorManager,
             ASENSOR_TYPE_GYROSCOPE);
 
-    priv->firstRun = 1; //need this since ASensorManager_createEventQueue requires a set android_app
+    priv->firstRun = 1; //need this since ASensorManager_createEventQueue requires a set android_app*
 
     ///TODO: Use ASensorManager_getSensorList to set accel only fallback
     //if (!priv->gyroscopeSensor)

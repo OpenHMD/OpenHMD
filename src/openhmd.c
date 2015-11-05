@@ -288,9 +288,6 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 	case OHMD_SCREEN_VERTICAL_RESOLUTION:
 		*out = device->properties.vres;
 		return OHMD_S_OK;
-	case OHMD_ACCELERATION_ONLY_FALLBACK:
-		*out = device->properties.accel_only;
-		return OHMD_S_OK;
 	default:
 		return OHMD_S_INVALID_PARAMETER;
 	}
@@ -299,11 +296,6 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in)
 {
 	switch(type){
-	case OHMD_ACCELERATION_ONLY_FALLBACK: {
-		device->properties.accel_only = in[0];
-		return OHMD_S_OK;
-	}
-	break;
 	default:
 		return OHMD_S_INVALID_PARAMETER;
 	}
