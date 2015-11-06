@@ -23,7 +23,7 @@ void ofusion_init(fusion* me)
 	me->grav_gain = 0.05f;
 }
 
-void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* accel, const vec3f* mag, const float prox)
+void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* accel, const vec3f* mag)
 {
 	me->ang_vel = *ang_vel;
 	me->accel = *accel;
@@ -33,8 +33,6 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 
 	vec3f world_accel;
 	oquatf_get_rotated(&me->orient, accel, &world_accel);
-
-	me->prox = prox;
 
 	me->iterations += 1;
 	me->time += dt;
