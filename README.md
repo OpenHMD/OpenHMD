@@ -7,12 +7,14 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 ## Supported Devices
   * Oculus Rift DK1 and DK2 (rotation only)
   * Android based devices
+  * External Sensor (passthrough for external sensors)
 
 ## Supported Platforms
   * Linux
   * Windows
   * OS X
   * Android
+  * FreeBSD
 
 ## Requirements
   * Option 1: GNU Autotools (if you're building from the git repository)
@@ -22,8 +24,10 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
     * https://github.com/signal11/hidapi/
 
 ## Language Bindings
+  * Java bindings by Joey Ferwerda and Koen Mertens
+    * https://github.com/OpenHMD/OpenHMD-Java
   * Perl bindings by CandyAngel
-    * https://bitbucket.org/CandyAngel/perl-openhmd
+    * https://github.com/CandyAngel/perl-openhmd
   * Python bindings by Lubosz Sarnecki
     * https://github.com/lubosz/python-rift
   
@@ -41,9 +45,10 @@ Using make:
 Using CMake:
 
 With CMake, you can enable and disable drivers to compile OpenHMD with.
-Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT and OPENHMD_DRIVER_ANDROID
+Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT, OPENHMD_DRIVER_EXTERNAL and OPENHMD_DRIVER_ANDROID.
+These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake command (or using cmake-gui).
 
-    cmake -DOPENHMD_DRIVER_ANDROID=ON .
+    cmake .
     make
 
 ### Configuring udev on Linux
@@ -58,10 +63,18 @@ After this you have to unplug your Rift and plug it back in. You should now be a
 
 
 ### Cross compiling for windows using mingw
+Using Make:
+
     export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
     PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
     make
 the library will end up in the .lib directory, you can use microsoft's lib.exe to make a .lib file for it
+
+Using CMake:
+
+For MinGW cross compiling, toolchain files tend to be the best solucion.
+Please check the CMake documentation on how to do this.
+A starting point might be the CMake wiki: http://www.vtk.org/Wiki/CmakeMingw
 
 ### Static linking on windows
 If you're linking statically with OpenHMD using windows/mingw you have to make sure the macro OHMD_STATIC is set before including openhmd.h. In GCC this can be done by adding the compiler flag -DOHMD_STATIC, and with msvc it can be done using /DOHMD_STATIC.

@@ -79,9 +79,7 @@ struct ohmd_device {
 
 	int (*getf)(ohmd_device* device, ohmd_float_value type, float* out);
 	int (*setf)(ohmd_device* device, ohmd_float_value type, float* in);
-
 	int (*seti)(ohmd_device* device, ohmd_int_value type, int* in);
-
 	int (*set_data)(ohmd_device* device, ohmd_data_value type, void* in);
 
 	void (*update)(ohmd_device* device);
@@ -110,6 +108,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx);
 
 #include "log.h"

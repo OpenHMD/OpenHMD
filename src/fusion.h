@@ -22,6 +22,7 @@ typedef struct {
 	vec3f ang_vel;  // angular velocity
 	vec3f mag;      // magnetometer
 	vec3f raw_mag;  // raw magnetometer values
+	float prox;     // proximity sensor
 
 	int iterations;
 	float time;
@@ -39,6 +40,6 @@ typedef struct {
 } fusion;
 
 void ofusion_init(fusion* me);
-void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* accel, const vec3f* mag_field);
+void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* accel, const vec3f* mag_field, const float prox);
 
 #endif

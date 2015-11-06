@@ -6,13 +6,35 @@ lib_LTLIBRARIES = libopenhmd.la
 libopenhmd_la_SOURCES = \
 	openhmd.c \
 	platform-win32.c \
+<<<<<<< HEAD
 	drv_oculus_rift/rift.c \
 	drv_oculus_rift/packet.c \
 	drv_android/android.c \
+=======
+>>>>>>> 7015410d4a059a252c20ee4abeb46adad0fe5fb1
 	drv_dummy/dummy.c \
 	omath.c \
 	platform-posix.c \
 	fusion.c
 
-libopenhmd_la_LDFLAGS = $(hidapi_LIBS) -no-undefined -version-info 0:0:0 $(EXTRA_LD_FLAGS)
-libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include $(hidapi_CFLAGS) -Wall 
+libopenhmd_la_LDFLAGS = -no-undefined -version-info 0:0:0
+libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall 
+
+if BUILD_DRIVER_OCULUS_RIFT
+
+libopenhmd_la_SOURCES += \
+	drv_oculus_rift/rift.c \
+	drv_oculus_rift/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_OCULUS_RIFT
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
+if BUILD_DRIVER_EXTERNAL
+
+libopenhmd_la_SOURCES += \
+	drv_external/external.c
+endif
+
+libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)

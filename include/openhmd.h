@@ -110,6 +110,9 @@ typedef enum {
 
 	/** float[6], get - Device specifc distortion value. */
 	OHMD_DISTORTION_K                     = 18,
+	
+	/** float[10], set - Perform sensor fusion on values from external sensors. Values are: dt (time since last update, in seconds) X, Y, Z gyro, X, Y, Z accelerometer and X, Y, Z magnetometer. */
+	OHMD_EXTERNAL_SENSOR_FUSION           = 19,
 
 	/** float[10], set - Perform sensor fusion on values from external sensors. Values are: dt (time since last update, in seconds) X, Y, Z gyro, X, Y, Z accelerometer and X, Y, Z magnetometer. */
 	OHMD_EXTERNAL_SENSOR_FUSION           = 19,

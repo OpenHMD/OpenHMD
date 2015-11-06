@@ -24,10 +24,13 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
 #endif
 
+#if DRIVER_EXTERNAL
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
+#endif
+
 #if DRIVER_ANDROID
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
 #endif
-
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
 
@@ -93,10 +96,10 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 		ohmd_driver* driver = (ohmd_driver*)desc->driver_ptr;
 		ohmd_device* device = driver->open_device(driver, desc);
 
-		device->rotation_correction.w = 1;
-
 		if (device == NULL)
 			return NULL;
+
+		device->rotation_correction.w = 1;
 
 		device->ctx = ctx;
 		device->active_device_idx = ctx->num_active_devices;
