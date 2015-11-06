@@ -308,6 +308,10 @@ int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type
         device->set_data(device, OHMD_DRIVER_DATA, in);
         return OHMD_S_OK;
     }
+    case OHMD_DRIVER_PROPERTIES:{
+        device->set_data(device, OHMD_DRIVER_PROPERTIES, in);
+        return OHMD_S_OK;
+    }
     break;
     default:
         return OHMD_S_INVALID_PARAMETER;

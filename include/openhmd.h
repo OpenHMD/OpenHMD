@@ -125,9 +125,6 @@ typedef enum {
 	/** int[1], get
 	      Physical vertical resolution of the device screen. */
 	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
-	/** int[1], get
-		  Acceleration only fallback non-fusion (Android driver) */
-	OHMD_ACCELERATION_ONLY_FALLBACK		  =	 2,
 
 } ohmd_int_value;
 
@@ -136,8 +133,11 @@ typedef enum {
 typedef enum {
     /** void*, set
         Set void* data for use in the internal drivers. */
-    OHMD_DRIVER_DATA
-
+    OHMD_DRIVER_DATA		= 0,
+    /** ohmd_device_properties*, set
+        Set the device properties based on the ohmd_device_properties struct for use in the internal drivers. 
+        This can be used to fill in information about the device such as Android internally, or for setting profiles.*/  
+	OHMD_DRIVER_PROPERTIES	= 1,
 } ohmd_data_value;
 
 /** An opaque pointer to a context structure. */

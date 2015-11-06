@@ -30,55 +30,11 @@ typedef struct {
     #endif
 } android_priv;
 
-static void nofusion_update(fusion* me, float dt, const vec3f* accel)
-{
-	//avg raw accel data to smooth jitter, and normalise
-	ofq_add(&me->accel_fq, accel);
-	vec3f accel_mean;
-	ofq_get_mean(&me->accel_fq, &accel_mean);
-	vec3f acc_n = accel_mean;
-	ovec3f_normalize_me(&acc_n);
+//Forward decelerations
+static void set_android_properties(ohmd_device* device, ohmd_device_properties* props);
+static void nofusion_init(fusion* me);
+static void nofusion_update(fusion* me, float dt, const vec3f* accel);
 
-
-	//reference vectors for axis-angle
-	vec3f xyzv[3] = {
-		{1,0,0},
-		{0,1,0},
-		{0,0,1}
-	};
-	quatf roll, pitch;
-
-	//pitch is rot around x, based on gravity in z and y axes
-	oquatf_init_axis(&pitch, xyzv+0, atan2f(-acc_n.z, -acc_n.y));
-
-	//roll is rot around z, based on gravity in x and y axes
-	//note we need to invert the values when the device is upside down (y < 0) for proper results
-	oquatf_init_axis(&roll, xyzv+2, acc_n.y < 0 ? atan2f(-acc_n.x, -acc_n.y) : atan2f(acc_n.x, acc_n.y));
-
-
-
-	quatf or = {0,0,0,1};
-	//order of applying is yaw-pitch-roll
-	//yaw is not possible using only accel
-	oquatf_mult_me(&or, &pitch);
-	oquatf_mult_me(&or, &roll);
-
-	me->orient = or;
-}
-
-//shorter buffers for frame smoothing
-static void nofusion_init(fusion* me)
-{
-	memset(me, 0, sizeof(fusion));
-	me->orient.w = 1.0f;
-
-	ofq_init(&me->mag_fq, 10);
-	ofq_init(&me->accel_fq, 10);
-	ofq_init(&me->ang_vel_fq, 10);
-
-	me->flags = FF_USE_GRAVITY;
-	me->grav_gain = 0.05f;
-}
 
 //Static variable for timeDelta;
 static float timestamp;
@@ -197,8 +153,12 @@ static int set_data(ohmd_device* device, ohmd_data_value type, void* in)
 	switch(type){
 		case OHMD_DRIVER_DATA: {
 		    priv->state = (android_app*)in;
+            break;
 		}
-		break;
+		case OHMD_DRIVER_PROPERTIES: {
+            set_android_properties(device, (ohmd_device_properties*)in);
+            break;
+		}
 
 		default:
 			ohmd_set_error(priv->base.ctx, "invalid type given to set_data (%i)", type);
@@ -298,6 +258,56 @@ ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx)
 }
 
 /* Android specific functions */
+static void nofusion_update(fusion* me, float dt, const vec3f* accel)
+{
+	//avg raw accel data to smooth jitter, and normalise
+	ofq_add(&me->accel_fq, accel);
+	vec3f accel_mean;
+	ofq_get_mean(&me->accel_fq, &accel_mean);
+	vec3f acc_n = accel_mean;
+	ovec3f_normalize_me(&acc_n);
+
+
+	//reference vectors for axis-angle
+	vec3f xyzv[3] = {
+		{1,0,0},
+		{0,1,0},
+		{0,0,1}
+	};
+	quatf roll, pitch;
+
+	//pitch is rot around x, based on gravity in z and y axes
+	oquatf_init_axis(&pitch, xyzv+0, atan2f(-acc_n.z, -acc_n.y));
+
+	//roll is rot around z, based on gravity in x and y axes
+	//note we need to invert the values when the device is upside down (y < 0) for proper results
+	oquatf_init_axis(&roll, xyzv+2, acc_n.y < 0 ? atan2f(-acc_n.x, -acc_n.y) : atan2f(acc_n.x, acc_n.y));
+
+
+
+	quatf or = {0,0,0,1};
+	//order of applying is yaw-pitch-roll
+	//yaw is not possible using only accel
+	oquatf_mult_me(&or, &pitch);
+	oquatf_mult_me(&or, &roll);
+
+	me->orient = or;
+}
+
+//shorter buffers for frame smoothing
+static void nofusion_init(fusion* me)
+{
+	memset(me, 0, sizeof(fusion));
+	me->orient.w = 1.0f;
+
+	ofq_init(&me->mag_fq, 10);
+	ofq_init(&me->accel_fq, 10);
+	ofq_init(&me->ang_vel_fq, 10);
+
+	me->flags = FF_USE_GRAVITY;
+	me->grav_gain = 0.05f;
+}
+
 static void set_android_properties(ohmd_device* device, ohmd_device_properties* props)
 {
     android_priv* priv = (android_priv*)device;
