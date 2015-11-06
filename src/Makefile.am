@@ -6,12 +6,6 @@ lib_LTLIBRARIES = libopenhmd.la
 libopenhmd_la_SOURCES = \
 	openhmd.c \
 	platform-win32.c \
-<<<<<<< HEAD
-	drv_oculus_rift/rift.c \
-	drv_oculus_rift/packet.c \
-	drv_android/android.c \
-=======
->>>>>>> 7015410d4a059a252c20ee4abeb46adad0fe5fb1
 	drv_dummy/dummy.c \
 	omath.c \
 	platform-posix.c \
@@ -35,6 +29,12 @@ if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \
 	drv_external/external.c
+endif
+
+if BUILD_DRIVER_ANDROID
+
+libopenhmd_la_SOURCES += \
+	drv_android/android.c
 endif
 
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)
