@@ -1,0 +1,38 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="net.openhmd.example"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="19"
+        android:targetSdkVersion="19" />
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+		<uses-feature
+			android:name="android.hardware.sensor.accelerometer"
+			android:required="true" />
+
+    <application
+        android:allowBackup="false"
+        android:hasCode="true"
+        android:label="OpenHMD-Example"
+        android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
+        <activity
+            android:name="net.openhmd.example.Example"
+            android:configChanges="orientation|keyboardHidden" >
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="OpenHMD-Example" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

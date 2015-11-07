@@ -6,12 +6,14 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 
 ## Supported Devices
   * Oculus Rift DK1 and DK2 (rotation only)
+  * Android based devices
   * External Sensor (passthrough for external sensors)
 
 ## Supported Platforms
   * Linux
   * Windows
   * OS X
+  * Android
   * FreeBSD
 
 ## Requirements
@@ -43,7 +45,7 @@ Using make:
 Using CMake:
 
 With CMake, you can enable and disable drivers to compile OpenHMD with.
-Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT and OPENHMD_DRIVER_EXTERNAL.
+Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT, OPENHMD_DRIVER_EXTERNAL and OPENHMD_DRIVER_ANDROID.
 These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake command (or using cmake-gui).
 
     cmake .

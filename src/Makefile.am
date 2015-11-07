@@ -31,4 +31,10 @@ libopenhmd_la_SOURCES += \
 	drv_external/external.c
 endif
 
+if BUILD_DRIVER_ANDROID
+
+libopenhmd_la_SOURCES += \
+	drv_android/android.c
+endif
+
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)

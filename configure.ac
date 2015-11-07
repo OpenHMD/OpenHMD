@@ -52,6 +52,15 @@ AC_ARG_ENABLE([driver-external],
 
 AM_CONDITIONAL([BUILD_DRIVER_EXTERNAL], [test "x$driver_external_enabled" != "xno"])
 
+# Android Driver
+AC_ARG_ENABLE([driver-android],
+        [AS_HELP_STRING([--enable-driver-android],
+                [enable building of Android driver (default n)])],
+        [driver_android_enabled=$enableval],
+        [driver_android_enabled='no'])
+
+AM_CONDITIONAL([BUILD_DRIVER_ANDROID], [test "x$driver_android_enabled" != "xno"])
+
 # Libs required by Oculus Rift Driver
 if test "x$driver_oculus_rift_enabled" != "xno"; then
 	PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)

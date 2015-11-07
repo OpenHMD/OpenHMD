@@ -44,7 +44,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 	float ang_vel_length = ovec3f_get_length(ang_vel);
 
 	if(ang_vel_length > 0.0001f){
-		vec3f rot_axis = 
+		vec3f rot_axis =
 			{{ ang_vel->x / ang_vel_length, ang_vel->y / ang_vel_length, ang_vel->z / ang_vel_length }};
 
 		float rot_angle = ang_vel_length * dt;
@@ -63,7 +63,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 		// if the device is within tolerance levels, count this as the device is level and add to the counter
 		// otherwise reset the counter and start over
 
-		me->device_level_count = 
+		me->device_level_count =
 			fabsf(ovec3f_get_length(accel) - 9.82f) < gravity_tolerance && ang_vel_length < ang_vel_tolerance
 			? me->device_level_count + 1 : 0;
 
@@ -74,7 +74,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 			me->device_level_count = 0;
 
 			vec3f accel_mean;
-			ofq_get_mean(&me->accel_fq, &accel_mean);	
+			ofq_get_mean(&me->accel_fq, &accel_mean);
 
 			// Calculate a cross product between what the device
 			// thinks is up and what gravity indicates is down.
@@ -105,7 +105,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 
 			// otherwise try to correct
 			else {
-				use_angle = -me->grav_gain * me->grav_error_angle * 0.005f * (5.0f * ang_vel_length + 1.0f); 
+				use_angle = -me->grav_gain * me->grav_error_angle * 0.005f * (5.0f * ang_vel_length + 1.0f);
 				me->grav_error_angle += use_angle;
 			}
 

@@ -28,6 +28,9 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
 
+#if DRIVER_ANDROID
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
+#endif
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
 
@@ -113,11 +116,11 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 	ohmd_context* ctx = device->ctx;
 	int idx = device->active_device_idx;
 
-	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1, 
+	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1,
 		sizeof(ohmd_device*) * (ctx->num_active_devices - idx - 1));
-	
+
 	device->close(device);
-	
+
 	ctx->num_active_devices--;
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
@@ -221,7 +224,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 
 		return OHMD_S_OK;
 	}
-		
+
 	default:
 		return device->getf(device, type, out);
 	}
@@ -291,6 +294,31 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 	default:
 		return OHMD_S_INVALID_PARAMETER;
 	}
+}
+
+int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in)
+{
+	switch(type){
+	default:
+		return OHMD_S_INVALID_PARAMETER;
+	}
+}
+
+int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in)
+{
+    switch(type){
+    case OHMD_DRIVER_DATA:{
+        device->set_data(device, OHMD_DRIVER_DATA, in);
+        return OHMD_S_OK;
+    }
+    case OHMD_DRIVER_PROPERTIES:{
+        device->set_data(device, OHMD_DRIVER_PROPERTIES, in);
+        return OHMD_S_OK;
+    }
+    break;
+    default:
+        return OHMD_S_INVALID_PARAMETER;
+    }
 }
 
 void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)

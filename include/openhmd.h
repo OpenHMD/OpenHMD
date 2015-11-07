@@ -18,7 +18,7 @@ extern "C" {
 
 #ifdef _WIN32
 #ifdef DLL_EXPORT
-#define OHMD_APIENTRY __cdecl 
+#define OHMD_APIENTRY __cdecl
 #define OHMD_APIENTRYDLL __declspec( dllexport )
 #else
 #ifdef OHMD_STATIC
@@ -55,24 +55,24 @@ typedef enum {
 	OHMD_PATH      = 2,
 } ohmd_string_value;
 
-/** A collection of float value information types used for getting and setting information with 
+/** A collection of float value information types used for getting and setting information with
  ohmd_device_getf() and ohmd_device_setf(). */
 typedef enum {
 	/** float[4], get - Absolute rotation of the device, in space, as a quaternion. */
 	OHMD_ROTATION_QUAT                    =  1,
 
-	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the 
+	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the
 	 left eye of the HMD. */
 	OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX     =  2,
 
-	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the 
+	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the
 	 right eye of the HMD. */
 	OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX    =  3,
 
-	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the 
+	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the
 	 left eye of the HMD. */
 	OHMD_LEFT_EYE_GL_PROJECTION_MATRIX    =  4,
-	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the 
+	/** float[16], get - A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the
 	 right eye of the HMD. */
 	OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX   =  5,
 
@@ -104,7 +104,7 @@ typedef enum {
 
 	/** float[1], get/set - Z-far value for the projection matrix calculations, i.e. drawing distance. */
 	OHMD_PROJECTION_ZFAR                  = 16,
-	/** float[1], get/set - Z-near value for the projection matrix calculations, i.e. close clipping 
+	/** float[1], get/set - Z-near value for the projection matrix calculations, i.e. close clipping
 	 distance. */
 	OHMD_PROJECTION_ZNEAR                 = 17,
 
@@ -128,6 +128,18 @@ typedef enum {
 
 } ohmd_int_value;
 
+/** A collection of data information types used for setting information with ohmd_set_data()
+*/
+typedef enum {
+    /** void*, set
+        Set void* data for use in the internal drivers. */
+    OHMD_DRIVER_DATA		= 0,
+    /** ohmd_device_properties*, set
+        Set the device properties based on the ohmd_device_properties struct for use in the internal drivers. 
+        This can be used to fill in information about the device such as Android internally, or for setting profiles.*/  
+	OHMD_DRIVER_PROPERTIES	= 1,
+} ohmd_data_value;
+
 /** An opaque pointer to a context structure. */
 typedef struct ohmd_context ohmd_context;
 
@@ -142,21 +154,21 @@ typedef struct ohmd_device ohmd_device;
 OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
 
 /**
- * Destroy an OpenHMD context. 
+ * Destroy an OpenHMD context.
  *
  * ohmd_ctx_destroy de-initializes and de-allocates an OpenHMD context allocated with ohmd_ctx_create.
  * All devices associated with the context are automatically closed.
- *  
+ *
  * @param ctx The context to destroy.
  */
 OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx);
 
 /**
- * Get the last error as a human readable string. 
+ * Get the last error as a human readable string.
  *
  * If a function taking a context as an argument (ohmd_context "methods") returns non-successfully,
- * a human readable error message describing what went wrong can be retreived with this function. 
- *  
+ * a human readable error message describing what went wrong can be retreived with this function.
+ *
  * @param ctx The context to retreive the error message from.
  * @return a pointer to the error message
  */
@@ -170,7 +182,7 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx)
  * Once per frame in a "game loop" should be sufficient.
  * If OpenHMD is handled in a background thread, calling ohmd_ctx_update and then sleeping for 10-20 ms
  * is recommended.
- * 
+ *
  * @param ctx The context that needs updating.
  */
 OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
@@ -179,7 +191,7 @@ OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
  * Probe for devices.
  *
  * Probes for and enumerates supported devices attached to the system.
- * 
+ *
  * @param ctx A context with no currently open devices.
  * @return number of devices found on the system
  */
@@ -188,13 +200,13 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
 /**
  * Get device description from enumeration list index.
  *
- * Gets a human readable device description string from a zero indexed enumeration index 
- * between 0 and max, where max is the number ohmd_ctx_probe returned. 
+ * Gets a human readable device description string from a zero indexed enumeration index
+ * between 0 and max, where max is the number ohmd_ctx_probe returned.
  * (I.e. if ohmd_ctx_probe returns 3,valid indices are 0, 1 and 2).
  * The function can return three types of data. The vendor name, the product name and
  * a driver specific path where the device is attached.
  * ohmd_ctx_probe must be called before calling ohmd_list_gets.
- * 
+ *
  * @param ctx A (probed) context.
  * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
  * @param type The type of data to fetch. One of OHMD_VENDOR, OHMD_PRODUCT and OHMD_PATH.
@@ -205,11 +217,11 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int
 /**
  * Open a device.
  *
- * Opens a device from a zero indexed enumeration index between 0 and max, 
+ * Opens a device from a zero indexed enumeration index between 0 and max,
  * where max is the number ohmd_ctx_probe returned. (I.e. if ohmd_ctx_probe returns 3,
  * valid indices are 0, 1 and 2).
  * ohmd_ctx_probe must be called before calling ohmd_list_open_device.
- * 
+ *
  * @param ctx A (probed) context.
  * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
  * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
@@ -230,7 +242,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device);
 /**
  * Get a floating point value from a device.
  *
- * 
+ *
  * @param device An open device to retreive the value from.
  * @param type What type of value to retreive, see ohmd_float_value section for more information.
  * @param[out] out A pointer to a float, or float array where the retreived value should be written.
@@ -249,7 +261,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_fl
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in);
 
 /**
- * Get an integer value from a device. 
+ * Get an integer value from a device.
  *
  * @param device An open device to retreive the value from.
  * @param type What type of value to retreive, ohmd_int_value section for more information.
@@ -257,6 +269,26 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_fl
  * @return 0 on success, <0 on failure.
  */
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out);
+
+/**
+ * Set an integer value for a device.
+ *
+ * @param device An open device to set the value in.
+ * @param type What type of value to set, see ohmd_float_value section for more information.
+ * @param in A pointer to a int, or int array where the new value is stored.
+ * @return 0 on success, <0 on failure.
+ */
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in);
+
+/**
+ * Set an void* data value for a device.
+ *
+ * @param device An open device to set the value in.
+ * @param type What type of value to set, see ohmd_float_value section for more information.
+ * @param in A pointer to the void* casted object.
+ * @return 0 on success, <0 on failure.
+ */
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in);
 
 #ifdef __cplusplus
 }
