@@ -72,7 +72,7 @@ the library will end up in the .lib directory, you can use microsoft's lib.exe t
 
 Using CMake:
 
-For MinGW cross compiling, toolchain files tend to be the best solucion.
+For MinGW cross compiling, toolchain files tend to be the best solution.
 Please check the CMake documentation on how to do this.
 A starting point might be the CMake wiki: http://www.vtk.org/Wiki/CmakeMingw
 
