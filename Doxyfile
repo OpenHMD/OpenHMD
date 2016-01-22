@@ -4,3 +4,4 @@ INPUT                  = include/
 STRIP_CODE_COMMENTS    = NO
 ALPHABETICAL_INDEX     = NO
 IGNORE_PREFIX          = ohmd_ OHMD_
+ENUM_VALUES_PER_LINE   = 1
