@@ -64,7 +64,6 @@ typedef enum {
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the
 	 left eye of the HMD. */
 	OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX     =  2,
-
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the
 	 right eye of the HMD. */
 	OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX    =  3,
@@ -130,7 +129,7 @@ typedef enum {
 /** A collection of data information types used for setting information with ohmd_set_data(). */
 typedef enum {
 	/** void* (set): Set void* data for use in the internal drivers. */
-    OHMD_DRIVER_DATA		= 0,
+	OHMD_DRIVER_DATA		= 0,
 	/**
 	 * ohmd_device_properties* (set):
 	 * Set the device properties based on the ohmd_device_properties struct for use in the internal drivers.
