@@ -5,9 +5,10 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/** \file openhmd.h
+/**
+ * \file openhmd.h
  * Main header for OpenHMD public API.
- */
+ **/
 
 #ifndef OPENHMD_H
 #define OPENHMD_H
@@ -56,23 +57,23 @@ typedef enum {
 } ohmd_string_value;
 
 /** A collection of float value information types, used for getting and setting information with
- ohmd_device_getf() and ohmd_device_setf(). */
+    ohmd_device_getf() and ohmd_device_setf(). */
 typedef enum {
 	/** float[4] (get): Absolute rotation of the device, in space, as a quaternion (x, y, z, w). */
 	OHMD_ROTATION_QUAT                    =  1,
 
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the
-	 left eye of the HMD. */
+	    left eye of the HMD. */
 	OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX     =  2,
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a modelview matrix for the
-	 right eye of the HMD. */
+	    right eye of the HMD. */
 	OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX    =  3,
 
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the
-	 left eye of the HMD. */
+	    left eye of the HMD. */
 	OHMD_LEFT_EYE_GL_PROJECTION_MATRIX    =  4,
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the
-	 right eye of the HMD. */
+	    right eye of the HMD. */
 	OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX   =  5,
 
 	/** float[3] (get): A 3-D vector representing the absolute position of the device, in space. */
@@ -149,7 +150,7 @@ typedef struct ohmd_device ohmd_device;
  * Create an OpenHMD context.
  *
  * @return a pointer to an allocated ohmd_context on success or NULL if it fails.
- */
+ **/
 OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
 
 /**
@@ -159,7 +160,7 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
  * All devices associated with the context are automatically closed.
  *
  * @param ctx The context to destroy.
- */
+ **/
 OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx);
 
 /**
@@ -170,7 +171,7 @@ OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx);
  *
  * @param ctx The context to retrieve the error message from.
  * @return a pointer to the error message.
- */
+ **/
 OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx);
 
 /**
@@ -183,7 +184,7 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx)
  * is recommended.
  *
  * @param ctx The context that needs updating.
- */
+ **/
 OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
 
 /**
@@ -193,7 +194,7 @@ OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
  *
  * @param ctx A context with no currently open devices.
  * @return the number of devices found on the system.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
 
 /**
@@ -211,7 +212,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
  * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
  * @param type The type of data to fetch. One of OHMD_VENDOR, OHMD_PRODUCT and OHMD_PATH.
  * @return a string with a human readable device name.
- */
+ **/
 OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type);
 
 /**
@@ -226,7 +227,7 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int
  * @param ctx A (probed) context.
  * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
  * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
- */
+ **/
 OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index);
 
 /**
@@ -237,7 +238,7 @@ OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* 
  *
  * @param device The open device.
  * @return 0 on success, <0 on failure.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device);
 
 /**
@@ -248,7 +249,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device);
  * @param type What type of value to retrieve, see ohmd_float_value section for more information.
  * @param[out] out A pointer to a float, or float array where the retrieved value should be written.
  * @return 0 on success, <0 on failure.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out);
 
 /**
@@ -258,7 +259,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_fl
  * @param type What type of value to set, see ohmd_float_value section for more information.
  * @param in A pointer to a float, or float array where the new value is stored.
  * @return 0 on success, <0 on failure.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in);
 
 /**
@@ -268,7 +269,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_fl
  * @param type What type of value to retrieve, ohmd_int_value section for more information.
  * @param[out] out A pointer to an integer, or integer array where the retrieved value should be written.
  * @return 0 on success, <0 on failure.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out);
 
 /**
@@ -278,7 +279,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_in
  * @param type What type of value to set, see ohmd_float_value section for more information.
  * @param in A pointer to a int, or int array where the new value is stored.
  * @return 0 on success, <0 on failure.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in);
 
 /**
@@ -288,7 +289,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_in
  * @param type What type of value to set, see ohmd_float_value section for more information.
  * @param in A pointer to the void* casted object.
  * @return 0 on success, <0 on failure.
- */
+ **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in);
 
 #ifdef __cplusplus
