@@ -21,11 +21,10 @@
 #define WRITE16(_val) WRITE8((_val) & 0xff); WRITE8(((_val) >> 8) & 0xff);
 #define WRITE32(_val) WRITE16((_val) & 0xffff) *buffer; WRITE16(((_val) >> 16) & 0xffff);
 
-
 bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size)
 {
-	if(size != 8){
-		LOGE("invalid packet size");
+	if(!(size == 8 || size == 9)){
+		LOGE("invalid packet size (expected 8 or 9 but got %d)", size);
 		return false;
 	}
 
@@ -40,8 +39,8 @@ bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, i
 
 bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size)
 {
-	if(size != 56){
-		LOGE("invalid packet size");
+	if(!(size == 56 || size == 57)){
+		LOGE("invalid packet size (expected 56 or 57 but got %d)", size);
 		return false;
 	}
 
@@ -67,8 +66,8 @@ bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned ch
 
 bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size)
 {
-	if(size != 7){
-		LOGE("invalid packet size");
+	if(!(size == 7 || size == 8)){
+		LOGE("invalid packet size (expected 7 or 8 but got %d)", size);
 		return false;
 	}
 
@@ -100,8 +99,8 @@ static void decode_sample(const unsigned char* buffer, int32_t* smp)
 
 bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
 {
-	if(size != 62){
-		LOGE("invalid packet size");
+	if(!(size == 62 || size == 64)){
+		LOGE("invalid packet size (expected 62 or 64 but got %d)", size);
 		return false;
 	}
 

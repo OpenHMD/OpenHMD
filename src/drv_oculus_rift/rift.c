@@ -226,6 +226,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// if the sensor has display info data, use HMD coordinate frame
 	priv->coordinate_frame = priv->display_info.distortion_type != RIFT_DT_NONE ? RIFT_CF_HMD : RIFT_CF_SENSOR;
 
+	// enable calibration
+	SETFLAG(priv->sensor_config.flags, RIFT_SCF_USE_CALIBRATION, 1);
+	SETFLAG(priv->sensor_config.flags, RIFT_SCF_AUTO_CALIBRATION, 1);
+
 	// apply sensor config
 	set_coordinate_frame(priv, priv->coordinate_frame);
 
