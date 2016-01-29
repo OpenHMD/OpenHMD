@@ -39,7 +39,6 @@ static rift_priv* rift_priv_get(ohmd_device* device)
 	return (rift_priv*)device;
 }
 
-
 static int get_feature_report(rift_priv* priv, rift_sensor_feature_cmd cmd, unsigned char* buf)
 {
 	memset(buf, 0, FEATURE_BUFFER_SIZE);
@@ -278,17 +277,19 @@ cleanup:
 }
 
 #define OCULUS_VR_INC_ID 0x2833
+#define RIFT_ID_COUNT 3
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
 	// enumerate HID devices and add any Rifts found to the device list
 
-	int ids[] = {
+	int ids[RIFT_ID_COUNT] = {
 		0x0001 /* DK1 */, 
-		0x0021 /* DK2 */
+		0x0021 /* DK2 */,
+		0x2021 /* DK2 alternative id */,
 	};
 
-	for(int i = 0; i < 2; i++){
+	for(int i = 0; i < RIFT_ID_COUNT; i++){
 		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, ids[i]);
 		struct hid_device_info* cur_dev = devs;
 
