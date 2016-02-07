@@ -79,14 +79,14 @@ typedef enum {
 	/** float[3] (get): A 3-D vector representing the absolute position of the device, in space. */
 	OHMD_POSITION_VECTOR                  =  6,
 
-	/** float[1] (get): Physical width of the device screen in centimetres. */
+	/** float[1] (get): Physical width of the device screen in metres. */
 	OHMD_SCREEN_HORIZONTAL_SIZE           =  7,
-	/** float[1] (get): Physical height of the device screen in centimetres. */
+	/** float[1] (get): Physical height of the device screen in metres. */
 	OHMD_SCREEN_VERTICAL_SIZE             =  8,
 
-	/** float[1] (get): Physical separation of the device lenses in centimetres. */
+	/** float[1] (get): Physical separation of the device lenses in metres. */
 	OHMD_LENS_HORIZONTAL_SEPARATION       =  9,
-	/** float[1] (get): Physical vertical position of the lenses in centimetres. */
+	/** float[1] (get): Physical vertical position of the lenses in metres. */
 	OHMD_LENS_VERTICAL_POSITION           = 10,
 
 	/** float[1] (get): Physical field of view for the left eye in degrees. */
@@ -98,7 +98,7 @@ typedef enum {
 	/** float[1] (get): Physical display aspect ratio for the right eye screen. */
 	OHMD_RIGHT_EYE_ASPECT_RATIO           = 14,
 
-	/** float[1] (get, set): Physical interpupillary distance of the user in centimetres. */
+	/** float[1] (get, set): Physical interpupillary distance of the user in metres. */
 	OHMD_EYE_IPD                          = 15,
 
 	/** float[1] (get, set): Z-far value for the projection matrix calculations (i.e. drawing distance). */
