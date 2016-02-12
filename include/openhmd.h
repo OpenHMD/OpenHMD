@@ -151,7 +151,7 @@ typedef struct ohmd_device ohmd_device;
  *
  * @return a pointer to an allocated ohmd_context on success or NULL if it fails.
  **/
-OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create();
+OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void);
 
 /**
  * Destroy an OpenHMD context.
@@ -260,7 +260,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_fl
  * @param in A pointer to a float, or float array where the new value is stored.
  * @return 0 on success, <0 on failure.
  **/
-OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, const float* in);
 
 /**
  * Get an integer value from a device.
@@ -280,7 +280,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_in
  * @param in A pointer to a int, or int array where the new value is stored.
  * @return 0 on success, <0 on failure.
  **/
-OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, const int* in);
 
 /**
  * Set an void* data value for a device.
@@ -290,7 +290,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_in
  * @param in A pointer to the void* casted object.
  * @return 0 on success, <0 on failure.
  **/
-OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in);
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, const void* in);
 
 #ifdef __cplusplus
 }
