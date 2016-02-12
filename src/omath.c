@@ -19,7 +19,7 @@ float ovec3f_get_length(const vec3f* me)
 
 void ovec3f_normalize_me(vec3f* me)
 {
-	if(me->x == 0 && me->x == 0 && me->z == 0)
+	if(me->x == 0 && me->y == 0 && me->z == 0)
 		return;
 
 	float len = ovec3f_get_length(me);
