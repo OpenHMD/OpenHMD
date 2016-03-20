@@ -108,5 +108,5 @@ AC_PROG_CC_C99
 
 AC_CONFIG_HEADERS([config.h])
 
-AC_OUTPUT([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
+AC_OUTPUT([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/opengl-DK2/Makefile examples/simple/Makefile])
 AC_OUTPUT 
