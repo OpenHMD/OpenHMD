@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
-ohmd_context* OHMD_APIENTRY ohmd_ctx_create()
+ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 {
 	ohmd_context* ctx = calloc(1, sizeof(ohmd_context));
 	if(!ctx){
@@ -230,7 +230,7 @@ int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, f
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, float* in)
+int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, const float* in)
 {
 	switch(type){
 	case OHMD_EYE_IPD:
@@ -296,7 +296,7 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int* in)
+int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, const int* in)
 {
 	switch(type){
 	default:
@@ -304,7 +304,7 @@ int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, int
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, void* in)
+int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, const void* in)
 {
     switch(type){
     case OHMD_DRIVER_DATA:{
@@ -321,7 +321,7 @@ int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type
     }
 }
 
-void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size)
+void* ohmd_allocfn(ohmd_context* ctx, const char* e_msg, size_t size)
 {
 	void* ret = calloc(1, size);
 	if(!ret)

@@ -43,7 +43,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	return 0;
 }
 
-static int setf(ohmd_device* device, ohmd_float_value type, float* in)
+static int setf(ohmd_device* device, ohmd_float_value type, const float* in)
 {
 	external_priv* priv = (external_priv*)device;
 

@@ -10,7 +10,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-void* ohmd_allocfn(ohmd_context* ctx, char* e_msg, size_t size);
+void* ohmd_allocfn(ohmd_context* ctx, const char* e_msg, size_t size);
 #define ohmd_alloc(_ctx, _size) ohmd_allocfn(_ctx, "could not allocate " #_size " bytes of RAM @ " __FILE__ ":" OHMD_STRINGIFY(__LINE__), _size)
 
 #ifndef LOGLEVEL
