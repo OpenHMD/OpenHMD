@@ -14,23 +14,26 @@
 
 #include <windows.h>
 
+#include "platform.h"
+#include "openhmdi.h"
+
 double ohmd_get_tick()
 {
-        double high, low;
-        FILETIME filetime;
+	double high, low;
+	FILETIME filetime;
 
-        GetSystemTimeAsFileTime(&filetime);
+	GetSystemTimeAsFileTime(&filetime);
 
-        high = filetime.dwHighDateTime;
-        low = filetime.dwLowDateTime;
+	high = filetime.dwHighDateTime;
+	low = filetime.dwLowDateTime;
 
-        return (high * 4294967296.0 + low) / 10000000;
+	return (high * 4294967296.0 + low) / 10000000;
 }
 
 // TODO higher resolution
 void ohmd_sleep(double seconds)
 {
-        Sleep((DWORD)(seconds * 1000));
+	Sleep((DWORD)(seconds * 1000));
 }
 
 // threads
@@ -51,7 +54,7 @@ __stdcall DWORD ohmd_thread_wrapper(void* t)
 	return thread->routine(thread->arg);
 }
 
-ohmd_thread* ohmd_create_thread(ohmd_ctx* ctx, unsigned int (*routine)(void* arg), void* arg)
+ohmd_thread* ohmd_create_thread(ohmd_context* ctx, unsigned int (*routine)(void* arg), void* arg)
 {
 	ohmd_thread* thread = ohmd_alloc(ctx, sizeof(ohmd_thread));
 	if(!thread)
@@ -65,7 +68,15 @@ ohmd_thread* ohmd_create_thread(ohmd_ctx* ctx, unsigned int (*routine)(void* arg
 	return thread;
 }
 
-ohmd_mutex* ohmd_create_mutex(ohmd_ctx* ctx)
+void ohmd_destroy_thread(ohmd_thread* thread)
+{
+	ohmd_sleep(3);
+	WaitForSingleObject(thread->handle, INFINITE);
+	CloseHandle(thread->handle);
+	free(thread);
+}
+
+ohmd_mutex* ohmd_create_mutex(ohmd_context* ctx)
 {
 	ohmd_mutex* mutex = ohmd_alloc(ctx, sizeof(ohmd_mutex));
 	if(!mutex)
