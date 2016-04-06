@@ -140,11 +140,20 @@ typedef enum {
 	OHMD_DRIVER_PROPERTIES	= 1,
 } ohmd_data_value;
 
+typedef enum {
+	/** int[1] (set, default: 1): Set this to 0 to prevent OpenHMD from creating background threads to do automatic device updating.
+	    Note that you have to manually call ohmd_update(); at least once per frame if you disable the threads. */
+	OHMD_IDS_AUTOMATIC_UPDATE = 0,
+} ohmd_int_settings;
+
 /** An opaque pointer to a context structure. */
 typedef struct ohmd_context ohmd_context;
 
 /** An opaque pointer to a structure representing a device, such as an HMD. */
 typedef struct ohmd_device ohmd_device;
+
+/** An opaque pointer to a structure representing arguments for a device. */
+typedef struct ohmd_device_settings ohmd_device_settings;
 
 /**
  * Create an OpenHMD context.
@@ -229,6 +238,46 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int
  * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
  **/
 OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index);
+
+/**
+ * Open a device with additional settings provided.
+ *
+ * Opens a device from a zero indexed enumeration index between 0 and (max - 1)
+ * where max is the number ohmd_ctx_probe returned (i.e. if ohmd_ctx_probe returns 3,
+ * valid indices are 0, 1 and 2).
+ *
+ * ohmd_ctx_probe must be called before calling ohmd_list_open_device.
+ *
+ * @param ctx A (probed) context.
+ * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
+ * @param settings A pointer to a device settings struct.
+ * @return a pointer to an ohmd_device, which represents a hardware device, such as an HMD.
+ **/
+OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index, ohmd_device_settings* settings);
+
+/**
+ * Specify int settings in a device settings struct.
+ *
+ * @param settings The device settings struct to set values to.
+ * @param key The specefic setting you wish to set.
+ * @param value A pointer to an int or int array (containing the expected number of elements) with the value(s) you wish to set.
+ **/
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settings, ohmd_int_settings key, const int* val);
+
+/**
+ * Create a device settings instance.
+ *
+ * @param ctx A pointer to a valid ohmd_context.
+ * @return a pointer to an allocated ohmd_context on success or NULL if it fails.
+ **/
+OHMD_APIENTRYDLL ohmd_device_settings* OHMD_APIENTRY ohmd_device_settings_create(ohmd_context* ctx);
+
+/**
+ * Destroy a device settings instance.
+ *
+ * @param ctx The device settings instance to destroy.
+ **/
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_device_settings_destroy(ohmd_device_settings* settings);
 
 /**
  * Close a device.

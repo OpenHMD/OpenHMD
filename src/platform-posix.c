@@ -18,6 +18,10 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <pthread.h>
+
+#include "platform.h"
+#include "openhmdi.h"
 
 // Use clock_gettime if the system implements posix realtime timers
 #ifndef CLOCK_MONOTONIC
@@ -44,6 +48,81 @@ void ohmd_sleep(double seconds)
 	sleepfor.tv_nsec = (long)((seconds - sleepfor.tv_sec) * 1000000000.0);
 
 	nanosleep(&sleepfor, NULL);
+}
+
+// threads
+
+struct ohmd_thread
+{
+	pthread_t thread;
+	unsigned int (*routine)(void* arg);
+	void* arg;
+};
+
+static void* pthread_wrapper(void* arg)
+{
+	ohmd_thread* my_thread = (ohmd_thread*)arg;
+	my_thread->routine(my_thread->arg);
+	return NULL;
+}
+
+ohmd_thread* ohmd_create_thread(ohmd_context* ctx, unsigned int (*routine)(void* arg), void* arg)
+{
+	ohmd_thread* thread = ohmd_alloc(ctx, sizeof(ohmd_thread));
+	if(thread == NULL)
+		return NULL;
+
+	thread->arg = arg;
+	thread->routine = routine;
+
+	int ret = pthread_create(&thread->thread, NULL, pthread_wrapper, thread);
+
+	if(ret != 0){
+		free(thread);
+		thread = NULL;
+	}
+
+	return thread;
+}
+
+ohmd_mutex* ohmd_create_mutex(ohmd_context* ctx)
+{
+	pthread_mutex_t* mutex = ohmd_alloc(ctx, sizeof(pthread_mutex_t));
+	if(mutex == NULL)
+		return NULL;
+
+	int ret = pthread_mutex_init(mutex, NULL);
+
+	if(ret != 0){
+		free(mutex);
+		mutex = NULL;
+	}
+
+	return (ohmd_mutex*)mutex;
+}
+
+void ohmd_destroy_thread(ohmd_thread* thread)
+{
+	pthread_join(thread->thread, NULL);
+	free(thread);
+}
+
+void ohmd_destroy_mutex(ohmd_mutex* mutex)
+{
+	pthread_mutex_destroy((pthread_mutex_t*)mutex);
+	free(mutex);
+}
+
+void ohmd_lock_mutex(ohmd_mutex* mutex)
+{
+	if(mutex)
+		pthread_mutex_lock((pthread_mutex_t*)mutex);
+}
+
+void ohmd_unlock_mutex(ohmd_mutex* mutex)
+{
+	if(mutex)
+		pthread_mutex_unlock((pthread_mutex_t*)mutex);
 }
 
 #endif
