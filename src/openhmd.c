@@ -415,6 +415,28 @@ int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type
 	return ret;
 }
 
+ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settings, ohmd_int_settings key, const int* val)
+{
+	switch(key){
+	case OHMD_IDS_AUTOMATIC_UPDATE:
+		settings->automatic_update = val[0] == 0 ? false : true;
+		return OHMD_S_OK;
+    
+	default:
+		return OHMD_S_INVALID_PARAMETER;
+	}
+}
+
+ohmd_device_settings* OHMD_APIENTRY ohmd_device_settings_create(ohmd_context* ctx)
+{
+	return ohmd_alloc(ctx, sizeof(ohmd_device_settings));
+}
+
+void OHMD_APIENTRY ohmd_device_settings_destroy(ohmd_device_settings* settings)
+{
+	free(settings);
+}
+
 void* ohmd_allocfn(ohmd_context* ctx, const char* e_msg, size_t size)
 {
 	void* ret = calloc(1, size);

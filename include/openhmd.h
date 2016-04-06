@@ -262,7 +262,7 @@ OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context
  * @param key The specefic setting you wish to set.
  * @param value A pointer to an int or int array (containing the expected number of elements) with the value(s) you wish to set.
  **/
-OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settings, ohmd_int_settings key, const int* val);
+OHMD_APIENTRYDLL ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settings, ohmd_int_settings key, const int* val);
 
 /**
  * Create a device settings instance.

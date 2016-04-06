@@ -90,7 +90,17 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	ohmd_device* hmd = ohmd_list_open_device(ctx, 0);
+	ohmd_device_settings* settings = ohmd_device_settings_create(ctx);
+
+	// If OHMD_IDS_AUTOMATIC_UPDATE is set to 0, ohmd_ctx_update() must be called manually every frame.
+	// It is enabled by default.
+
+	int auto_update = 1;
+	ohmd_device_settings_seti(settings, OHMD_IDS_AUTOMATIC_UPDATE, &auto_update);
+
+	ohmd_device* hmd = ohmd_list_open_device_s(ctx, 0, settings);
+
+	ohmd_device_settings_destroy(settings);
 	
 	if(!hmd){
 		printf("failed to open device: %s\n", ohmd_ctx_get_error(ctx));
@@ -121,7 +131,7 @@ int main(int argc, char** argv)
 
 	bool done = false;
 	while(!done){
-		ohmd_ctx_update(ctx);
+		// ohmd_ctx_update(ctx); <- must be called if automatic updates are turned off
 
 		SDL_Event event;
 		while(SDL_PollEvent(&event)){
