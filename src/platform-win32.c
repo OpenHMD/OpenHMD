@@ -38,7 +38,7 @@ static int _enable_ovr_service = 0;
 void _toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
 {
 	SC_HANDLE serviceDbHandle = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
-	SC_HANDLE serviceHandle = OpenService(serviceDbHandle, processname, SC_MANAGER_ALL_ACCESS);
+	SC_HANDLE serviceHandle = OpenService(serviceDbHandle, 'OVRService', SC_MANAGER_ALL_ACCESS);
 
 	SERVICE_STATUS_PROCESS status;
 	DWORD bytesNeeded;
@@ -51,7 +51,7 @@ void _toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
 		if (b)
 		{
 			printf("OVRService stopped\n");
-			enable_ovr_service = 1;
+			_enable_ovr_service = 1;
 		}
 		else 
 			printf("Error: OVRService failed to stop, please try running with Administrator rights\n");
