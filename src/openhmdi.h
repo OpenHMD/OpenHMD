@@ -96,7 +96,11 @@ struct ohmd_device {
 	ohmd_device_settings settings;
 
 	int active_device_idx; // index into ohmd_device->active_devices[]
+
+	quatf rotation;
+	vec3f position;
 };
+
 
 struct ohmd_context {
 	ohmd_driver* drivers[16];

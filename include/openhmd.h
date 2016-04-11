@@ -141,8 +141,8 @@ typedef enum {
 } ohmd_data_value;
 
 typedef enum {
-	/** int[1] (set, default: 1): Set this to 0 to prevent OpenHMD from creating background threads to do automatic device updating.
-	    Note that you have to manually call ohmd_update(); at least once per frame if you disable the threads. */
+	/** int[1] (set, default: 1): Set this to 0 to prevent OpenHMD from creating background threads to do automatic device ticking.
+	    Call ohmd_update(); must be called frequently, at least 10 times per second, if the background threads are disabled. */
 	OHMD_IDS_AUTOMATIC_UPDATE = 0,
 } ohmd_int_settings;
 
@@ -186,10 +186,12 @@ OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx)
 /**
  * Update a context.
  *
- * Performs tasks like pumping events from the device. The exact details are up to the driver
- * but try to call it quite frequently.
+ * Update the values for the devices handled by a context.
+ *
+ * If background threads are disabled, this performs tasks like pumping events from the device. The exact details 
+ * are up to the driver but try to call it quite frequently.
  * Once per frame in a "game loop" should be sufficient.
- * If OpenHMD is handled in a background thread, calling ohmd_ctx_update and then sleeping for 10-20 ms
+ * If OpenHMD is handled in a background thread in your program, calling ohmd_ctx_update and then sleeping for 10-20 ms
  * is recommended.
  *
  * @param ctx The context that needs updating.

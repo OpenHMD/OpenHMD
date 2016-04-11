@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 
 	ohmd_device_settings* settings = ohmd_device_settings_create(ctx);
 
-	// If OHMD_IDS_AUTOMATIC_UPDATE is set to 0, ohmd_ctx_update() must be called manually every frame.
+	// If OHMD_IDS_AUTOMATIC_UPDATE is set to 0, ohmd_ctx_update() must be called at least 10 times per second.
 	// It is enabled by default.
 
 	int auto_update = 1;
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 
 	bool done = false;
 	while(!done){
-		// ohmd_ctx_update(ctx); <- must be called if automatic updates are turned off
+		ohmd_ctx_update(ctx);
 
 		SDL_Event event;
 		while(SDL_PollEvent(&event)){

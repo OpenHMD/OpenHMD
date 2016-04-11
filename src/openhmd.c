@@ -65,8 +65,14 @@ void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
 {
 	for(int i = 0; i < ctx->num_active_devices; i++){
-		if(!ctx->active_devices[i]->settings.automatic_update && ctx->active_devices[i]->update)
-			ctx->active_devices[i]->update(ctx->active_devices[i]);
+		ohmd_device* dev = ctx->active_devices[i];
+		if(!dev->settings.automatic_update && dev->update)
+			dev->update(dev);
+	
+		ohmd_lock_mutex(ctx->update_mutex);
+		dev->getf(dev, OHMD_POSITION_VECTOR, (float*)&dev->position);
+		dev->getf(dev, OHMD_ROTATION_QUAT, (float*)&dev->rotation);
+		ohmd_unlock_mutex(ctx->update_mutex);
 	}
 }
 
@@ -201,8 +207,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	switch(type){
 	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
-			quatf rot;
-			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
+			quatf rot = device->rotation;
 			quatf tmp = device->rotation_correction;
 			oquatf_mult_me(&tmp, &rot);
 			rot = tmp;
@@ -215,8 +220,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 		}
 	case OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
-			quatf rot;
-			device->getf(device, OHMD_ROTATION_QUAT, (float*)&rot);
+			quatf rot = device->rotation;
 			oquatf_mult_me(&rot, &device->rotation_correction);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
@@ -268,10 +272,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 
 	case OHMD_ROTATION_QUAT:
 	{
-		int ret = device->getf(device, OHMD_ROTATION_QUAT, out);
-
-		if(ret != 0)
-			return ret;
+		*(quatf*)out = device->rotation;
 
 		oquatf_mult_me((quatf*)out, &device->rotation_correction);
 		quatf tmp = device->rotation_correction;
@@ -281,10 +282,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	}
 	case OHMD_POSITION_VECTOR:
 	{
-		int ret = device->getf(device, OHMD_POSITION_VECTOR, out);
-
-		if(ret != 0)
-			return ret;
+		*(vec3f*)out = device->position;
 
 		for(int i = 0; i < 3; i++)
 			out[i] += device->position_correction.arr[i];
