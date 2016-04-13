@@ -38,7 +38,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		break;
 
 	default:
-		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%d)", type);
+		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
 		return -1;
 		break;
 	}
