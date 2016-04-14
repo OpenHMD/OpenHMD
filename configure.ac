@@ -47,7 +47,7 @@ AC_ARG_ENABLE([driver-htc-vive],
         [driver_htc_vive_enabled=$enableval],
         [driver_htc_vive_enabled='yes'])
 
-AM_CONDITIONAL([BUILD_DRIVER_OCULUS_RIFT], [test "x$driver_oculus_rift_enabled" != "xno"])
+AM_CONDITIONAL([BUILD_DRIVER_HTC_VIVE], [test "x$driver_oculus_rift_enabled" != "xno"])
 
 # External Driver
 AC_ARG_ENABLE([driver-external],
