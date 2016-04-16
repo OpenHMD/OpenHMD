@@ -238,8 +238,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			priv->imu.pos.x = (float)pos.pos_x;
 			priv->imu.pos.y = (float)pos.pos_y;
 			priv->imu.pos.z = (float)pos.pos_z;
-			printf("imu (% 9f, % 9f, % 9f) %i\n",
-			       priv->imu.pos.x, priv->imu.pos.y, priv->imu.pos.z, pos.index);
 		} else if (pos.flags == 2) {
 			rift_led *led = &priv->leds[pos.index];
 			led->pos.x = (float)pos.pos_x;
@@ -249,8 +247,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			led->dir.y = (float)pos.dir_y;
 			led->dir.z = (float)pos.dir_z;
 			ovec3f_normalize_me(&led->dir);
-			printf("% 3i (% 9f, % 9f, % 9f)\n", pos.index,
-			       led->pos.x, led->pos.y, led->pos.z);
 		}
 	}
 
