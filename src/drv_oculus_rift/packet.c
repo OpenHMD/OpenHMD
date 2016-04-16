@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "rift.h"
 
+#define SKIP8 (buffer++)
 #define SKIP_CMD (buffer++)
 #define READ8 *(buffer++);
 #define READ16 *buffer | (*(buffer + 1) << 8); buffer += 2;
@@ -20,6 +21,33 @@
 #define WRITE8(_val) *(buffer++) = (_val);
 #define WRITE16(_val) WRITE8((_val) & 0xff); WRITE8(((_val) >> 8) & 0xff);
 #define WRITE32(_val) WRITE16((_val) & 0xffff) *buffer; WRITE16(((_val) >> 16) & 0xffff);
+
+
+bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int size)
+{
+	if(size != 30) {
+		LOGE("invalid packet size (expected 30 but got %d)", size);
+		return false;
+	}
+
+	SKIP_CMD;
+	SKIP8;
+	SKIP8;
+	p->flags = READ8;
+	p->pos_x = READ32;
+	p->pos_y = READ32;
+	p->pos_z = READ32;
+	p->dir_x = READ16;
+	p->dir_y = READ16;
+	p->dir_z = READ16;
+	SKIP8;
+	SKIP8;
+	p->index = READ8;
+	SKIP8;
+	p->num = READ8;
+
+	return true;
+}
 
 bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size)
 {

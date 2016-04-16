@@ -21,6 +21,13 @@
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
 
 typedef struct {
+	// Relative position in micrometers
+	vec3f pos;
+	// Normal
+	vec3f dir;
+} rift_led;
+
+typedef struct {
 	ohmd_device base;
 
 	hid_device* handle;
@@ -32,6 +39,12 @@ typedef struct {
 	double last_keep_alive;
 	fusion sensor_fusion;
 	vec3f raw_mag, raw_accel, raw_gyro;
+
+	struct {
+		vec3f pos;
+	} imu;
+
+	rift_led *leds;
 } rift_priv;
 
 static rift_priv* rift_priv_get(ohmd_device* device)
@@ -205,8 +218,41 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 
 	unsigned char buf[FEATURE_BUFFER_SIZE];
-	
+	pkt_position_info pos;
+	int first_index = -1;
 	int size;
+
+	while (true) {
+		size = get_feature_report(priv, RIFT_CMD_POSITION_INFO, buf);
+		if (size <= 0 || !decode_position_info(&pos, buf, size) ||
+		    first_index == pos.index) {
+			break;
+		}
+
+		if (first_index < 0) {
+			first_index = pos.index;
+			priv->leds = calloc(pos.num, sizeof(rift_led));
+		}
+
+		if (pos.flags == 1) {
+			priv->imu.pos.x = (float)pos.pos_x;
+			priv->imu.pos.y = (float)pos.pos_y;
+			priv->imu.pos.z = (float)pos.pos_z;
+			printf("imu (% 9f, % 9f, % 9f) %i\n",
+			       priv->imu.pos.x, priv->imu.pos.y, priv->imu.pos.z, pos.index);
+		} else if (pos.flags == 2) {
+			rift_led *led = &priv->leds[pos.index];
+			led->pos.x = (float)pos.pos_x;
+			led->pos.y = (float)pos.pos_y;
+			led->pos.z = (float)pos.pos_z;
+			led->dir.x = (float)pos.dir_x;
+			led->dir.y = (float)pos.dir_y;
+			led->dir.z = (float)pos.dir_z;
+			ovec3f_normalize_me(&led->dir);
+			printf("% 3i (% 9f, % 9f, % 9f)\n", pos.index,
+			       led->pos.x, led->pos.y, led->pos.z);
+		}
+	}
 
 	// Read and decode the sensor range
 	size = get_feature_report(priv, RIFT_CMD_RANGE, buf);
