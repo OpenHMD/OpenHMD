@@ -12,7 +12,7 @@ libopenhmd_la_SOURCES = \
 	fusion.c
 
 libopenhmd_la_LDFLAGS = -no-undefined -version-info 0:0:0
-libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall 
+libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall
 
 if BUILD_DRIVER_OCULUS_RIFT
 
@@ -20,8 +20,16 @@ libopenhmd_la_SOURCES += \
 	drv_oculus_rift/rift.c \
 	drv_oculus_rift/packet.c
 
-libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_OCULUS_RIFT
-libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+libopenhmd_la_SOURCES += drv_oculus_rift/camera.c
+libopenhmd_la_CPPFLAGS += -I$(top_srcdir)/extern/libuvc/include
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_OCULUS_RIFT -DUSE_LIBUVC
+libopenhmd_la_LIBADD = $(hidapi_LIBS)
+
+libopenhmd_la_LIBADD += $(top_builddir)/extern/libuvc.la
+
+libopenhmd_la_CPPFLAGS += $(libusb_CFLAGS)
+libopenhmd_la_LIBADD += $(libusb_LIBS)
 
 endif
 

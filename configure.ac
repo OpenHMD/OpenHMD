@@ -16,6 +16,7 @@ PKG_PROG_PKG_CONFIG([0.24])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 hidapi="hidapi"
+libusb="libusb-1.0"
 
 AC_SUBST(PKG_CONFIG_EXTRA_PATH, "")
 AC_SUBST(EXTRA_LD_FLAGS, "")
@@ -60,7 +61,10 @@ AM_CONDITIONAL([BUILD_DRIVER_ANDROID], [test "x$driver_android_enabled" != "xno"
 
 # Libs required by Oculus Rift Driver
 AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
+	[PKG_CHECK_MODULES([libusb], [$libusb])])
+AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
 
 # Do we build OpenGL example?
 AC_ARG_ENABLE([openglexample],
@@ -103,5 +107,5 @@ AC_PROG_CC
 AC_PROG_CC_C99
 
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
+AC_CONFIG_FILES([Makefile extern/Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
 AC_OUTPUT 
