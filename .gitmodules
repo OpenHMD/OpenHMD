@@ -1,0 +1,3 @@
+[submodule "extern/libuvc"]
+	path = extern/libuvc
+	url = https://github.com/OpenHMD/libuvc.git

@@ -310,6 +310,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.close = close_device;
 	priv->base.getf = getf;
 
+	#if USE_LIBUVC
+	oc_init();
+	#endif
+
 	// initialize sensor fusion
 	ofusion_init(&priv->sensor_fusion);
 
@@ -366,6 +370,11 @@ static void destroy_driver(ohmd_driver* drv)
 {
 	LOGD("shutting down driver");
 	hid_exit();
+
+	#if USE_LIBUVC
+	oc_exit();
+	#endif
+
 	free(drv);
 }
 

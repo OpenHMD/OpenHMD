@@ -122,4 +122,7 @@ void dump_packet_sensor_config(const pkt_sensor_config* config);
 void dump_packet_sensor_display_info(const pkt_sensor_display_info* info);
 void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor);
 
+int oc_init();
+int oc_exit();
+
 #endif

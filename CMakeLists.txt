@@ -29,6 +29,9 @@ OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
+#external dependencies for extended functionality
+OPTION(OPENHMD_USE_LIBUVC "libUVC driver for camera functionality" ON)
+
 if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(openhmd_source_files ${openhmd_source_files} 
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/rift.c
@@ -55,5 +58,21 @@ if (OPENHMD_DRIVER_ANDROID)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
 
-add_library(openhmd ${openhmd_source_files} ${LIBS})
+if (OPENHMD_USE_LIBUVC)
+	#add_external(extern/libuvc -DUSE_LIBUVC)
+	add_subdirectory(extern/libuvc)
+	add_definitions(-DUSE_LIBUVC)
+	set(LIBS ${LIBS} extern/libuvc/libuvc.a)
+	if (OPENHMD_DRIVER_OCULUS_RIFT)
+		set(openhmd_source_files ${openhmd_source_files}
+		${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/camera.c)
+	endif (OPENHMD_DRIVER_OCULUS_RIFT)
+endif(OPENHMD_USE_LIBUVC)
+
+add_library(openhmd SHARED ${openhmd_source_files} ${LIBS})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
+
+# add the install targets
+install (TARGETS openhmd DESTINATION lib)
+install (FILES "${PROJECT_BINARY_DIR}/include/openhmd.h"
+         DESTINATION include)
