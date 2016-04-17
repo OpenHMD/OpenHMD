@@ -59,10 +59,8 @@ if (OPENHMD_DRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
 
 if (OPENHMD_USE_LIBUVC)
-	#add_external(extern/libuvc -DUSE_LIBUVC)
 	add_subdirectory(extern/libuvc)
 	add_definitions(-DUSE_LIBUVC)
-	set(LIBS ${LIBS} extern/libuvc/libuvc.a)
 	if (OPENHMD_DRIVER_OCULUS_RIFT)
 		set(openhmd_source_files ${openhmd_source_files}
 		${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/camera.c)
