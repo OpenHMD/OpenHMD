@@ -59,7 +59,10 @@ if (OPENHMD_DRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
 
 if (OPENHMD_USE_LIBUVC)
-	add_subdirectory(extern/libuvc)
+	#add_subdirectory(extern/libuvc)
+	SET(openhmd_source_files ${openhmd_source_files} extern/libuvc/src/ctrl.c extern/libuvc/src/ctrl-gen.c extern/libuvc/src/device.c extern/libuvc/src/diag.c
+           extern/libuvc/src/frame.c extern/libuvc/src/init.c extern/libuvc/src/stream.c extern/libuvc/src/misc.c)
+	include_directories(${CMAKE_CURRENT_LIST_DIR}/extern/libuvc/include)
 	add_definitions(-DUSE_LIBUVC)
 	if (OPENHMD_DRIVER_OCULUS_RIFT)
 		set(openhmd_source_files ${openhmd_source_files}
