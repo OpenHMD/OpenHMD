@@ -5,7 +5,7 @@ This project aims to provide a Free and Open Source API and drivers for immersiv
 OpenHMD is released under the permissive Boost Software License (see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very appreciated.
 
 ## Supported Devices
-  * Oculus Rift DK1 and DK2 (rotation only)
+  * Oculus Rift DK1 and DK2 (with positional)
   * Android based devices
   * External Sensor (passthrough for external sensors)
 
@@ -50,6 +50,16 @@ These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake co
 
     cmake .
     make
+    sudo make install
+
+You could build out of source also, creating a folder and running cmake from there pointing at the source folder.
+This is recommended if you would commit to a repository.
+
+example:
+
+    mkdir Build
+    cd Build
+    cmake ..
 
 ### Configuring udev on Linux
 To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).
