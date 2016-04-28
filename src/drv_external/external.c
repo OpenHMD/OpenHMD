@@ -138,9 +138,9 @@ ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx)
 }
 
 /* external specific functions */
-static void set_external_properties(ohmd_device* device, ohmd_device_properties* props)
+/*static void set_external_properties(ohmd_device* device, ohmd_device_properties* props)
 {
-    external_priv* priv = (external_priv*)device;
+	external_priv* priv = (external_priv*)device;
 
 	priv->base.properties.hsize = props->hsize;
 	priv->base.properties.vsize = props->vsize;
@@ -150,4 +150,4 @@ static void set_external_properties(ohmd_device* device, ohmd_device_properties*
 	priv->base.properties.lens_vpos = props->lens_vpos;
 	priv->base.properties.fov = DEG_TO_RAD(props->fov);
 	priv->base.properties.ratio = props->ratio;
-}
+}*/
