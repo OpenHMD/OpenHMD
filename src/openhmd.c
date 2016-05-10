@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 // Running automatic updates at 144 Hz
-#define AUTOMATIC_UPDATE_SLEEP (1.0 / 144.0)
+#define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
 
 ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 {
