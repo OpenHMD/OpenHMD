@@ -44,6 +44,8 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 
 void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 {
+	ctx->update_request_quit = true;
+
 	for(int i = 0; i < ctx->num_active_devices; i++){
 		ctx->active_devices[i]->close(ctx->active_devices[i]);
 	}
@@ -51,8 +53,6 @@ void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 	for(int i = 0; i < ctx->num_drivers; i++){
 		ctx->drivers[i]->destroy(ctx->drivers[i]);
 	}
-		
-	ctx->update_request_quit = true;
 
 	if(ctx->update_thread){
 		ohmd_destroy_thread(ctx->update_thread);
