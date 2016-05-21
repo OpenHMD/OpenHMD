@@ -97,6 +97,7 @@ bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, i
 bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
 bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
 bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
+bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 
 void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
 

@@ -58,7 +58,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	// set the RIFT_SCF_SENSOR_COORDINATES in the sensor config to match whether coordframe is hmd or sensor
 	SETFLAG(priv->sensor_config.flags, RIFT_SCF_SENSOR_COORDINATES, coordframe == RIFT_CF_SENSOR);
 
-	// encode send the new config to the Rift 
+	// encode send the new config to the Rift
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 	int size = encode_sensor_config(buf, &priv->sensor_config);
 	if(send_feature_report(priv, buf, size) == -1){
@@ -86,6 +86,34 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
 	if(!decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+		LOGE("couldn't decode tracker sensor message");
+	}
+
+	pkt_tracker_sensor* s = &priv->sensor;
+
+	dump_packet_tracker_sensor(s);
+
+	// TODO handle missed samples etc.
+
+	float dt = s->num_samples > 3 ? (s->num_samples - 2) * TICK_LEN : TICK_LEN;
+
+	int32_t mag32[] = { s->mag[0], s->mag[1], s->mag[2] };
+	vec3f_from_rift_vec(mag32, &priv->raw_mag);
+
+	for(int i = 0; i < OHMD_MIN(s->num_samples, 3); i++){
+		vec3f_from_rift_vec(s->samples[i].accel, &priv->raw_accel);
+		vec3f_from_rift_vec(s->samples[i].gyro, &priv->raw_gyro);
+
+		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &priv->raw_mag);
+
+		// reset dt to tick_len for the last samples if there were more than one sample
+		dt = TICK_LEN;
+	}
+}
+
+static void handle_tracker_sensor_msg_dk2(rift_priv* priv, unsigned char* buffer, int size)
+{
+	if(!decode_tracker_sensor_msg_dk2(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
 
@@ -139,8 +167,10 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == RIFT_IRQ_SENSORS){
+		if(buffer[0] == RIFT_IRQ_SENSORS) {
 			handle_tracker_sensor_msg(priv, buffer, size);
+		} else if (buffer[0] == 11) {
+		        handle_tracker_sensor_msg_dk2(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
 		}
@@ -198,14 +228,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	if(!priv->handle)
 		goto cleanup;
-	
+
 	if(hid_set_nonblocking(priv->handle, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
 	}
 
 	unsigned char buf[FEATURE_BUFFER_SIZE];
-	
+
 	int size;
 
 	// Read and decode the sensor range
@@ -281,16 +311,18 @@ cleanup:
 }
 
 #define OCULUS_VR_INC_ID 0x2833
-#define RIFT_ID_COUNT 3
+#define RIFT_ID_COUNT 5
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
 	// enumerate HID devices and add any Rifts found to the device list
 
 	int ids[RIFT_ID_COUNT] = {
-		0x0001 /* DK1 */, 
+		0x0001 /* DK1 */,
 		0x0021 /* DK2 */,
 		0x2021 /* DK2 alternative id */,
+		0x0031, /* CV1 */
+		0x2031,
 	};
 
 	for(int i = 0; i < RIFT_ID_COUNT; i++){
@@ -306,7 +338,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->driver, "OpenHMD Rift Driver");
 			strcpy(desc->vendor, "Oculus VR, Inc.");
 			strcpy(desc->product, "Rift (Devkit)");
-			
+
 			desc->revision = i;
 
 			strcpy(desc->path, cur_dev->path);
