@@ -139,7 +139,7 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == RIFT_IRQ_SENSORS) {
+		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == 11) { //TODO: add to rift_irq_cmd enum
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
