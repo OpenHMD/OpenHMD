@@ -11,6 +11,7 @@
 
 #define HTC_ID                   0x0bb4
 #define VIVE_HMD                 0x2c87
+
 #define VALVE_ID                 0x28de
 #define VIVE_WATCHMAN_DONGLE     0x2101
 #define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
@@ -26,7 +27,8 @@
 typedef struct {
 	ohmd_device base;
 	
-	hid_device* handle;
+	hid_device* hmd_handle;
+	hid_device* imu_handle;
 } vive_priv;
 
 static void update_device(ohmd_device* device)
@@ -36,7 +38,8 @@ static void update_device(ohmd_device* device)
 	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 	
-	while((size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
+	// lighthouse update
+	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
 		if(buffer[0] == VIVE_IRQ_SENSORS){
 			vive_sensor_packet pkt;
 			vive_decode_sensor_packet(&pkt, buffer, size);
@@ -58,7 +61,6 @@ static void update_device(ohmd_device* device)
 				printf("seq: %u\n", pkt.samples[i].seq);
 				printf("\n");
 			}
-
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
 		}
@@ -105,11 +107,14 @@ static void close_device(ohmd_device* device)
 	LOGD("closing HTC Vive device");
 
 	// turn the display off
-	hret = hid_send_feature_report(priv->handle, vive_magic_power_off1, sizeof(vive_magic_power_off1));
+	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off1, sizeof(vive_magic_power_off1));
 	printf("power off magic 1: %d\n", hret);
 	
-	hret = hid_send_feature_report(priv->handle, vive_magic_power_off2, sizeof(vive_magic_power_off2));
+	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off2, sizeof(vive_magic_power_off2));
 	printf("power off magic 2: %d\n", hret);
+
+	hid_close(priv->hmd_handle);
+	hid_close(priv->imu_handle);
 
 	free(device);
 }
@@ -151,6 +156,38 @@ static void dumpbin(const char* label, const unsigned char* data, int length)
 	printf("\n");
 }
 
+static hid_device* open_device_idx(int manufacturer, int product, int iface, int iface_tot, int device_index)
+{
+	struct hid_device_info* devs = hid_enumerate(manufacturer, product);
+	struct hid_device_info* cur_dev = devs;
+
+	int idx = 0;
+	int iface_cur = 0;
+	hid_device* ret = NULL;
+
+	while (cur_dev) {
+		printf("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
+
+		if(idx == device_index && iface == iface_cur){
+			ret = hid_open_path(cur_dev->path);
+			printf("opening\n");
+		}
+
+		cur_dev = cur_dev->next;
+
+		iface_cur++;
+
+		if(iface_cur >= iface_tot){
+			idx++;
+			iface_cur = 0;
+		}
+	}
+
+	hid_free_enumeration(devs);
+
+	return ret;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	vive_priv* priv = ohmd_alloc(driver->ctx, sizeof(vive_priv));
@@ -162,24 +199,41 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	
 	priv->base.ctx = driver->ctx;
 
-	// Open the HID device
-	priv->handle = hid_open_path(desc->path);
+	int idx = atoi(desc->path);
 
-	if(!priv->handle)
+	// Open the HMD device
+	priv->hmd_handle = open_device_idx(HTC_ID, VIVE_HMD, 0, 1, idx);
+
+	if(!priv->hmd_handle)
 		goto cleanup;
 	
-	if(hid_set_nonblocking(priv->handle, 1) == -1){
+	if(hid_set_nonblocking(priv->hmd_handle, 1) == -1){
+		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
+		goto cleanup;
+	}
+	
+	// Open the lighthouse device
+	priv->imu_handle = open_device_idx(VALVE_ID, VIVE_LIGHTHOUSE_FPGA_RX, 0, 2, idx);
+
+	if(!priv->imu_handle)
+		goto cleanup;
+	
+	if(hid_set_nonblocking(priv->imu_handle, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
 	}
 
-	dump_info_string(hid_get_manufacturer_string, "manufacturer", priv->handle);
-	dump_info_string(hid_get_product_string , "product", priv->handle);
-	dump_info_string(hid_get_serial_number_string, "serial number", priv->handle);
+	dump_info_string(hid_get_manufacturer_string, "manufacturer", priv->hmd_handle);
+	dump_info_string(hid_get_product_string , "product", priv->hmd_handle);
+	dump_info_string(hid_get_serial_number_string, "serial number", priv->hmd_handle);
 
 	// turn the display on
-	hret = hid_send_feature_report(priv->handle, vive_magic_power_on, sizeof(vive_magic_power_on));
+	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_on, sizeof(vive_magic_power_on));
 	printf("power on magic: %d\n", hret);
+	
+	// enable lighthouse
+	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
+	//printf("enable lighthouse magic: %d\n", hret);
 	
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
@@ -216,6 +270,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	struct hid_device_info* devs = hid_enumerate(HTC_ID, VIVE_HMD);
 	struct hid_device_info* cur_dev = devs;
 
+	int idx = 0;
 	while (cur_dev) {
 		ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
@@ -225,11 +280,12 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 		desc->revision = 0;
 
-		strcpy(desc->path, cur_dev->path);
+		snprintf(desc->path, OHMD_STR_SIZE, "%d", idx);
 
 		desc->driver_ptr = driver;
 
 		cur_dev = cur_dev->next;
+		idx++;
 	}
 
 	hid_free_enumeration(devs);
