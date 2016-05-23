@@ -7,11 +7,14 @@
 
 /* HTC Vive Driver */
 
+#define FEATURE_BUFFER_SIZE 256
+
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
 #include <assert.h>
-#include "../openhmdi.h"
+
+#include "vive.h"
 
 typedef struct {
 	ohmd_device base;
@@ -21,7 +24,42 @@ typedef struct {
 
 static void update_device(ohmd_device* device)
 {
-	//vive_priv* priv = (vive_priv*)device;
+	vive_priv* priv = (vive_priv*)device;
+
+	int size = 0;
+	unsigned char buffer[FEATURE_BUFFER_SIZE];
+	
+	while((size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
+		if(buffer[0] == VIVE_IRQ_SENSORS){
+			vive_sensor_packet pkt;
+			vive_decode_sensor_packet(&pkt, buffer, size);
+
+			printf("vive sensor sample:\n");
+			printf("  report_id: %u\n", pkt.report_id);
+			for(int i = 0; i < 3; i++){
+				printf("    sample[%d]:\n", i);
+
+				for(int j = 0; j < 3; j++){
+					printf("      acc[%d]: %d\n", j, pkt.samples[i].acc[j]);
+				}
+				
+				for(int j = 0; j < 3; j++){
+					printf("      rot[%d]: %d\n", j, pkt.samples[i].rot[j]);
+				}
+
+				printf("time_ticks: %d\n", pkt.samples[i].time_ticks);
+				printf("seq: %u\n", pkt.samples[i].seq);
+				printf("\n");
+			}
+
+		}else{
+			LOGE("unknown message type: %u", buffer[0]);
+		}
+	}
+
+	if(size < 0){
+		LOGE("error reading from device");
+	}
 }
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -84,8 +122,9 @@ static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t), const ch
 	}
 }
 
-static void dumpbin(const unsigned char* data, int length)
+static void dumpbin(const char* label, const unsigned char* data, int length)
 {
+	printf("%s:\n", label);
 	for(int i = 0; i < length; i++){
 		printf("%02x ", data[i]);
 		if((i % 16) == 15)
@@ -122,20 +161,35 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	int hret = 0;
 
-	unsigned char send_buffer2[64] = {0x04};
+#if 0
+	unsigned char send_buffer2[65] = /*{0x04, 0x01, 0xc7, 0x48, 0x00, 0x07, 0x02, 0xc7, 
+		0x48, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x00, 0x00};*/
+		{
+			0x04, 0x78, 0x29, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x88, 0x1c, 0x20,
+			0x01, 0x88, 0x1c, 0x20, 0x01, 0x7c, 0xf3, 0x18, 0x00, 0x6c, 0x4d, 0xdb, 0x0f, 0x70, 0xfb, 0xe2,
+			0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x12, 0x22, 0x01, 0x60, 0xfb, 0xe2, 0x00, 0x7c, 0xf3, 0x18,
+			0x00, 0x78, 0xfb, 0xe2, 0x00, 0xea, 0x6d, 0xcd, 0x0f, 0x60, 0xf3, 0x18, 0x00, 0x00, 0x00, 0x00
+		};
 	
 	hret = hid_send_feature_report(priv->handle, send_buffer2, sizeof(send_buffer2));
-	printf("set_feature_report: %d\n", hret);
+	printf("send_feature_report: %d\n", hret);
+#endif
 	
-	unsigned char send_buffer[65] = {0x04};
+	/*unsigned char send_buffer[65] = {0x04};
 	
 	hret = hid_get_feature_report(priv->handle, send_buffer, sizeof(send_buffer));
 	assert(hret != -1);
 	
 	printf("%d\n", hret);
 
-	dumpbin(send_buffer, sizeof(send_buffer));
+	dumpbin("buffer", send_buffer, sizeof(send_buffer));*/
 
+	//unsigned char sbuf3[65] = {0x21, 0x09, 0x04, 0x03, 0x00, 0x00, 0x40, 0x00};
+	//hid_write(priv->handle, sbuf3, sizeof(sbuf3));
+	
+	unsigned char sbuf3[65] = {0x00};
+	hret = hid_send_feature_report(priv->handle, sbuf3, sizeof(sbuf3));
+	printf("send_feature_report: %d\n", hret);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
