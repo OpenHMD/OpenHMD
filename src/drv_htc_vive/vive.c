@@ -9,6 +9,13 @@
 
 #define FEATURE_BUFFER_SIZE 256
 
+#define HTC_ID                   0x0bb4
+#define VIVE_HMD                 0x2c87
+#define VALVE_ID                 0x28de
+#define VIVE_WATCHMAN_DONGLE     0x2101
+#define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
+
+
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
@@ -92,7 +99,18 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
 static void close_device(ohmd_device* device)
 {
+	int hret = 0;
+	vive_priv* priv = (vive_priv*)device;
+
 	LOGD("closing HTC Vive device");
+
+	// turn the display off
+	hret = hid_send_feature_report(priv->handle, vive_magic_power_off1, sizeof(vive_magic_power_off1));
+	printf("power off magic 1: %d\n", hret);
+	
+	hret = hid_send_feature_report(priv->handle, vive_magic_power_off2, sizeof(vive_magic_power_off2));
+	printf("power off magic 2: %d\n", hret);
+
 	free(device);
 }
 
@@ -136,8 +154,11 @@ static void dumpbin(const char* label, const unsigned char* data, int length)
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	vive_priv* priv = ohmd_alloc(driver->ctx, sizeof(vive_priv));
+
 	if(!priv)
 		return NULL;
+
+	int hret = 0;
 	
 	priv->base.ctx = driver->ctx;
 
@@ -152,45 +173,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 	}
 
-	//for(int i = 0; i < 100; i++)
-	//	dump_indexed_string(priv->handle, i);
-	
 	dump_info_string(hid_get_manufacturer_string, "manufacturer", priv->handle);
 	dump_info_string(hid_get_product_string , "product", priv->handle);
 	dump_info_string(hid_get_serial_number_string, "serial number", priv->handle);
 
-	int hret = 0;
-
-#if 0
-	unsigned char send_buffer2[65] = /*{0x04, 0x01, 0xc7, 0x48, 0x00, 0x07, 0x02, 0xc7, 
-		0x48, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x00, 0x00};*/
-		{
-			0x04, 0x78, 0x29, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x88, 0x1c, 0x20,
-			0x01, 0x88, 0x1c, 0x20, 0x01, 0x7c, 0xf3, 0x18, 0x00, 0x6c, 0x4d, 0xdb, 0x0f, 0x70, 0xfb, 0xe2,
-			0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x12, 0x22, 0x01, 0x60, 0xfb, 0xe2, 0x00, 0x7c, 0xf3, 0x18,
-			0x00, 0x78, 0xfb, 0xe2, 0x00, 0xea, 0x6d, 0xcd, 0x0f, 0x60, 0xf3, 0x18, 0x00, 0x00, 0x00, 0x00
-		};
+	// turn the display on
+	hret = hid_send_feature_report(priv->handle, vive_magic_power_on, sizeof(vive_magic_power_on));
+	printf("power on magic: %d\n", hret);
 	
-	hret = hid_send_feature_report(priv->handle, send_buffer2, sizeof(send_buffer2));
-	printf("send_feature_report: %d\n", hret);
-#endif
-	
-	/*unsigned char send_buffer[65] = {0x04};
-	
-	hret = hid_get_feature_report(priv->handle, send_buffer, sizeof(send_buffer));
-	assert(hret != -1);
-	
-	printf("%d\n", hret);
-
-	dumpbin("buffer", send_buffer, sizeof(send_buffer));*/
-
-	//unsigned char sbuf3[65] = {0x21, 0x09, 0x04, 0x03, 0x00, 0x00, 0x40, 0x00};
-	//hid_write(priv->handle, sbuf3, sizeof(sbuf3));
-	
-	unsigned char sbuf3[65] = {0x00};
-	hret = hid_send_feature_report(priv->handle, sbuf3, sizeof(sbuf3));
-	printf("send_feature_report: %d\n", hret);
-
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
@@ -220,14 +210,6 @@ cleanup:
 
 	return NULL;
 }
-
-#define HTC_ID                   0x0bb4
-#define VIVE_HMD                 0x2c87
-
-#define VALVE_ID                 0x28de
-
-#define VIVE_WATCHMAN_DONGLE     0x2101
-#define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
