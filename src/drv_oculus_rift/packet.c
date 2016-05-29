@@ -128,6 +128,41 @@ bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buf
 	return true;
 }
 
+bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
+{
+	if(!(size == 64)){
+		LOGE("invalid packet size (expected 62 or 64 but got %d)", size);
+		return false;
+	}
+
+	SKIP_CMD;
+	msg->last_command_id = READ16;
+	msg->num_samples = READ8;
+	int nb_samples_since_start = READ16;
+	msg->temperature = READ16;
+	msg->timestamp = READ32;
+
+	int actual = OHMD_MIN(msg->num_samples, 2);
+	for(int i = 0; i < actual; i++){
+		decode_sample(buffer, msg->samples[i].accel);
+		buffer += 8;
+
+		decode_sample(buffer, msg->samples[i].gyro);
+		buffer += 8;
+	}
+
+	// Skip empty samples
+	buffer += (2 - actual) * 16;
+
+	for(int i = 0; i < 3; i++){
+		msg->mag[i] = READ16;
+	}
+
+	// TODO: positional tracking data and frame data
+
+	return true;
+}
+
 // TODO do we need to consider HMD vs sensor "centric" values
 void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec)
 {
