@@ -85,7 +85,13 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
-	if(!decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+	if (buffer[0] == RIFT_IRQ_SENSORS
+	  && !decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+		LOGE("couldn't decode tracker sensor message");
+	}
+
+	if (buffer[0] == RIFT_IRQ_SENSORS_DK2
+	  && !decode_tracker_sensor_msg_dk2(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
 
@@ -139,7 +145,7 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == 11) { //TODO: add to rift_irq_cmd enum
+		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == RIFT_IRQ_SENSORS_DK2) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
@@ -281,7 +287,7 @@ cleanup:
 }
 
 #define OCULUS_VR_INC_ID 0x2833
-#define RIFT_ID_COUNT 5
+#define RIFT_ID_COUNT 4
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
@@ -292,7 +298,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		0x0021 /* DK2 */,
 		0x2021 /* DK2 alternative id */,
 		0x0031, /* CV1 */
-		0x2031,
+		/* 0x2031, CV1 USB hub */
 	};
 
 	for(int i = 0; i < RIFT_ID_COUNT; i++){
