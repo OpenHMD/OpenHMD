@@ -18,7 +18,8 @@ typedef enum {
 	RIFT_CMD_SENSOR_CONFIG = 2,
 	RIFT_CMD_RANGE = 4,
 	RIFT_CMD_KEEP_ALIVE = 8,
-	RIFT_CMD_DISPLAY_INFO = 9
+	RIFT_CMD_DISPLAY_INFO = 9,
+	RIFT_CMD_ENABLE_COMPONENTS = 0x1d
 } rift_sensor_feature_cmd;
 
 typedef enum {
@@ -104,6 +105,7 @@ void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
 
 int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
 int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
+int encode_enable_components(unsigned char* buffer, bool display, bool audio);
 
 void dump_packet_sensor_range(const pkt_sensor_range* range);
 void dump_packet_sensor_config(const pkt_sensor_config* config);

@@ -239,6 +239,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// apply sensor config
 	set_coordinate_frame(priv, priv->coordinate_frame);
 
+	// Turn the screens on
+	// TODO: this should probably be done conditionnally for the CV1
+	size = encode_enable_components(buf, true, true);
+	send_feature_report(priv, buf, size);
+
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
 	size = encode_keep_alive(buf, &keep_alive);
