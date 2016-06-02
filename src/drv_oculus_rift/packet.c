@@ -189,6 +189,22 @@ int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
 	return 5; // keep alive packet size
 }
 
+int encode_enable_components(unsigned char* buffer, bool display, bool audio)
+{
+	uint8_t flags = 0;
+
+	WRITE8(RIFT_CMD_ENABLE_COMPONENTS);
+	WRITE16(0); // last command ID
+
+	if (display)
+		flags |= 1;
+	if (audio)
+		flags |= 2;
+	flags |= 4; // I don't know what it is. Wireless?
+	WRITE8(flags);
+	return 4;
+}
+
 void dump_packet_sensor_range(const pkt_sensor_range* range)
 {
 	(void)range;
