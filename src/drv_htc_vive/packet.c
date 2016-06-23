@@ -33,12 +33,12 @@ bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buf
 		for(int i = 0; i < 3; i++){
 			pkt->samples[j].acc[i] = read16(&buffer);
 		}
-		
+
 		// rotation
 		for(int i = 0; i < 3; i++){
 			pkt->samples[j].rot[i] = read16(&buffer);
 		}
-	
+
 		pkt->samples[j].time_ticks = read32(&buffer);
 		pkt->samples[j].seq = read8(&buffer);
 	}
