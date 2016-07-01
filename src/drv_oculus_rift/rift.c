@@ -196,8 +196,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Open the HID device
 	priv->handle = hid_open_path(desc->path);
 
-	if(!priv->handle)
+	if(!priv->handle) {
+    ohmd_set_error(driver->ctx, "Could not open HID device path %s. Check your rights.", desc->path);
 		goto cleanup;
+	}
 	
 	if(hid_set_nonblocking(priv->handle, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
