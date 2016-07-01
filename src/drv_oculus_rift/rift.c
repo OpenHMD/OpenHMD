@@ -185,6 +185,22 @@ static void close_device(ohmd_device* device)
 	free(priv);
 }
 
+static char* _hid_to_unix_path(char* path)
+{
+	const int len = 4;
+	char bus [len];
+	char dev [len];
+	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
+
+	sprintf (bus, "%.*s\n", len, path);
+	sprintf (dev, "%.*s\n", len, path + 5);
+
+	sprintf (result, "/dev/bus/usb/%03d/%03d",
+		(int)strtol(bus, NULL, 16),
+		(int)strtol(dev, NULL, 16));
+	return result;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	rift_priv* priv = ohmd_alloc(driver->ctx, sizeof(rift_priv));
@@ -196,8 +212,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Open the HID device
 	priv->handle = hid_open_path(desc->path);
 
-	if(!priv->handle)
+	if(!priv->handle) {
+		char* path = _hid_to_unix_path(desc->path);
+		ohmd_set_error(driver->ctx, "Could not open %s. "
+		                            "Check your rights.", path);
+		free(path);
 		goto cleanup;
+	}
 	
 	if(hid_set_nonblocking(priv->handle, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
