@@ -19,6 +19,13 @@ inline static int32_t read32(const unsigned char** buffer)
 	return ret;
 }
 
+void vec3f_from_vive_vec(const int32_t* smp, vec3f* out_vec)
+{
+	out_vec->x = (float)smp[0] * 0.0001f;
+	out_vec->y = (float)smp[1] * 0.0001f;
+	out_vec->z = (float)smp[2] * 0.0001f;
+}
+
 bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size)
 {
 	if(size != 52){

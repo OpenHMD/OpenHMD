@@ -12,7 +12,7 @@ typedef enum
 	VIVE_IRQ_SENSORS = 32,
 } vive_irq_cmd;
 
-typedef struct 
+typedef struct
 {
 	int16_t acc[3];
 	int16_t rot[3];

@@ -29,6 +29,7 @@ typedef struct {
 
 	hid_device* hmd_handle;
 	hid_device* imu_handle;
+	vec3f raw_accel, raw_gyro;
 } vive_priv;
 
 static void update_device(ohmd_device* device)
@@ -49,13 +50,15 @@ static void update_device(ohmd_device* device)
 			for(int i = 0; i < 3; i++){
 				printf("    sample[%d]:\n", i);
 
-				for(int j = 0; j < 3; j++){
-					printf("      acc[%d]: %d\n", j, pkt.samples[i].acc[j]);
-				}
+				vec3f_from_vive_vec(pkt.samples[i].acc, &priv->raw_accel);
+				printf("      acc[0]: %d\n", &priv->raw_accel.x);
+				printf("      acc[1]: %d\n", &priv->raw_accel.y);
+				printf("      acc[2]: %d\n", &priv->raw_accel.z);
 
-				for(int j = 0; j < 3; j++){
-					printf("      rot[%d]: %d\n", j, pkt.samples[i].rot[j]);
-				}
+				vec3f_from_vive_vec(pkt.samples[i].rot, &priv->raw_gyro);
+				printf("      gyro[0]: %d\n", &priv->raw_gyro.x);
+				printf("      gyro[1]: %d\n", &priv->raw_gyro.y);
+				printf("      gyro[2]: %d\n", &priv->raw_gyro.z);
 
 				printf("time_ticks: %d\n", pkt.samples[i].time_ticks);
 				printf("seq: %u\n", pkt.samples[i].seq);
