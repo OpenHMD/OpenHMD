@@ -158,10 +158,11 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 		device->active_device_idx = ctx->num_active_devices;
 		ctx->active_devices[ctx->num_active_devices++] = device;
 
+		ohmd_unlock_mutex(ctx->update_mutex);
+
 		if(device->settings.automatic_update)
 			ohmd_set_up_update_thread(ctx);
 
-		ohmd_unlock_mutex(ctx->update_mutex);
 		return device;
 	}
 
