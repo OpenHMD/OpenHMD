@@ -19,7 +19,7 @@ inline static int32_t read32(const unsigned char** buffer)
 	return ret;
 }
 
-void vec3f_from_vive_vec(const int32_t* smp, vec3f* out_vec)
+void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0] * 0.0001f;
 	out_vec->y = (float)smp[1] * 0.0001f;

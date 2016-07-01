@@ -51,14 +51,14 @@ static void update_device(ohmd_device* device)
 				printf("    sample[%d]:\n", i);
 
 				vec3f_from_vive_vec(pkt.samples[i].acc, &priv->raw_accel);
-				printf("      acc[0]: %d\n", &priv->raw_accel.x);
-				printf("      acc[1]: %d\n", &priv->raw_accel.y);
-				printf("      acc[2]: %d\n", &priv->raw_accel.z);
+				printf("      acc[0]: %f\n", priv->raw_accel.x);
+				printf("      acc[1]: %f\n", priv->raw_accel.y);
+				printf("      acc[2]: %f\n", priv->raw_accel.z);
 
 				vec3f_from_vive_vec(pkt.samples[i].rot, &priv->raw_gyro);
-				printf("      gyro[0]: %d\n", &priv->raw_gyro.x);
-				printf("      gyro[1]: %d\n", &priv->raw_gyro.y);
-				printf("      gyro[2]: %d\n", &priv->raw_gyro.z);
+				printf("      gyro[0]: %f\n", priv->raw_gyro.x);
+				printf("      gyro[1]: %f\n", priv->raw_gyro.y);
+				printf("      gyro[2]: %f\n", priv->raw_gyro.z);
 
 				printf("time_ticks: %d\n", pkt.samples[i].time_ticks);
 				printf("seq: %u\n", pkt.samples[i].seq);
