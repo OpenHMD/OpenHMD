@@ -16,6 +16,7 @@
 #define VIVE_WATCHMAN_DONGLE     0x2101
 #define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
 
+#define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
 
 #include <string.h>
 #include <wchar.h>
@@ -29,6 +30,7 @@ typedef struct {
 
 	hid_device* hmd_handle;
 	hid_device* imu_handle;
+	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
 } vive_priv;
 
@@ -63,6 +65,9 @@ static void update_device(ohmd_device* device)
 				printf("time_ticks: %d\n", pkt.samples[i].time_ticks);
 				printf("seq: %u\n", pkt.samples[i].seq);
 				printf("\n");
+
+				float dt = (pkt.samples[i].time_ticks * TICK_LEN);
+				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, 0);
 			}
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
