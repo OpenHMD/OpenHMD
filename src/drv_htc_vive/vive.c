@@ -67,7 +67,8 @@ static void update_device(ohmd_device* device)
 				printf("\n");
 
 				float dt = (pkt.samples[i].time_ticks * TICK_LEN);
-				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, 0);
+				vec3f mag = {0.0f,0.0f,0.0f};
+				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 			}
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
