@@ -85,8 +85,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
 	switch(type){
 	case OHMD_ROTATION_QUAT:
-		out[0] = out[1] = out[2] = 0;
-		out[3] = 1.0f;
+		*(quatf*)out = priv->sensor_fusion.orient;
 		break;
 
 	case OHMD_POSITION_VECTOR:
