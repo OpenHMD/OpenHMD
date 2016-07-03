@@ -2,7 +2,9 @@
 
 inline static uint8_t read8(const unsigned char** buffer)
 {
-	return *(*buffer++);
+	uint8_t ret = **buffer;
+	*buffer += 1;
+	return ret;
 }
 
 inline static int16_t read16(const unsigned char** buffer)
