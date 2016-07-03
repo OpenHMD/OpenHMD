@@ -67,7 +67,8 @@ static void update_device(ohmd_device* device)
 				printf("\n");
 
 				float dt = (pkt.samples[i].time_ticks * TICK_LEN);
-				vec3f mag = {0.0f,0.0f,0.0f};
+				vec3f mag = {{0.0f,0.0f,0.0f}};
+
 				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 			}
 		}else{
@@ -263,6 +264,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.update = update_device;
 	priv->base.close = close_device;
 	priv->base.getf = getf;
+
+	ofusion_init(&priv->sensor_fusion);
 
 	return (ohmd_device*)priv;
 
