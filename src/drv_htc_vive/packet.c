@@ -53,17 +53,3 @@ bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buf
 
 	return true;
 }
-
-bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, int size)
-{
-	if(size != 64){
-		LOGE("invalid vive sensor packet size (expected 64 but got %d)", size);
-		return false;
-	}
-
-	pkt->report_id = read8(&buffer);
-	pkt->length = read8(&buffer);
-	pkt->config_data = read8(&buffer);
-
-	return true;
-}
