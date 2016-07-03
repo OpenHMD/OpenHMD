@@ -21,9 +21,10 @@ inline static int32_t read32(const unsigned char** buffer)
 
 void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec)
 {
-	out_vec->x = (float)smp[0] * 0.0001f;
-	out_vec->y = (float)smp[1] * 0.0001f;
-	out_vec->z = (float)smp[2] * 0.0001f;
+	float gravity = 9.81;
+	out_vec->x = (float)smp[0] * (4.0*gravity/32768.0);
+	out_vec->y = (float)smp[1] * (4.0*gravity/32768.0);
+	out_vec->z = (float)smp[2] * (4.0*gravity/32768.0);
 }
 
 bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size)
@@ -49,6 +50,20 @@ bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buf
 		pkt->samples[j].time_ticks = read32(&buffer);
 		pkt->samples[j].seq = read8(&buffer);
 	}
+
+	return true;
+}
+
+bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, int size)
+{
+	if(size != 64){
+		LOGE("invalid vive sensor packet size (expected 64 but got %d)", size);
+		return false;
+	}
+
+	pkt->report_id = read8(&buffer);
+	pkt->length = read8(&buffer);
+	pkt->config_data = read8(&buffer);
 
 	return true;
 }
