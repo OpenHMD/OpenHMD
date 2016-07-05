@@ -16,7 +16,7 @@ typedef struct
 {
 	int16_t acc[3];
 	int16_t rot[3];
-	int32_t	time_ticks;
+	uint32_t time_ticks;
 	uint8_t seq;
 } vive_sensor_sample;
 

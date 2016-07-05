@@ -14,9 +14,9 @@ inline static int16_t read16(const unsigned char** buffer)
 	return ret;
 }
 
-inline static int32_t read32(const unsigned char** buffer)
+inline static uint32_t read32(const unsigned char** buffer)
 {
-	int32_t ret = **buffer | (*(*buffer + 1) << 8) | (*(*buffer + 1) << 16) | (*(*buffer + 1) << 24);
+	uint32_t ret = **buffer | (*(*buffer + 1) << 8) | (*(*buffer + 2) << 16) | (*(*buffer + 3) << 24);
 	*buffer += 4;
 	return ret;
 }

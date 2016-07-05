@@ -62,7 +62,7 @@ static void update_device(ohmd_device* device)
 				printf("      gyro[1]: %f\n", priv->raw_gyro.y);
 				printf("      gyro[2]: %f\n", priv->raw_gyro.z);
 
-				printf("time_ticks: %d\n", pkt.samples[i].time_ticks);
+				printf("time_ticks: %u\n", pkt.samples[i].time_ticks);
 				printf("seq: %u\n", pkt.samples[i].seq);
 				printf("\n");
 
