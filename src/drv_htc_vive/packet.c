@@ -21,12 +21,20 @@ inline static uint32_t read32(const unsigned char** buffer)
 	return ret;
 }
 
-void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec)
+void vec3f_from_vive_vec_accel(const int16_t* smp, vec3f* out_vec)
 {
 	float gravity = 9.81;
 	out_vec->x = (float)smp[0] * (4.0*gravity/32768.0);
-	out_vec->y = (float)smp[1] * (4.0*gravity/32768.0);
+	out_vec->y = (float)smp[1] * (4.0*gravity/32768.0) * -1;
 	out_vec->z = (float)smp[2] * (4.0*gravity/32768.0);
+}
+
+void vec3f_from_vive_vec_gyro(const int16_t* smp, vec3f* out_vec)
+{
+	float scaler = 8.0 / 32768.0;
+	out_vec->x = (float)smp[0] * scaler;
+	out_vec->y = (float)smp[1] * scaler * -1;
+	out_vec->z = (float)smp[2] * scaler;
 }
 
 bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size)

@@ -32,6 +32,8 @@ typedef struct {
 	hid_device* imu_handle;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
+	uint32_t previous_time_ticks;
+	uint8_t previous_seq;
 } vive_priv;
 
 static void update_device(ohmd_device* device)
@@ -49,15 +51,24 @@ static void update_device(ohmd_device* device)
 
 			printf("vive sensor sample:\n");
 			printf("  report_id: %u\n", pkt.report_id);
-			for(int i = 0; i < 3; i++){
+			for(int i = 0; i < 1; i++){
+				if(priv->previous_time_ticks == NULL) {
+					priv->previous_time_ticks = pkt.samples[i].time_ticks;
+					priv->previous_seq = pkt.samples[i].seq;
+					continue;
+				}
+
+				if (pkt.samples[i].seq == priv->previous_seq) {
+					continue;
+				}
 				printf("    sample[%d]:\n", i);
 
-				vec3f_from_vive_vec(pkt.samples[i].acc, &priv->raw_accel);
+				vec3f_from_vive_vec_accel(pkt.samples[i].acc, &priv->raw_accel);
 				printf("      acc[0]: %f\n", priv->raw_accel.x);
 				printf("      acc[1]: %f\n", priv->raw_accel.y);
 				printf("      acc[2]: %f\n", priv->raw_accel.z);
 
-				vec3f_from_vive_vec(pkt.samples[i].rot, &priv->raw_gyro);
+				vec3f_from_vive_vec_gyro(pkt.samples[i].rot, &priv->raw_gyro);
 				printf("      gyro[0]: %f\n", priv->raw_gyro.x);
 				printf("      gyro[1]: %f\n", priv->raw_gyro.y);
 				printf("      gyro[2]: %f\n", priv->raw_gyro.z);
@@ -66,10 +77,15 @@ static void update_device(ohmd_device* device)
 				printf("seq: %u\n", pkt.samples[i].seq);
 				printf("\n");
 
-				float dt = (pkt.samples[i].time_ticks * TICK_LEN);
+				// TODO: Handle wrapping of time_ticks
+				float tick_delta = pkt.samples[1].time_ticks - priv->previous_time_ticks;
+				float dt = (1/48000000.0) * (tick_delta * 3);
 				vec3f mag = {{0.0f,0.0f,0.0f}};
 
 				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
+
+				priv->previous_time_ticks = pkt.samples[i].time_ticks;
+				priv->previous_seq = pkt.samples[i].seq;
 			}
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
