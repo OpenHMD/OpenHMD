@@ -32,8 +32,7 @@ typedef struct {
 	hid_device* imu_handle;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
-	uint32_t previous_time_ticks;
-	uint8_t previous_seq;
+	uint32_t previous_ticks;
 } vive_priv;
 
 static void update_device(ohmd_device* device)
@@ -51,41 +50,56 @@ static void update_device(ohmd_device* device)
 
 			printf("vive sensor sample:\n");
 			printf("  report_id: %u\n", pkt.report_id);
-			for(int i = 0; i < 1; i++){
-				if(priv->previous_time_ticks == NULL) {
-					priv->previous_time_ticks = pkt.samples[i].time_ticks;
-					priv->previous_seq = pkt.samples[i].seq;
+
+			uint8_t seq[3] = {
+				pkt.samples[0].seq,
+				pkt.samples[1].seq,
+				pkt.samples[2].seq,
+			};
+			int lowest_index
+				= (seq[0] == (uint8_t)(seq[1] + 2) ) ? 1
+				: (seq[1] == (uint8_t)(seq[2] + 2) ) ? 2
+				:                                      0
+				;
+
+			for (int offset = 0; offset < 3; offset++) {
+				int index = (lowest_index + offset) % 3;
+
+				if (priv->previous_ticks == NULL) {
+					priv->previous_ticks = pkt.samples[index].time_ticks;
 					continue;
 				}
 
-				if (pkt.samples[i].seq == priv->previous_seq) {
-					continue;
+				uint32_t t1, t2;
+				t1 = pkt.samples[index].time_ticks;
+				t2 = priv->previous_ticks;
+
+				if (t1 != t2 && (
+					(t1 < t2 && t2 - t1 > 0xFFFFFFFF >> 2) ||
+					(t1 > t2 && t1 - t2 < 0xFFFFFFFF >> 2)
+				)) {
+					printf("    sample[%d]:\n", index);
+
+					vec3f_from_vive_vec_accel(pkt.samples[index].acc, &priv->raw_accel);
+					printf("      acc[0]: %f\n", priv->raw_accel.x);
+					printf("      acc[1]: %f\n", priv->raw_accel.y);
+					printf("      acc[2]: %f\n", priv->raw_accel.z);
+
+					vec3f_from_vive_vec_gyro(pkt.samples[index].rot, &priv->raw_gyro);
+					printf("      gyro[0]: %f\n", priv->raw_gyro.x);
+					printf("      gyro[1]: %f\n", priv->raw_gyro.y);
+					printf("      gyro[2]: %f\n", priv->raw_gyro.z);
+
+					printf("time_ticks: %u\n", pkt.samples[index].time_ticks);
+					printf("seq: %u\n", pkt.samples[index].seq);
+					printf("\n");
+
+					float dt = (1/48000000.0) * (t1 - t2);
+					vec3f mag = {{0.0f,0.0f,0.0f}};
+					ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
+
+					priv->previous_ticks = pkt.samples[index].time_ticks;
 				}
-				printf("    sample[%d]:\n", i);
-
-				vec3f_from_vive_vec_accel(pkt.samples[i].acc, &priv->raw_accel);
-				printf("      acc[0]: %f\n", priv->raw_accel.x);
-				printf("      acc[1]: %f\n", priv->raw_accel.y);
-				printf("      acc[2]: %f\n", priv->raw_accel.z);
-
-				vec3f_from_vive_vec_gyro(pkt.samples[i].rot, &priv->raw_gyro);
-				printf("      gyro[0]: %f\n", priv->raw_gyro.x);
-				printf("      gyro[1]: %f\n", priv->raw_gyro.y);
-				printf("      gyro[2]: %f\n", priv->raw_gyro.z);
-
-				printf("time_ticks: %u\n", pkt.samples[i].time_ticks);
-				printf("seq: %u\n", pkt.samples[i].seq);
-				printf("\n");
-
-				// TODO: Handle wrapping of time_ticks
-				float tick_delta = pkt.samples[1].time_ticks - priv->previous_time_ticks;
-				float dt = (1/48000000.0) * (tick_delta * 3);
-				vec3f mag = {{0.0f,0.0f,0.0f}};
-
-				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
-
-				priv->previous_time_ticks = pkt.samples[i].time_ticks;
-				priv->previous_seq = pkt.samples[i].seq;
 			}
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
