@@ -296,6 +296,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.getf = getf;
 
 	ofusion_init(&priv->sensor_fusion);
+	priv->sensor_fusion.flags = 0;
 
 	return (ohmd_device*)priv;
 
