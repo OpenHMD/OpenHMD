@@ -16,14 +16,18 @@
 #define VIVE_WATCHMAN_DONGLE     0x2101
 #define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
 
-#define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
+#define VIVE_TIME_DIV 48000000.0f
 
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
 #include <assert.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "vive.h"
+#include "openhmdi.h"
 
 typedef struct {
 	ohmd_device base;
@@ -32,8 +36,57 @@ typedef struct {
 	hid_device* imu_handle;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
-	uint32_t previous_ticks;
+	uint32_t last_ticks;
+	uint8_t last_seq;
 } vive_priv;
+
+void vec3f_from_vive_vec_accel(const int16_t* smp, vec3f* out_vec)
+{
+	float gravity = 9.81f;
+	float scaler = 4.0f * gravity / 32768.0f;
+
+	out_vec->x = (float)smp[0] * scaler;
+	out_vec->y = (float)smp[1] * scaler * -1;
+	out_vec->z = (float)smp[2] * scaler * -1;
+}
+
+void vec3f_from_vive_vec_gyro(const int16_t* smp, vec3f* out_vec)
+{
+	float scaler = 8.7f / 32768.0f;
+	out_vec->x = (float)smp[0] * scaler;
+	out_vec->y = (float)smp[1] * scaler * -1;
+	out_vec->z = (float)smp[2] * scaler * -1;
+}
+
+vive_sensor_sample* get_next_sample(vive_sensor_packet* pkt, int last_seq)
+{
+	int diff[3];
+
+	for(int i = 0; i < 3; i++)
+	{
+		diff[i] = (int)pkt->samples[i].seq - last_seq;
+
+		if(diff[i] < -128){
+			diff[i] += 256;
+		}
+	}
+
+	int closest_diff = INT_MAX;
+	int closest_idx = -1;
+
+	for(int i = 0; i < 3; i++)
+	{
+		if(diff[i] < closest_diff && diff[i] > 0 && diff[i] < 128){
+			closest_diff = diff[i];
+			closest_idx = i;
+		}
+	}
+	
+	if(closest_idx != -1)
+		return pkt->samples + closest_idx; 
+
+	return NULL;
+}
 
 static void update_device(ohmd_device* device)
 {
@@ -42,64 +95,34 @@ static void update_device(ohmd_device* device)
 	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
-	// lighthouse update
 	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
 		if(buffer[0] == VIVE_IRQ_SENSORS){
 			vive_sensor_packet pkt;
 			vive_decode_sensor_packet(&pkt, buffer, size);
 
-			printf("vive sensor sample:\n");
-			printf("  report_id: %u\n", pkt.report_id);
+			vive_sensor_sample* smp = NULL;
 
-			uint8_t seq[3] = {
-				pkt.samples[0].seq,
-				pkt.samples[1].seq,
-				pkt.samples[2].seq,
-			};
-			int lowest_index
-				= (seq[0] == (uint8_t)(seq[1] + 2) ) ? 1
-				: (seq[1] == (uint8_t)(seq[2] + 2) ) ? 2
-				:                                      0
-				;
-
-			for (int offset = 0; offset < 3; offset++) {
-				int index = (lowest_index + offset) % 3;
-
-				if (priv->previous_ticks == NULL) {
-					priv->previous_ticks = pkt.samples[index].time_ticks;
-					continue;
-				}
-
+			while((smp = get_next_sample(&pkt, priv->last_seq)) != NULL)
+			{
+				if(priv->last_ticks == 0)
+					priv->last_ticks = smp->time_ticks;
+				
 				uint32_t t1, t2;
-				t1 = pkt.samples[index].time_ticks;
-				t2 = priv->previous_ticks;
+				t1 = smp->time_ticks;
+				t2 = priv->last_ticks;
+					
+				float dt = (t1 - t2) / VIVE_TIME_DIV;
 
-				if (t1 != t2 && (
-					(t1 < t2 && t2 - t1 > 0xFFFFFFFF >> 2) ||
-					(t1 > t2 && t1 - t2 < 0xFFFFFFFF >> 2)
-				)) {
-					printf("    sample[%d]:\n", index);
+				priv->last_ticks = smp->time_ticks;
 
-					vec3f_from_vive_vec_accel(pkt.samples[index].acc, &priv->raw_accel);
-					printf("      acc[0]: %f\n", priv->raw_accel.x);
-					printf("      acc[1]: %f\n", priv->raw_accel.y);
-					printf("      acc[2]: %f\n", priv->raw_accel.z);
+				vec3f_from_vive_vec_accel(smp->acc, &priv->raw_accel);
+				vec3f_from_vive_vec_gyro(smp->rot, &priv->raw_gyro);
 
-					vec3f_from_vive_vec_gyro(pkt.samples[index].rot, &priv->raw_gyro);
-					printf("      gyro[0]: %f\n", priv->raw_gyro.x);
-					printf("      gyro[1]: %f\n", priv->raw_gyro.y);
-					printf("      gyro[2]: %f\n", priv->raw_gyro.z);
+				vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-					printf("time_ticks: %u\n", pkt.samples[index].time_ticks);
-					printf("seq: %u\n", pkt.samples[index].seq);
-					printf("\n");
-
-					float dt = (1/48000000.0) * (t1 - t2);
-					vec3f mag = {{0.0f,0.0f,0.0f}};
-					ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
-
-					priv->previous_ticks = pkt.samples[index].time_ticks;
-				}
+				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
+				
+				priv->last_seq = smp->seq;
 			}
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
@@ -158,6 +181,7 @@ static void close_device(ohmd_device* device)
 	free(device);
 }
 
+#if 0
 static void dump_indexed_string(hid_device* device, int index)
 {
 	wchar_t wbuffer[512] = {0};
@@ -170,6 +194,7 @@ static void dump_indexed_string(hid_device* device, int index)
 		printf("indexed string 0x%02x: '%s'\n", index, buffer);
 	}
 }
+#endif
 
 static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t), const char* what, hid_device* device)
 {
@@ -184,6 +209,7 @@ static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t), const ch
 	}
 }
 
+#if 0
 static void dumpbin(const char* label, const unsigned char* data, int length)
 {
 	printf("%s:\n", label);
@@ -194,6 +220,7 @@ static void dumpbin(const char* label, const unsigned char* data, int length)
 	}
 	printf("\n");
 }
+#endif
 
 static hid_device* open_device_idx(int manufacturer, int product, int iface, int iface_tot, int device_index)
 {
@@ -296,7 +323,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.getf = getf;
 
 	ofusion_init(&priv->sensor_fusion);
-	priv->sensor_fusion.flags = 0;
 
 	return (ohmd_device*)priv;
 
