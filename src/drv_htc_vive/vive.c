@@ -68,8 +68,10 @@ static bool process_error(vive_priv* priv)
 	
 	ofq_add(&priv->gyro_q, &priv->raw_gyro); 
 
-	if(priv->gyro_q.at >= priv->gyro_q.size - 1)
+	if(priv->gyro_q.at >= priv->gyro_q.size - 1){
 		ofq_get_mean(&priv->gyro_q, &priv->gyro_error);
+		printf("gyro error: %f, %f, %f\n", priv->gyro_error.x, priv->gyro_error.y, priv->gyro_error.z);
+	}
 
 	return false;
 }
@@ -135,7 +137,7 @@ static void update_device(ohmd_device* device)
 				vec3f_from_vive_vec_gyro(smp->rot, &priv->raw_gyro);
 
 				if(process_error(priv)){
-					vec3f mag = {{0.0f,0.0f,0.0f}};
+					vec3f mag = {{0.0f, 0.0f, 0.0f}};
 					vec3f gyro;
 					ovec3f_subtract(&priv->raw_gyro, &priv->gyro_error, &gyro);
 
