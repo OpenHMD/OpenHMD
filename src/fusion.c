@@ -25,11 +25,6 @@ void ofusion_init(fusion* me)
 
 void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* accel, const vec3f* mag)
 {
-	printf("flags: %d\n", me->flags);
-	printf("dt: %f\n", dt);
-	printf("raw accel: %f %f %f\n", accel->x, accel->y, accel->z);
-	printf("raw ang_vel:  %f %f %f\n", ang_vel->x, ang_vel->y, ang_vel->z);
-
 	me->ang_vel = *ang_vel;
 	me->accel = *accel;
 	me->raw_mag = *mag;

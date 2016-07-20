@@ -38,6 +38,9 @@ typedef struct {
 	vec3f raw_accel, raw_gyro;
 	uint32_t last_ticks;
 	uint8_t last_seq;
+	
+	vec3f gyro_error;
+	filter_queue gyro_q;
 } vive_priv;
 
 void vec3f_from_vive_vec_accel(const int16_t* smp, vec3f* out_vec)
@@ -56,6 +59,19 @@ void vec3f_from_vive_vec_gyro(const int16_t* smp, vec3f* out_vec)
 	out_vec->x = (float)smp[0] * scaler;
 	out_vec->y = (float)smp[1] * scaler * -1;
 	out_vec->z = (float)smp[2] * scaler * -1;
+}
+
+static bool process_error(vive_priv* priv)
+{
+	if(priv->gyro_q.at >= priv->gyro_q.size - 1)
+		return true;
+	
+	ofq_add(&priv->gyro_q, &priv->raw_gyro); 
+
+	if(priv->gyro_q.at >= priv->gyro_q.size - 1)
+		ofq_get_mean(&priv->gyro_q, &priv->gyro_error);
+
+	return false;
 }
 
 vive_sensor_sample* get_next_sample(vive_sensor_packet* pkt, int last_seq)
@@ -118,9 +134,13 @@ static void update_device(ohmd_device* device)
 				vec3f_from_vive_vec_accel(smp->acc, &priv->raw_accel);
 				vec3f_from_vive_vec_gyro(smp->rot, &priv->raw_gyro);
 
-				vec3f mag = {{0.0f, 0.0f, 0.0f}};
+				if(process_error(priv)){
+					vec3f mag = {{0.0f,0.0f,0.0f}};
+					vec3f gyro;
+					ovec3f_subtract(&priv->raw_gyro, &priv->gyro_error, &gyro);
 
-				ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
+					ofusion_update(&priv->sensor_fusion, dt, &gyro, &priv->raw_accel, &mag);
+				}
 				
 				priv->last_seq = smp->seq;
 			}
@@ -323,6 +343,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.getf = getf;
 
 	ofusion_init(&priv->sensor_fusion);
+	
+	ofq_init(&priv->gyro_q, 128);
 
 	return (ohmd_device*)priv;
 
