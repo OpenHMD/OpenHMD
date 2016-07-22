@@ -27,6 +27,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
 #endif
 
+#if DRIVER_SECRET_HMD_ONE
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_secret_hmd_one_drv(ctx);
+#endif
+
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
@@ -68,7 +72,7 @@ void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
 		ohmd_device* dev = ctx->active_devices[i];
 		if(!dev->settings.automatic_update && dev->update)
 			dev->update(dev);
-	
+
 		ohmd_lock_mutex(ctx->update_mutex);
 		dev->getf(dev, OHMD_POSITION_VECTOR, (float*)&dev->position);
 		dev->getf(dev, OHMD_ROTATION_QUAT, (float*)&dev->rotation);
@@ -111,7 +115,7 @@ const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 static unsigned int ohmd_update_thread(void* arg)
 {
 	ohmd_context* ctx = (ohmd_context*)arg;
-	
+
 	while(!ctx->update_request_quit)
 	{
 		ohmd_lock_mutex(ctx->update_mutex);
@@ -120,7 +124,7 @@ static unsigned int ohmd_update_thread(void* arg)
 			if(ctx->active_devices[i]->settings.automatic_update && ctx->active_devices[i]->update)
 				ctx->active_devices[i]->update(ctx->active_devices[i]);
 		}
-		
+
 		ohmd_unlock_mutex(ctx->update_mutex);
 
 		ohmd_sleep(AUTOMATIC_UPDATE_SLEEP);
@@ -197,7 +201,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->active_device_idx--;
-	
+
 	ohmd_unlock_mutex(device->ctx->update_mutex);
 
 	return OHMD_S_OK;

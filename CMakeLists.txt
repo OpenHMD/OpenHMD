@@ -26,6 +26,7 @@ set(openhmd_source_files
 )
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
+OPTION(OPENHMD_DRIVER_SECRET_HMD_ONE "Secret HMD 1 driver" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -40,6 +41,18 @@ if(OPENHMD_DRIVER_OCULUS_RIFT)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_OCULUS_RIFT)
+
+if(OPENHMD_DRIVER_OCULUS_RIFT)
+	set(openhmd_source_files ${openhmd_source_files} 
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_secret_hmd_one/secret_hmd_one.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_secret_hmd_one/packet.c
+	)
+	add_definitions(-DDRIVER_SECRET_HMD_ONE)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_SECRET_HMD_ONE)
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files} 
