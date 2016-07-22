@@ -40,15 +40,6 @@ AC_ARG_ENABLE([driver-oculus-rift],
 
 AM_CONDITIONAL([BUILD_DRIVER_OCULUS_RIFT], [test "x$driver_oculus_rift_enabled" != "xno"])
 
-# Secret HMD One Driver
-AC_ARG_ENABLE([driver-secret-hmd-one],
-        [AS_HELP_STRING([--disable-driver-secret-hmd-one],
-                [disable building of secret-hmd-one driver [default=yes]])],
-        [driver_secret_hmd_one_enabled=$enableval],
-        [driver_secret_hmd_one_enabled='yes'])
-
-AM_CONDITIONAL([BUILD_DRIVER_SECRET_HMD_ONE], [test "x$driver_secret_hmd_one_enabled" != "xno"])
-
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -69,10 +60,6 @@ AM_CONDITIONAL([BUILD_DRIVER_ANDROID], [test "x$driver_android_enabled" != "xno"
 
 # Libs required by Oculus Rift Driver
 AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
-	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
-
-# Libs required by secret-hmd-one Driver
-AS_IF([test "x$driver_secret_hmd_one_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?

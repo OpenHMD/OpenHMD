@@ -25,17 +25,6 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
-if BUILD_DRIVER_SECRET_HMD_ONE
-
-libopenhmd_la_SOURCES += \
-	drv_secret_hmd_one/secret_hmd_one.c \
-	drv_secret_hmd_one/packet.c
-
-libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_SECRET_HMD_ONE
-libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
-
-endif
-
 if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \
