@@ -327,7 +327,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties TODO: Get from device
-	priv->base.properties.hsize = 0.122400f;
+	priv->base.properties.hsize = 0.132400f;
 	priv->base.properties.vsize = 0.068200f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
