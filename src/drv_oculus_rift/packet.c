@@ -138,7 +138,7 @@ bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char*
 	SKIP_CMD;
 	msg->last_command_id = READ16;
 	msg->num_samples = READ8;
-	int nb_samples_since_start = READ16;
+	READ16; // unused: nb_samples_since_start
 	msg->temperature = READ16;
 	msg->timestamp = READ32;
 
