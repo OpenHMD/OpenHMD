@@ -9,6 +9,7 @@
 
 typedef enum
 {
+	VIVE_CONFIG_DATA = 17,
 	VIVE_IRQ_SENSORS = 32,
 } vive_irq_cmd;
 
@@ -26,7 +27,15 @@ typedef struct
 	vive_sensor_sample samples[3];
 } vive_sensor_packet;
 
+typedef struct
+{
+	uint8_t report_id;
+	uint8_t length;
+	uint8_t config_data;
+} vive_config_packet;
+
 void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec);
 bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size);
+bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, int size);
 
 #endif

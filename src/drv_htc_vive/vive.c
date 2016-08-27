@@ -38,7 +38,7 @@ typedef struct {
 	vec3f raw_accel, raw_gyro;
 	uint32_t last_ticks;
 	uint8_t last_seq;
-	
+
 	vec3f gyro_error;
 	filter_queue gyro_q;
 } vive_priv;
@@ -65,8 +65,8 @@ static bool process_error(vive_priv* priv)
 {
 	if(priv->gyro_q.at >= priv->gyro_q.size - 1)
 		return true;
-	
-	ofq_add(&priv->gyro_q, &priv->raw_gyro); 
+
+	ofq_add(&priv->gyro_q, &priv->raw_gyro);
 
 	if(priv->gyro_q.at >= priv->gyro_q.size - 1){
 		ofq_get_mean(&priv->gyro_q, &priv->gyro_error);
@@ -99,9 +99,9 @@ vive_sensor_sample* get_next_sample(vive_sensor_packet* pkt, int last_seq)
 			closest_idx = i;
 		}
 	}
-	
+
 	if(closest_idx != -1)
-		return pkt->samples + closest_idx; 
+		return pkt->samples + closest_idx;
 
 	return NULL;
 }
@@ -124,11 +124,11 @@ static void update_device(ohmd_device* device)
 			{
 				if(priv->last_ticks == 0)
 					priv->last_ticks = smp->time_ticks;
-				
+
 				uint32_t t1, t2;
 				t1 = smp->time_ticks;
 				t2 = priv->last_ticks;
-					
+
 				float dt = (t1 - t2) / VIVE_TIME_DIV;
 
 				priv->last_ticks = smp->time_ticks;
@@ -143,7 +143,7 @@ static void update_device(ohmd_device* device)
 
 					ofusion_update(&priv->sensor_fusion, dt, &gyro, &priv->raw_accel, &mag);
 				}
-				
+
 				priv->last_seq = smp->seq;
 			}
 		}else{
@@ -327,8 +327,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties TODO: Get from device
-	priv->base.properties.hsize = 0.122400f;
-	priv->base.properties.vsize = 0.068200f;
+	priv->base.properties.hsize = 0.122822f;
+	priv->base.properties.vsize = 0.068234f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
 	priv->base.properties.lens_sep = 0.063500;
@@ -345,7 +345,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.getf = getf;
 
 	ofusion_init(&priv->sensor_fusion);
-	
+
 	ofq_init(&priv->gyro_q, 128);
 
 	return (ohmd_device*)priv;

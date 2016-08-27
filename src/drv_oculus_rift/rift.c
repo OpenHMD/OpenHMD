@@ -198,14 +198,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	if(!priv->handle)
 		goto cleanup;
-	
+
 	if(hid_set_nonblocking(priv->handle, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
 	}
 
 	unsigned char buf[FEATURE_BUFFER_SIZE];
-	
+
 	int size;
 
 	// Read and decode the sensor range
@@ -288,7 +288,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	// enumerate HID devices and add any Rifts found to the device list
 
 	int ids[RIFT_ID_COUNT] = {
-		0x0001 /* DK1 */, 
+		0x0001 /* DK1 */,
 		0x0021 /* DK2 */,
 		0x2021 /* DK2 alternative id */,
 	};
@@ -306,7 +306,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->driver, "OpenHMD Rift Driver");
 			strcpy(desc->vendor, "Oculus VR, Inc.");
 			strcpy(desc->product, "Rift (Devkit)");
-			
+
 			desc->revision = i;
 
 			strcpy(desc->path, cur_dev->path);
