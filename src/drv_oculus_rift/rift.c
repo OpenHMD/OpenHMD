@@ -58,7 +58,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	// set the RIFT_SCF_SENSOR_COORDINATES in the sensor config to match whether coordframe is hmd or sensor
 	SETFLAG(priv->sensor_config.flags, RIFT_SCF_SENSOR_COORDINATES, coordframe == RIFT_CF_SENSOR);
 
-	// encode send the new config to the Rift 
+	// encode send the new config to the Rift
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 	int size = encode_sensor_config(buf, &priv->sensor_config);
 	if(send_feature_report(priv, buf, size) == -1){
@@ -187,13 +187,12 @@ static void close_device(ohmd_device* device)
 
 static char* _hid_to_unix_path(char* path)
 {
-	const int len = 4;
-	char bus [len];
-	char dev [len];
+	char bus [4];
+	char dev [4];
 	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
 
-	sprintf (bus, "%.*s\n", len, path);
-	sprintf (dev, "%.*s\n", len, path + 5);
+	sprintf (bus, "%.*s\n", 4, path);
+	sprintf (dev, "%.*s\n", 4, path + 5);
 
 	sprintf (result, "/dev/bus/usb/%03d/%03d",
 		(int)strtol(bus, NULL, 16),
@@ -219,14 +218,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		free(path);
 		goto cleanup;
 	}
-	
+
 	if(hid_set_nonblocking(priv->handle, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
 	}
 
 	unsigned char buf[FEATURE_BUFFER_SIZE];
-	
+
 	int size;
 
 	// Read and decode the sensor range
@@ -309,7 +308,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	// enumerate HID devices and add any Rifts found to the device list
 
 	int ids[RIFT_ID_COUNT] = {
-		0x0001 /* DK1 */, 
+		0x0001 /* DK1 */,
 		0x0021 /* DK2 */,
 		0x2021 /* DK2 alternative id */,
 	};
@@ -327,7 +326,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->driver, "OpenHMD Rift Driver");
 			strcpy(desc->vendor, "Oculus VR, Inc.");
 			strcpy(desc->product, "Rift (Devkit)");
-			
+
 			desc->revision = i;
 
 			strcpy(desc->path, cur_dev->path);
