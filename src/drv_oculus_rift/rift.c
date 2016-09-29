@@ -34,6 +34,19 @@ typedef struct {
 	vec3f raw_mag, raw_accel, raw_gyro;
 } rift_priv;
 
+typedef enum {
+	REV_DK1,
+	REV_DK2,
+	REV_CV1
+} rift_revision;
+
+typedef struct {
+	const char* name;
+	int id;
+	int iface;
+	rift_revision rev;
+} rift_devices;
+
 static rift_priv* rift_priv_get(ohmd_device* device)
 {
 	return (rift_priv*)device;
@@ -240,8 +253,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	set_coordinate_frame(priv, priv->coordinate_frame);
 
 	// Turn the screens on
-	// TODO: use something more robust than desc->revision
-	if (desc->revision >= 3)
+	if (desc->revision == REV_CV1)
 	{
 		size = encode_enable_components(buf, true, true);
 		send_feature_report(priv, buf, size);
@@ -301,33 +313,34 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
 	// enumerate HID devices and add any Rifts found to the device list
 
-	int ids[RIFT_ID_COUNT] = {
-		0x0001 /* DK1 */,
-		0x0021 /* DK2 */,
-		0x2021 /* DK2 alternative id */,
-		0x0031, /* CV1 */
-		/* 0x2031, CV1 USB hub */
+	rift_devices rd[RIFT_ID_COUNT] = {
+		{ "Rift (DK1)", 0x0001,	-1, REV_DK1 },
+		{ "Rift (DK2)", 0x0021,	-1, REV_DK2 },
+		{ "Rift (DK2)", 0x2021,	-1, REV_DK2 },
+		{ "Rift (CV1)", 0x0031,	 0, REV_CV1 },
 	};
 
 	for(int i = 0; i < RIFT_ID_COUNT; i++){
-		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, ids[i]);
+		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, rd[i].id);
 		struct hid_device_info* cur_dev = devs;
 
 		if(devs == NULL)
 			continue;
 
 		while (cur_dev) {
-			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+			if(rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface){
+				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD Rift Driver");
-			strcpy(desc->vendor, "Oculus VR, Inc.");
-			strcpy(desc->product, "Rift (Devkit)"); ///TODO: Get version from rift, or set based on ID
+				strcpy(desc->driver, "OpenHMD Rift Driver");
+				strcpy(desc->vendor, "Oculus VR, Inc.");
+				strcpy(desc->product, rd[i].name);
 
-			desc->revision = i;
+				desc->revision = rd[i].rev;
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->driver_ptr = driver;
+				desc->driver_ptr = driver;
+			}
 
 			cur_dev = cur_dev->next;
 		}
