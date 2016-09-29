@@ -250,9 +250,8 @@ ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx)
 
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
-	drv->get_device_list = get_device_list;
-	drv->open_device = open_device;
 	drv->destroy = destroy_driver;
+	drv->ctx = ctx;
 
 	return drv;
 }
