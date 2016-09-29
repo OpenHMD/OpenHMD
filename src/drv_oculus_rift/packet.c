@@ -55,8 +55,8 @@ bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned ch
 	info->lens_separation = READFIXED;
 	info->eye_to_screen_distance[0] = READFIXED;
 	info->eye_to_screen_distance[1] = READFIXED;
-	
-	info->distortion_type_opts = 0;	
+
+	info->distortion_type_opts = 0;
 
 	for(int i = 0; i < 6; i++)
 		info->distortion_k[i] = READFLOAT;
@@ -128,6 +128,41 @@ bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buf
 	return true;
 }
 
+bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
+{
+	if(!(size == 64)){
+		LOGE("invalid packet size (expected 62 or 64 but got %d)", size);
+		return false;
+	}
+
+	SKIP_CMD;
+	msg->last_command_id = READ16;
+	msg->num_samples = READ8;
+	buffer += 2; // unused: nb_samples_since_start
+	msg->temperature = READ16;
+	msg->timestamp = READ32;
+
+	int actual = OHMD_MIN(msg->num_samples, 2);
+	for(int i = 0; i < actual; i++){
+		decode_sample(buffer, msg->samples[i].accel);
+		buffer += 8;
+
+		decode_sample(buffer, msg->samples[i].gyro);
+		buffer += 8;
+	}
+
+	// Skip empty samples
+	buffer += (2 - actual) * 16;
+
+	for(int i = 0; i < 3; i++){
+		msg->mag[i] = READ16;
+	}
+
+	// TODO: positional tracking data and frame data
+
+	return true;
+}
+
 // TODO do we need to consider HMD vs sensor "centric" values
 void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec)
 {
@@ -152,6 +187,22 @@ int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
 	WRITE16(keep_alive->command_id);
 	WRITE16(keep_alive->keep_alive_interval);
 	return 5; // keep alive packet size
+}
+
+int encode_enable_components(unsigned char* buffer, bool display, bool audio)
+{
+	uint8_t flags = 0;
+
+	WRITE8(RIFT_CMD_ENABLE_COMPONENTS);
+	WRITE16(0); // last command ID
+
+	if (display)
+		flags |= 1;
+	if (audio)
+		flags |= 2;
+	flags |= 4; // I don't know what it is. Wireless?
+	WRITE8(flags);
+	return 4;
 }
 
 void dump_packet_sensor_range(const pkt_sensor_range* range)
