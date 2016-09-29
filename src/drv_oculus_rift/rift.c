@@ -34,6 +34,19 @@ typedef struct {
 	vec3f raw_mag, raw_accel, raw_gyro;
 } rift_priv;
 
+typedef enum {
+	REV_DK1,
+	REV_DK2,
+	REV_CV1
+} rift_revision;
+
+typedef struct {
+	const char* name;
+	int id;
+	int iface;
+	rift_revision rev;
+} rift_devices;
+
 static rift_priv* rift_priv_get(ohmd_device* device)
 {
 	return (rift_priv*)device;
@@ -85,7 +98,13 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
-	if(!decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+	if (buffer[0] == RIFT_IRQ_SENSORS
+	  && !decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+		LOGE("couldn't decode tracker sensor message");
+	}
+
+	if (buffer[0] == RIFT_IRQ_SENSORS_DK2
+	  && !decode_tracker_sensor_msg_dk2(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
 
@@ -139,7 +158,7 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == RIFT_IRQ_SENSORS){
+		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == RIFT_IRQ_SENSORS_DK2) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
@@ -253,6 +272,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// apply sensor config
 	set_coordinate_frame(priv, priv->coordinate_frame);
 
+	// Turn the screens on
+	if (desc->revision == REV_CV1)
+	{
+		size = encode_enable_components(buf, true, true);
+		send_feature_report(priv, buf, size);
+	}
+
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
 	size = encode_keep_alive(buf, &keep_alive);
@@ -301,37 +327,40 @@ cleanup:
 }
 
 #define OCULUS_VR_INC_ID 0x2833
-#define RIFT_ID_COUNT 3
+#define RIFT_ID_COUNT 4
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
 	// enumerate HID devices and add any Rifts found to the device list
 
-	int ids[RIFT_ID_COUNT] = {
-		0x0001 /* DK1 */,
-		0x0021 /* DK2 */,
-		0x2021 /* DK2 alternative id */,
+	rift_devices rd[RIFT_ID_COUNT] = {
+		{ "Rift (DK1)", 0x0001,	-1, REV_DK1 },
+		{ "Rift (DK2)", 0x0021,	-1, REV_DK2 },
+		{ "Rift (DK2)", 0x2021,	-1, REV_DK2 },
+		{ "Rift (CV1)", 0x0031,	 0, REV_CV1 },
 	};
 
 	for(int i = 0; i < RIFT_ID_COUNT; i++){
-		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, ids[i]);
+		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, rd[i].id);
 		struct hid_device_info* cur_dev = devs;
 
 		if(devs == NULL)
 			continue;
 
 		while (cur_dev) {
-			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+			if(rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface){
+				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD Rift Driver");
-			strcpy(desc->vendor, "Oculus VR, Inc.");
-			strcpy(desc->product, "Rift (Devkit)");
+				strcpy(desc->driver, "OpenHMD Rift Driver");
+				strcpy(desc->vendor, "Oculus VR, Inc.");
+				strcpy(desc->product, rd[i].name);
 
-			desc->revision = i;
+				desc->revision = rd[i].rev;
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->driver_ptr = driver;
+				desc->driver_ptr = driver;
+			}
 
 			cur_dev = cur_dev->next;
 		}
