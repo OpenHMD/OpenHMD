@@ -97,11 +97,10 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 
 	// TODO handle missed samples etc.
 
-	//float dt = s->num_samples > 3 ? (s->num_samples - 2) * TICK_LEN : TICK_LEN;
-	float dt = 0.0001f;
+	float dt = TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 2; i++){
+	for(int i = 0; i < 1; i++){ //just use 1 sample for now
 		vec3f_from_dp_vec(s->samples[i].accel, &priv->raw_accel);
 		vec3f_from_dp_vec(s->samples[i].gyro, &priv->raw_gyro);
 

@@ -126,8 +126,8 @@ bool dp_decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* 
 void vec3f_from_dp_vec(const int32_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0] * 0.0001f;
-	out_vec->y = (float)smp[1] * 0.0001f;
-	out_vec->z = (float)smp[2] * 0.0001f;
+	out_vec->y = ((float)smp[2] * 0.0001f) * -1;
+	out_vec->z = (float)smp[1] * 0.0001f;
 }
 
 int dp_encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config)
