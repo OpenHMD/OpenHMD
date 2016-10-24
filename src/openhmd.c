@@ -72,7 +72,7 @@ void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
 		ohmd_device* dev = ctx->active_devices[i];
 		if(!dev->settings.automatic_update && dev->update)
 			dev->update(dev);
-	
+
 		ohmd_lock_mutex(ctx->update_mutex);
 		dev->getf(dev, OHMD_POSITION_VECTOR, (float*)&dev->position);
 		dev->getf(dev, OHMD_ROTATION_QUAT, (float*)&dev->rotation);
@@ -115,7 +115,7 @@ const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 static unsigned int ohmd_update_thread(void* arg)
 {
 	ohmd_context* ctx = (ohmd_context*)arg;
-	
+
 	while(!ctx->update_request_quit)
 	{
 		ohmd_lock_mutex(ctx->update_mutex);
@@ -124,7 +124,7 @@ static unsigned int ohmd_update_thread(void* arg)
 			if(ctx->active_devices[i]->settings.automatic_update && ctx->active_devices[i]->update)
 				ctx->active_devices[i]->update(ctx->active_devices[i]);
 		}
-		
+
 		ohmd_unlock_mutex(ctx->update_mutex);
 
 		ohmd_sleep(AUTOMATIC_UPDATE_SLEEP);
@@ -185,7 +185,7 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 	return ohmd_list_open_device_s(ctx, index, &settings);
 }
 
-OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
+int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 {
 	ohmd_lock_mutex(device->ctx->update_mutex);
 
@@ -201,7 +201,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->active_device_idx--;
-	
+
 	ohmd_unlock_mutex(device->ctx->update_mutex);
 
 	return OHMD_S_OK;
@@ -424,7 +424,7 @@ ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settin
 	case OHMD_IDS_AUTOMATIC_UPDATE:
 		settings->automatic_update = val[0] == 0 ? false : true;
 		return OHMD_S_OK;
-    
+
 	default:
 		return OHMD_S_INVALID_PARAMETER;
 	}
@@ -463,7 +463,10 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 	// and with the given value offset the projection matrix.
 	float screen_center = props->hsize / 4.0f;
 	float lens_shift = screen_center - props->lens_sep / 2.0f;
-	float proj_offset = 4.0f * lens_shift / props->hsize;
+	// XXX: on CV1, props->hsize > props->lens_sep / 2.0,
+	// I am not sure about the implications, but just taking the absolute
+	// value of the offset seems to work.
+	float proj_offset = fabs(4.0f * lens_shift / props->hsize);
 
 	// Setup the base projection matrix. Each eye mostly have the
 	// same projection matrix with the exception of the offset.

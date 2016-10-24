@@ -48,7 +48,7 @@ struct ohmd_mutex {
 	HANDLE handle;
 };
 
-__stdcall DWORD ohmd_thread_wrapper(void* t)
+DWORD __stdcall ohmd_thread_wrapper(void* t)
 {
 	ohmd_thread* thread = (ohmd_thread*)t;
 	return thread->routine(thread->arg);
