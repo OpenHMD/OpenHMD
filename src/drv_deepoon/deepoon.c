@@ -63,7 +63,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 	// encode send the new config to the Rift
 	unsigned char buf[FEATURE_BUFFER_SIZE];
-	int size = encode_sensor_config(buf, &priv->sensor_config);
+	int size = dp_encode_sensor_config(buf, &priv->sensor_config);
 	if(send_feature_report(priv, buf, size) == -1){
 		ohmd_set_error(priv->base.ctx, "send_feature_report failed in set_coordinate frame");
 		return;
@@ -78,7 +78,6 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 		return;
 	}
 
-	decode_sensor_config(&priv->sensor_config, buf, size);
 	priv->hw_coordinate_frame = (priv->sensor_config.flags & RIFT_SCF_SENSOR_COORDINATES) ? RIFT_CF_SENSOR : RIFT_CF_HMD;
 
 	if(priv->hw_coordinate_frame != coordframe) {
@@ -88,7 +87,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
-	if(!decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+	if(!dp_decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
 
@@ -103,8 +102,8 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
 	for(int i = 0; i < 2; i++){
-		vec3f_from_rift_vec(s->samples[i].accel, &priv->raw_accel);
-		vec3f_from_rift_vec(s->samples[i].gyro, &priv->raw_gyro);
+		vec3f_from_dp_vec(s->samples[i].accel, &priv->raw_accel);
+		vec3f_from_dp_vec(s->samples[i].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
@@ -123,7 +122,7 @@ static void update_device(ohmd_device* device)
 	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0 - .2){
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
-		int ka_size = encode_keep_alive(buffer, &keep_alive);
+		int ka_size = dp_encode_keep_alive(buffer, &keep_alive);
 		send_feature_report(priv, buffer, ka_size);
 
 		// Update the time of the last keep alive we have sent.
@@ -248,21 +247,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	int size;
 
-	// Read and decode the sensor range
-	size = get_feature_report(priv, RIFT_CMD_RANGE, buf);
-	decode_sensor_range(&priv->sensor_range, buf, size);
-	dump_packet_sensor_range(&priv->sensor_range);
-
-	// Read and decode display information
-	size = get_feature_report(priv, RIFT_CMD_DISPLAY_INFO, buf);
-	decode_sensor_display_info(&priv->display_info, buf, size);
-	dump_packet_sensor_display_info(&priv->display_info);
-
-	// Read and decode the sensor config
-	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
-	decode_sensor_config(&priv->sensor_config, buf, size);
-	dump_packet_sensor_config(&priv->sensor_config);
-
 	// if the sensor has display info data, use HMD coordinate frame
 	priv->coordinate_frame = priv->display_info.distortion_type != RIFT_DT_NONE ? RIFT_CF_HMD : RIFT_CF_SENSOR;
 
@@ -275,7 +259,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
-	size = encode_keep_alive(buf, &keep_alive);
+	size = dp_encode_keep_alive(buf, &keep_alive);
 	send_feature_report(priv, buf, size);
 
 	// Update the time of the last keep alive we have sent.
@@ -283,22 +267,22 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// update sensor settings with new keep alive value
 	// (which will have been ignored in favor of the default 1000 ms one)
-	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
-	decode_sensor_config(&priv->sensor_config, buf, size);
-	dump_packet_sensor_config(&priv->sensor_config);
+	//size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
+	//dp_decode_sensor_config(&priv->sensor_config, buf, size);
+	//dp_dump_packet_sensor_config(&priv->sensor_config);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties
-	priv->base.properties.hsize = priv->display_info.h_screen_size;
-	priv->base.properties.vsize = priv->display_info.v_screen_size;
-	priv->base.properties.hres = priv->display_info.h_resolution;
-	priv->base.properties.vres = priv->display_info.v_resolution;
-	priv->base.properties.lens_sep = priv->display_info.lens_separation;
-	priv->base.properties.lens_vpos = priv->display_info.v_center;
-	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
-	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
+	priv->base.properties.hsize = 0.1498f;
+	priv->base.properties.vsize = 0.0936f;
+	priv->base.properties.hres = 1920;
+	priv->base.properties.vres = 1080;
+	priv->base.properties.lens_sep = 0.0635f;
+	priv->base.properties.lens_vpos = 0.0468f;;
+	priv->base.properties.fov = DEG_TO_RAD(120.0); // TODO calculate.
+	priv->base.properties.ratio = ((float)1920 / (float)1080) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);

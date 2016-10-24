@@ -93,19 +93,19 @@ typedef struct {
 } pkt_keep_alive;
 
 
-bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
-bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
-bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
-bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
+bool dp_decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
+bool dp_decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
+bool dp_decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
+bool dp_decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 
-void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
+void vec3f_from_dp_vec(const int32_t* smp, vec3f* out_vec);
 
-int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
-int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
+int dp_encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
+int dp_encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
 
-void dump_packet_sensor_range(const pkt_sensor_range* range);
-void dump_packet_sensor_config(const pkt_sensor_config* config);
-void dump_packet_sensor_display_info(const pkt_sensor_display_info* info);
-void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor);
+void dp_dump_packet_sensor_range(const pkt_sensor_range* range);
+void dp_dump_packet_sensor_config(const pkt_sensor_config* config);
+void dp_dump_packet_sensor_display_info(const pkt_sensor_display_info* info);
+void dp_dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor);
 
 #endif

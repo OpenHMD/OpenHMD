@@ -21,7 +21,7 @@
 #define WRITE16(_val) WRITE8((_val) & 0xff); WRITE8(((_val) >> 8) & 0xff);
 #define WRITE32(_val) WRITE16((_val) & 0xffff) *buffer; WRITE16(((_val) >> 16) & 0xffff);
 
-bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size)
+bool dp_decodesensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size)
 {
 	if(!(size == 8 || size == 9)){
 		LOGE("invalid packet size (expected 8 or 9 but got %d)", size);
@@ -37,7 +37,7 @@ bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, i
 	return true;
 }
 
-bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size)
+bool dp_decodesensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size)
 {
 	if(!(size == 56 || size == 57)){
 		LOGE("invalid packet size (expected 56 or 57 but got %d)", size);
@@ -64,7 +64,7 @@ bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned ch
 	return true;
 }
 
-bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size)
+bool dp_decodesensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size)
 {
 	if(!(size == 7 || size == 8)){
 		LOGE("invalid packet size (expected 7 or 8 but got %d)", size);
@@ -80,7 +80,7 @@ bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer
 	return true;
 }
 
-static void decode_sample(const unsigned char* buffer, int32_t* smp)
+static void dp_decodesample(const unsigned char* buffer, int32_t* smp)
 {
 	/*
 	 * Decode 3 tightly packed 21 bit values from 4 bytes.
@@ -97,7 +97,7 @@ static void decode_sample(const unsigned char* buffer, int32_t* smp)
 	smp[2] = z >> 11;
 }
 
-bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
+bool dp_decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
 {
 	if(!(size == 62 || size == 64)){
 		LOGE("invalid packet size (expected 62 or 64 but got %d)", size);
@@ -112,48 +112,25 @@ bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buf
 	msg->tick = READ32;
 
 	for(int i = 0; i < 2; i++){
-		decode_sample(buffer, msg->samples[i].accel);
+		dp_decodesample(buffer, msg->samples[i].accel);
 		buffer += 8;
 
-		decode_sample(buffer, msg->samples[i].gyro);
-		buffer += 8;
-	}
-	//Order: skip 4 bytes | sequence 2 bytes |
-	//SKIP_CMD;
-	/*
-	buffer += 4;
-	msg->timestamp = READ16;
-	msg->num_samples = READ8;
-	msg->last_command_id = READ16;
-	msg->temperature = READ16;
-
-	int actual = OHMD_MIN(msg->num_samples, 3);
-	for(int i = 0; i < actual; i++){
-		decode_sample(buffer, msg->samples[i].accel);
-		buffer += 8;
-
-		decode_sample(buffer, msg->samples[i].gyro);
+		dp_decodesample(buffer, msg->samples[i].gyro);
 		buffer += 8;
 	}
-
-	// Skip empty samples
-	buffer += (3 - actual) * 16;
-	for(int i = 0; i < 3; i++){
-		msg->mag[i] = READ16;
-	}*/
 
 	return true;
 }
 
 // TODO do we need to consider HMD vs sensor "centric" values
-void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec)
+void vec3f_from_dp_vec(const int32_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0] * 0.0001f;
 	out_vec->y = (float)smp[1] * 0.0001f;
 	out_vec->z = (float)smp[2] * 0.0001f;
 }
 
-int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config)
+int dp_encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config)
 {
 	WRITE8(RIFT_CMD_SENSOR_CONFIG);
 	WRITE16(config->command_id);
@@ -163,7 +140,7 @@ int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config)
 	return 7; // sensor config packet size
 }
 
-int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
+int dp_encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
 {
 	WRITE8(RIFT_CMD_KEEP_ALIVE);
 	WRITE16(keep_alive->command_id);
@@ -171,35 +148,7 @@ int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
 	return 5; // keep alive packet size
 }
 
-void dump_packet_sensor_range(const pkt_sensor_range* range)
-{
-	(void)range;
-
-	LOGD("sensor range\n");
-	LOGD("  command id:  %d", range->command_id);
-	LOGD("  accel scale: %d", range->accel_scale);
-	LOGD("  gyro scale:  %d", range->gyro_scale);
-	LOGD("  mag scale:   %d", range->mag_scale);
-}
-
-void dump_packet_sensor_display_info(const pkt_sensor_display_info* info)
-{
-	(void)info;
-
-	LOGD("display info");
-	LOGD("  command id:             %d", info->command_id);
-	LOGD("  distortion_type:        %d", info->distortion_type);
-	LOGD("  resolution:             %d x %d", info->h_resolution, info->v_resolution);
-	LOGD("  screen size:            %f x %f", info->h_screen_size, info->v_screen_size);
-	LOGD("  vertical center:        %f", info->v_center);
-	LOGD("  lens_separation:        %f", info->lens_separation);
-	LOGD("  eye_to_screen_distance: %f, %f", info->eye_to_screen_distance[0], info->eye_to_screen_distance[1]);
-	LOGD("  distortion_k:           %f, %f, %f, %f, %f, %f",
-		info->distortion_k[0], info->distortion_k[1], info->distortion_k[2],
-		info->distortion_k[3], info->distortion_k[4], info->distortion_k[5]);
-}
-
-void dump_packet_sensor_config(const pkt_sensor_config* config)
+void dp_dump_packet_sensor_config(const pkt_sensor_config* config)
 {
 	(void)config;
 
@@ -217,7 +166,7 @@ void dump_packet_sensor_config(const pkt_sensor_config* config)
 	LOGD("  keep alive interval: %u", config->keep_alive_interval);
 }
 
-void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor)
+void dp_dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor)
 {
 	(void)sensor;
 	LOGD("TEST: deepoon sensor data");
@@ -228,16 +177,5 @@ void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor)
 	for(int i = 0; i < 2; i++){
 		LOGD("    accel: %d %d %d", sensor->samples[i].accel[0], sensor->samples[i].accel[1], sensor->samples[i].accel[2]);
 		LOGD("    gyro:  %d %d %d", sensor->samples[i].gyro[0], sensor->samples[i].gyro[1], sensor->samples[i].gyro[2]);
-	}/*
-	LOGD("tracker sensor:");
-	LOGD("  report id: %u", sensor->report_id);
-	LOGD("  timestamp:       %u", sensor->timestamp);
-	LOGD("  temperature:     %d", sensor->temperature);
-	LOGD("  num samples:     %u", sensor->num_samples);
-	LOGD("  magnetic field:  %i %i %i", sensor->mag[0], sensor->mag[1], sensor->mag[2]);
-
-	for(int i = 0; i < OHMD_MIN(sensor->num_samples, 3); i++){
-		LOGD("    accel: %d %d %d", sensor->samples[i].accel[0], sensor->samples[i].accel[1], sensor->samples[i].accel[2]);
-		LOGD("    gyro:  %d %d %d", sensor->samples[i].gyro[0], sensor->samples[i].gyro[1], sensor->samples[i].gyro[2]);
-	}*/
+	}
 }
