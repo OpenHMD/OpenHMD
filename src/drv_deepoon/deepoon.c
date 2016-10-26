@@ -183,19 +183,6 @@ static void close_device(ohmd_device* device)
 	free(priv);
 }
 
-static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t), const char* what, hid_device* device)
-{
-	wchar_t wbuffer[512] = {0};
-	char buffer[1024] = {0};
-
-	int hret = fun(device, wbuffer, 511);
-
-	if(hret == 0){
-		wcstombs(buffer, wbuffer, sizeof(buffer));
-		printf("%s: '%s'\n", what, buffer);
-	}
-}
-
 static char* _hid_to_unix_path(char* path)
 {
 	const int len = 4;
