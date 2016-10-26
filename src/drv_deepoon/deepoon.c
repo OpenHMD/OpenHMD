@@ -93,14 +93,12 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 
 	pkt_tracker_sensor* s = &priv->sensor;
 
-	//dump_packet_tracker_sensor(s);
-
-	// TODO handle missed samples etc.
+	dp_dump_packet_tracker_sensor(s);
 
 	float dt = TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 1; i++){ //just use 1 sample for now
+	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for this frame
 		vec3f_from_dp_vec(s->samples[i].accel, &priv->raw_accel);
 		vec3f_from_dp_vec(s->samples[i].gyro, &priv->raw_gyro);
 
@@ -238,10 +236,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 	}
 
-	dump_info_string(hid_get_manufacturer_string, "manufacturer", priv->handle);
-	dump_info_string(hid_get_product_string , "product", priv->handle);
-	dump_info_string(hid_get_serial_number_string, "serial number", priv->handle);
-
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 
 	int size;
@@ -264,12 +258,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Update the time of the last keep alive we have sent.
 	priv->last_keep_alive = ohmd_get_tick();
 
-	// update sensor settings with new keep alive value
-	// (which will have been ignored in favor of the default 1000 ms one)
-	//size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
-	//dp_decode_sensor_config(&priv->sensor_config, buf, size);
-	//dp_dump_packet_sensor_config(&priv->sensor_config);
-
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
@@ -280,7 +268,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vres = 1080;
 	priv->base.properties.lens_sep = 0.0635f;
 	priv->base.properties.lens_vpos = 0.0468f;;
-	priv->base.properties.fov = DEG_TO_RAD(120.0); // TODO calculate.
+	priv->base.properties.fov = DEG_TO_RAD(100.0); // TODO calculate.
 	priv->base.properties.ratio = ((float)1920 / (float)1080) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
