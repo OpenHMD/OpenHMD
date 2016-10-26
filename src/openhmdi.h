@@ -13,6 +13,7 @@
 #include "openhmd.h"
 #include "omath.h"
 #include "platform.h"
+#include "common.h"
 
 #include <stdbool.h>
 #include <stdint.h>
