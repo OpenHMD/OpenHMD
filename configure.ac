@@ -40,6 +40,15 @@ AC_ARG_ENABLE([driver-oculus-rift],
 
 AM_CONDITIONAL([BUILD_DRIVER_OCULUS_RIFT], [test "x$driver_oculus_rift_enabled" != "xno"])
 
+# Deepoon Driver
+AC_ARG_ENABLE([driver-deepoon],
+        [AS_HELP_STRING([--disable-driver-deepoon],
+                [disable building of Deepoon driver [default=yes]])],
+        [driver_deepoon_enabled=$enableval],
+        [driver_deepoon_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_DEEPOON], [test "x$driver_deepoon_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -60,6 +69,10 @@ AM_CONDITIONAL([BUILD_DRIVER_ANDROID], [test "x$driver_android_enabled" != "xno"
 
 # Libs required by Oculus Rift Driver
 AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
+	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by Depoon Driver
+AS_IF([test "x$driver_deepoon_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?

@@ -126,6 +126,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_deepoon_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx);
 
