@@ -16,7 +16,7 @@
 
 #include "deepoon.h"
 
-#define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
+#define TICK_LEN (1.0f / 1000000.0f) // 1000 Hz ticks
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
 
@@ -87,6 +87,11 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
+	uint32_t last_sample_tick =  priv->sensor.tick;
+
+    if(priv->sensor.tick == 0) //startup correction
+      last_sample_tick = priv->sensor.tick - 1000;
+
 	if(!dp_decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
@@ -95,7 +100,8 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 
 	dp_dump_packet_tracker_sensor(s);
 
-	float dt = TICK_LEN;
+    int32_t tick_delta = s->tick - last_sample_tick;
+	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
 	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for this frame
