@@ -16,7 +16,7 @@
 
 #include "deepoon.h"
 
-#define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
+#define TICK_LEN (1.0f / 1000000.0f) // 1000 Hz ticks
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
 
@@ -87,6 +87,8 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
+	uint32_t last_sample_tick = priv->sensor.tick;
+
 	if(!dp_decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
@@ -95,7 +97,11 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 
 	dp_dump_packet_tracker_sensor(s);
 
-	float dt = TICK_LEN;
+	uint32_t tick_delta = 1000;
+	if(last_sample_tick > 0) //startup correction
+		tick_delta = s->tick - last_sample_tick;
+
+	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
 	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for this frame
@@ -256,7 +262,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vres = 1080;
 	priv->base.properties.lens_sep = 0.0849f;
 	priv->base.properties.lens_vpos = 0.0468f;;
-	priv->base.properties.fov = DEG_TO_RAD(100.0); // TODO calculate.
+	priv->base.properties.fov = DEG_TO_RAD(110.0); // TODO calculate.
 	priv->base.properties.ratio = ((float)1920 / (float)1080) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
