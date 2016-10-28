@@ -204,6 +204,21 @@ static void close_device(ohmd_device* device)
 	free(priv);
 }
 
+static char* _hid_to_unix_path(char* path)
+{
+	char bus [4];
+	char dev [4];
+	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
+
+	sprintf (bus, "%.*s\n", 4, path);
+	sprintf (dev, "%.*s\n", 4, path + 5);
+
+	sprintf (result, "/dev/bus/usb/%03d/%03d",
+		(int)strtol(bus, NULL, 16),
+		(int)strtol(dev, NULL, 16));
+	return result;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	rift_priv* priv = ohmd_alloc(driver->ctx, sizeof(rift_priv));
