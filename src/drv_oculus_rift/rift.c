@@ -141,7 +141,8 @@ static void update_device(ohmd_device* device)
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
 		int ka_size = encode_keep_alive(buffer, &keep_alive);
-		send_feature_report(priv, buffer, ka_size);
+		if (send_feature_report(priv, buffer, ka_size) == -1)
+			LOGE("error sending keepalive");
 
 		// Update the time of the last keep alive we have sent.
 		priv->last_keep_alive = t;
@@ -276,13 +277,15 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if (desc->revision == REV_CV1)
 	{
 		size = encode_enable_components(buf, true, true);
-		send_feature_report(priv, buf, size);
+		if (send_feature_report(priv, buf, size) == -1)
+			LOGE("error turning the screens on");
 	}
 
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
 	size = encode_keep_alive(buf, &keep_alive);
-	send_feature_report(priv, buf, size);
+	if (send_feature_report(priv, buf, size) == -1)
+		LOGE("error setting up keepalive");
 
 	// Update the time of the last keep alive we have sent.
 	priv->last_keep_alive = ohmd_get_tick();
