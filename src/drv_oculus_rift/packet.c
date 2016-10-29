@@ -200,7 +200,7 @@ int encode_enable_components(unsigned char* buffer, bool display, bool audio)
 		flags |= 1;
 	if (audio)
 		flags |= 2;
-	flags |= 4; // I don't know what it is. Wireless?
+//	flags |= 4; // I don't know what it is. Wireless?
 	WRITE8(flags);
 	return 4;
 }
