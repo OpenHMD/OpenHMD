@@ -6,7 +6,6 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 
 ## Supported Devices
   * Oculus Rift DK1, DK2 and CV1 (rotation only)
-  * HTC Vive (rotation only)
   * Deepoon E2
   * Android based devices
   * External Sensor (passthrough for external sensors)
