@@ -49,6 +49,15 @@ AC_ARG_ENABLE([driver-deepoon],
 
 AM_CONDITIONAL([BUILD_DRIVER_DEEPOON], [test "x$driver_deepoon_enabled" != "xno"])
 
+# Sony PSVR Driver
+AC_ARG_ENABLE([driver-psvr],
+        [AS_HELP_STRING([--disable-driver-psvr],
+                [disable building of Sony PSVR driver [default=yes]])],
+        [driver_psvr_enabled=$enableval],
+        [driver_psvr_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_PSVR], [test "x$driver_psvr_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -73,6 +82,10 @@ AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
 
 # Libs required by Depoon Driver
 AS_IF([test "x$driver_deepoon_enabled" != "xno"],
+	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by Sony PSVR Driver
+AS_IF([test "x$driver_psvr_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?
@@ -117,4 +130,4 @@ AC_PROG_CC_C99
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
-AC_OUTPUT 
+AC_OUTPUT
