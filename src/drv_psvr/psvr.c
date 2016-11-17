@@ -14,8 +14,6 @@
 #define SONY_ID                  0x054c
 #define PSVR_HMD                 0x09af
 
-#define PSVR_TIME_DIV 48000000.0f
-
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
@@ -31,7 +29,7 @@ typedef struct {
 	ohmd_device base;
 
 	hid_device* hmd_handle;
-	hid_device* imu_handle;
+	hid_device* hmd_control;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
 	uint32_t last_ticks;
@@ -44,7 +42,7 @@ void vec3f_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[1] * 0.001f;
 	out_vec->y = (float)smp[0] * 0.001f;
-	out_vec->z = (float)smp[2] * 0.001f;
+	out_vec->z = (float)smp[2] * 0.001f * -1.0f;
 }
 
 static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, int size)
@@ -64,7 +62,7 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for this frame
+	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for 	 frame
 		vec3f_from_psvr_vec(s->samples[i].accel, &priv->raw_accel);
 		vec3f_from_psvr_vec(s->samples[i].gyro, &priv->raw_gyro);
 
@@ -133,20 +131,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
 static void close_device(ohmd_device* device)
 {
-	//int hret = 0;
 	psvr_priv* priv = (psvr_priv*)device;
 
-	LOGD("closing HTC Psvr device");
-
-	// turn the display off
-	//hret = hid_send_feature_report(priv->hmd_handle, psvr_magic_power_off1, sizeof(psvr_magic_power_off1));
-	//printf("power off magic 1: %d\n", hret);
-
-	//hret = hid_send_feature_report(priv->hmd_handle, psvr_magic_power_off2, sizeof(psvr_magic_power_off2));
-	//printf("power off magic 2: %d\n", hret);
+	LOGD("closing HTC PSVR device");
 
 	hid_close(priv->hmd_handle);
-	hid_close(priv->imu_handle);
+	hid_close(priv->hmd_control);
 
 	free(device);
 }
@@ -190,8 +180,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv)
 		return NULL;
 
-	//int hret = 0;
-
 	priv->base.ctx = driver->ctx;
 
 	int idx = atoi(desc->path);
@@ -206,18 +194,22 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
 	}
-/*
-	dump_info_string(hid_get_manufacturer_string, "manufacturer", priv->hmd_handle);
-	dump_info_string(hid_get_product_string , "product", priv->hmd_handle);
-	dump_info_string(hid_get_serial_number_string, "serial number", priv->hmd_handle);
-*/
-	// turn the display on
-	//hret = hid_send_feature_report(priv->hmd_handle, psvr_magic_power_on, sizeof(psvr_magic_power_on));
-	//printf("power on magic: %d\n", hret);
 
-	// enable lighthouse
-	//hret = hid_send_feature_report(priv->hmd_handle, psvr_magic_enable_lighthouse, sizeof(psvr_magic_enable_lighthouse));
-	//printf("enable lighthouse magic: %d\n", hret);
+	// Open the HMD Control device
+	priv->hmd_control = open_device_idx(SONY_ID, PSVR_HMD, 0, 0, 1);
+
+	if(!priv->hmd_control)
+		goto cleanup;
+
+	if(hid_set_nonblocking(priv->hmd_control, 1) == -1){
+		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
+		goto cleanup;
+	}
+
+	// turn the display on
+	hid_write(priv->hmd_control, psvr_power_on, sizeof(psvr_power_on));
+	// set VR mode for the hmd
+	hid_write(priv->hmd_control, psvr_vrmode_on, sizeof(psvr_vrmode_on));
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
@@ -279,7 +271,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 static void destroy_driver(ohmd_driver* drv)
 {
-	LOGD("shutting down HTC PSVR driver");
+	LOGD("shutting down Sony PSVR driver");
 	free(drv);
 }
 

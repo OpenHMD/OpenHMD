@@ -27,13 +27,11 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 		LOGE("invalid psvr sensor packet size (expected 64 but got %d)", size);
 		return false;
 	}
-	int16_t accel[3];
-	int16_t gyro[3];
 
-	buffer += 2;
-	uint16_t volume = read16(&buffer); //volume
-	buffer += 12; //uknown, skip 12
-	uint32_t tick = read32(&buffer); //TICK
+	buffer += 2; //skip 2
+	pkt->samples[0].volume = read16(&buffer); //volume
+	buffer += 12; //unknown, skip 12
+	pkt->samples[0].tick = read32(&buffer); //TICK
 	// acceleration
 	for(int i = 0; i < 3; i++){
 		pkt->samples[0].gyro[i] = read16(&buffer);
@@ -42,28 +40,10 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 	// rotation
 	for(int i = 0; i < 3; i++){
 		pkt->samples[0].accel[i] = read16(&buffer);
-	}
-/*
-	printf("JOEDEBUG - Tick = %u\n", tick);
-	printf("JOEDEBUG - Accel = %d %d %d\n", accel[0], accel[1], accel[2]);
-	printf("JOEDEBUG - Gyro = %d %d %d\n", gyro[0], gyro[1], gyro[2]);*/
+	}//34
+	buffer += 23; //probably other sample somewhere
+	pkt->samples[0].proximity = read8(&buffer); //255 for close
+	pkt->samples[0].proximity_state = read8(&buffer); // 0 (nothing) to 3 (headset is on)
+
 	return true;
-
-/*
-	for(int j = 0; j < 3; j++){
-		// acceleration
-		for(int i = 0; i < 3; i++){
-			pkt->samples[j].acc[i] = read16(&buffer);
-		}
-
-		// rotation
-		for(int i = 0; i < 3; i++){
-			pkt->samples[j].rot[i] = read16(&buffer);
-		}
-
-		pkt->samples[j].time_ticks = read32(&buffer);
-		pkt->samples[j].seq = read8(&buffer);
-	}
-
-	return true;*/
 }
