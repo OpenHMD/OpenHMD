@@ -90,8 +90,14 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == 0){
+		if(buffer[0] == PSVR_IRQ_SENSORS){
 			handle_tracker_sensor_msg(priv, buffer, size);
+		}else if (buffer[0] == PSVR_IRQ_VOLUME_PLUS){
+			//TODO implement
+		}else if (buffer[0] == PSVR_IRQ_VOLUME_MINUS){
+			//TODO implement
+		}else if (buffer[0] == PSVR_IRQ_MIC_MUTE){
+			//TODO implement
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
 		}
