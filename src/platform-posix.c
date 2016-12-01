@@ -29,14 +29,14 @@ double ohmd_get_tick()
 {
 	struct timeval now;
 	gettimeofday(&now, NULL);
-	return (double)now.tv_sec * 1.0 + (double)now.tv_usec / 1000000.0;
+	return (double)now.tv_sec * 1.0 + (double)now.tv_usec / 1000000.0dd;
 }
 #else
 double ohmd_get_tick()
 {
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	return (double)now.tv_sec * 1.0 + (double)now.tv_nsec / 1000000000.0;
+	return (double)now.tv_sec * 1.0 + (double)now.tv_nsec / 1000000000.0dd;
 }
 #endif
 
@@ -45,7 +45,7 @@ void ohmd_sleep(double seconds)
 	struct timespec sleepfor;
 
 	sleepfor.tv_sec = (time_t)seconds;
-	sleepfor.tv_nsec = (long)((seconds - sleepfor.tv_sec) * 1000000000.0);
+	sleepfor.tv_nsec = (long)((seconds - sleepfor.tv_sec) * 1000000000.0dd);
 
 	nanosleep(&sleepfor, NULL);
 }

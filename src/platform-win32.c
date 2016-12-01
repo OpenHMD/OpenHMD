@@ -27,7 +27,7 @@ double ohmd_get_tick()
 	high = filetime.dwHighDateTime;
 	low = filetime.dwLowDateTime;
 
-	return (high * 4294967296.0 + low) / 10000000;
+	return (high * 4294967296.0dd + low) / 10000000;
 }
 
 // TODO higher resolution
