@@ -14,10 +14,6 @@
 
 ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 {
-	#ifdef _WIN32
-	_toggle_ovr_service(0); //disable OVRService when running
-	#endif
-	
 	ohmd_context* ctx = calloc(1, sizeof(ohmd_context));
 	if(!ctx){
 		LOGE("could not allocate RAM for context");
@@ -52,10 +48,6 @@ void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 	}
 
 	free(ctx);
-
-	#ifdef _WIN32
-	_toggle_ovr_service(1); //enable OVRService when running
-	#endif
 }
 
 void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)

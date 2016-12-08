@@ -35,7 +35,7 @@ void ohmd_sleep(double seconds)
 
 static int _enable_ovr_service = 0;
 
-void _toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
+void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
 {
 	SC_HANDLE serviceDbHandle = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
 	SC_HANDLE serviceHandle = OpenService(serviceDbHandle, 'OVRService', SC_MANAGER_ALL_ACCESS);

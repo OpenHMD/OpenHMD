@@ -46,4 +46,8 @@ void ohmd_sleep(double seconds)
 	nanosleep(&sleepfor, NULL);
 }
 
+void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
+{
+	//Empty implementation	
+}
 #endif
