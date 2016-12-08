@@ -51,7 +51,6 @@ void ohmd_sleep(double seconds)
 }
 
 // threads
-
 struct ohmd_thread
 {
 	pthread_t thread;
@@ -125,4 +124,9 @@ void ohmd_unlock_mutex(ohmd_mutex* mutex)
 		pthread_mutex_unlock((pthread_mutex_t*)mutex);
 }
 
+/// Handling ovr service
+void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
+{
+	//Empty implementation	
+}
 #endif

@@ -377,6 +377,8 @@ static void destroy_driver(ohmd_driver* drv)
 	LOGD("shutting down driver");
 	hid_exit();
 	free(drv);
+
+	ohmd_toggle_ovr_service(1); //re-enable OVRService if previously running
 }
 
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
@@ -384,6 +386,8 @@ ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 	if(drv == NULL)
 		return NULL;
+
+	ohmd_toggle_ovr_service(0); //disable OVRService if running
 
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
