@@ -105,6 +105,7 @@ void ohmd_unlock_mutex(ohmd_mutex* mutex)
 		ReleaseMutex(mutex->handle);
 }
 
+/// Handling ovr service
 static int _enable_ovr_service = 0;
 
 void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
