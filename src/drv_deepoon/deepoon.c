@@ -5,7 +5,7 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/* Oculus Rift Driver - HID/USB Driver Implementation */
+/* Deepoon Driver - HID/USB Driver Implementation */
 
 #include <stdlib.h>
 #include <hidapi.h>
@@ -14,11 +14,14 @@
 #include <time.h>
 #include <assert.h>
 
-#include "rift.h"
+#include "deepoon.h"
 
-#define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
+#define TICK_LEN (1.0f / 1000000.0f) // 1000 Hz ticks
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
+
+#define DEEPOON_ID					0x0483
+#define DEEPOON_HMD					0x5750
 
 typedef struct {
 	ohmd_device base;
@@ -33,19 +36,6 @@ typedef struct {
 	fusion sensor_fusion;
 	vec3f raw_mag, raw_accel, raw_gyro;
 } rift_priv;
-
-typedef enum {
-	REV_DK1,
-	REV_DK2,
-	REV_CV1
-} rift_revision;
-
-typedef struct {
-	const char* name;
-	int id;
-	int iface;
-	rift_revision rev;
-} rift_devices;
 
 static rift_priv* rift_priv_get(ohmd_device* device)
 {
@@ -73,7 +63,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 	// encode send the new config to the Rift
 	unsigned char buf[FEATURE_BUFFER_SIZE];
-	int size = encode_sensor_config(buf, &priv->sensor_config);
+	int size = dp_encode_sensor_config(buf, &priv->sensor_config);
 	if(send_feature_report(priv, buf, size) == -1){
 		ohmd_set_error(priv->base.ctx, "send_feature_report failed in set_coordinate frame");
 		return;
@@ -88,7 +78,6 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 		return;
 	}
 
-	decode_sensor_config(&priv->sensor_config, buf, size);
 	priv->hw_coordinate_frame = (priv->sensor_config.flags & RIFT_SCF_SENSOR_COORDINATES) ? RIFT_CF_SENSOR : RIFT_CF_HMD;
 
 	if(priv->hw_coordinate_frame != coordframe) {
@@ -98,32 +87,28 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
-	if (buffer[0] == RIFT_IRQ_SENSORS
-	  && !decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
-		LOGE("couldn't decode tracker sensor message");
-	}
+	uint32_t last_sample_tick = priv->sensor.tick;
 
-	if (buffer[0] == RIFT_IRQ_SENSORS_DK2
-	  && !decode_tracker_sensor_msg_dk2(&priv->sensor, buffer, size)){
+	if(!dp_decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
 
 	pkt_tracker_sensor* s = &priv->sensor;
 
-	dump_packet_tracker_sensor(s);
+	dp_dump_packet_tracker_sensor(s);
 
-	// TODO handle missed samples etc.
+	uint32_t tick_delta = 1000;
+	if(last_sample_tick > 0) //startup correction
+		tick_delta = s->tick - last_sample_tick;
 
-	float dt = s->num_samples > 3 ? (s->num_samples - 2) * TICK_LEN : TICK_LEN;
+	float dt = tick_delta * TICK_LEN;
+	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	int32_t mag32[] = { s->mag[0], s->mag[1], s->mag[2] };
-	vec3f_from_rift_vec(mag32, &priv->raw_mag);
+	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for this frame
+		vec3f_from_dp_vec(s->samples[i].accel, &priv->raw_accel);
+		vec3f_from_dp_vec(s->samples[i].gyro, &priv->raw_gyro);
 
-	for(int i = 0; i < OHMD_MIN(s->num_samples, 3); i++){
-		vec3f_from_rift_vec(s->samples[i].accel, &priv->raw_accel);
-		vec3f_from_rift_vec(s->samples[i].gyro, &priv->raw_gyro);
-
-		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &priv->raw_mag);
+		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
 		// reset dt to tick_len for the last samples if there were more than one sample
 		dt = TICK_LEN;
@@ -140,9 +125,8 @@ static void update_device(ohmd_device* device)
 	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0 - .2){
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
-		int ka_size = encode_keep_alive(buffer, &keep_alive);
-		if (send_feature_report(priv, buffer, ka_size) == -1)
-			LOGE("error sending keepalive");
+		int ka_size = dp_encode_keep_alive(buffer, &keep_alive);
+		send_feature_report(priv, buffer, ka_size);
 
 		// Update the time of the last keep alive we have sent.
 		priv->last_keep_alive = t;
@@ -159,7 +143,7 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == RIFT_IRQ_SENSORS_DK2) {
+		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == 11){
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
@@ -207,12 +191,13 @@ static void close_device(ohmd_device* device)
 
 static char* _hid_to_unix_path(char* path)
 {
-	char bus [4];
-	char dev [4];
+	const int len = 4;
+	char bus [len];
+	char dev [len];
 	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
 
-	sprintf (bus, "%.*s\n", 4, path);
-	sprintf (dev, "%.*s\n", 4, path + 5);
+	sprintf (bus, "%.*s\n", len, path);
+	sprintf (dev, "%.*s\n", len, path + 5);
 
 	sprintf (result, "/dev/bus/usb/%03d/%03d",
 		(int)strtol(bus, NULL, 16),
@@ -248,21 +233,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	int size;
 
-	// Read and decode the sensor range
-	size = get_feature_report(priv, RIFT_CMD_RANGE, buf);
-	decode_sensor_range(&priv->sensor_range, buf, size);
-	dump_packet_sensor_range(&priv->sensor_range);
-
-	// Read and decode display information
-	size = get_feature_report(priv, RIFT_CMD_DISPLAY_INFO, buf);
-	decode_sensor_display_info(&priv->display_info, buf, size);
-	dump_packet_sensor_display_info(&priv->display_info);
-
-	// Read and decode the sensor config
-	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
-	decode_sensor_config(&priv->sensor_config, buf, size);
-	dump_packet_sensor_config(&priv->sensor_config);
-
 	// if the sensor has display info data, use HMD coordinate frame
 	priv->coordinate_frame = priv->display_info.distortion_type != RIFT_DT_NONE ? RIFT_CF_HMD : RIFT_CF_SENSOR;
 
@@ -273,41 +243,27 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// apply sensor config
 	set_coordinate_frame(priv, priv->coordinate_frame);
 
-	// Turn the screens on
-	if (desc->revision == REV_CV1)
-	{
-		size = encode_enable_components(buf, true, true);
-		if (send_feature_report(priv, buf, size) == -1)
-			LOGE("error turning the screens on");
-	}
-
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
-	size = encode_keep_alive(buf, &keep_alive);
-	if (send_feature_report(priv, buf, size) == -1)
-		LOGE("error setting up keepalive");
+	size = dp_encode_keep_alive(buf, &keep_alive);
+	send_feature_report(priv, buf, size);
 
 	// Update the time of the last keep alive we have sent.
 	priv->last_keep_alive = ohmd_get_tick();
-
-	// update sensor settings with new keep alive value
-	// (which will have been ignored in favor of the default 1000 ms one)
-	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
-	decode_sensor_config(&priv->sensor_config, buf, size);
-	dump_packet_sensor_config(&priv->sensor_config);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties
-	priv->base.properties.hsize = priv->display_info.h_screen_size;
-	priv->base.properties.vsize = priv->display_info.v_screen_size;
-	priv->base.properties.hres = priv->display_info.h_resolution;
-	priv->base.properties.vres = priv->display_info.v_resolution;
-	priv->base.properties.lens_sep = priv->display_info.lens_separation;
-	priv->base.properties.lens_vpos = priv->display_info.v_center;
-	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
-	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
+	//NOTE: These values are estimations, no one has taken one appart to check
+	priv->base.properties.hsize = 0.1698f;
+	priv->base.properties.vsize = 0.0936f;
+	priv->base.properties.hres = 1920;
+	priv->base.properties.vres = 1080;
+	priv->base.properties.lens_sep = 0.0849f;
+	priv->base.properties.lens_vpos = 0.0468f;;
+	priv->base.properties.fov = DEG_TO_RAD(110.0); // TODO calculate.
+	priv->base.properties.ratio = ((float)1920 / (float)1080) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
@@ -329,47 +285,28 @@ cleanup:
 	return NULL;
 }
 
-#define OCULUS_VR_INC_ID 0x2833
-#define RIFT_ID_COUNT 4
-
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-	// enumerate HID devices and add any Rifts found to the device list
+	struct hid_device_info* devs = hid_enumerate(DEEPOON_ID, DEEPOON_HMD);
+	struct hid_device_info* cur_dev = devs;
 
-	rift_devices rd[RIFT_ID_COUNT] = {
-		{ "Rift (DK1)", 0x0001,	-1, REV_DK1 },
-		{ "Rift (DK2)", 0x0021,	-1, REV_DK2 },
-		{ "Rift (DK2)", 0x2021,	-1, REV_DK2 },
-		{ "Rift (CV1)", 0x0031,	 0, REV_CV1 },
-	};
+	while (cur_dev) {
+		ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-	for(int i = 0; i < RIFT_ID_COUNT; i++){
-		struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID, rd[i].id);
-		struct hid_device_info* cur_dev = devs;
+		strcpy(desc->driver, "Deepoon Driver");
+		strcpy(desc->vendor, "Deepoon");
+		strcpy(desc->product, "Deepoon E2");
 
-		if(devs == NULL)
-			continue;
+		desc->revision = 0;
 
-		while (cur_dev) {
-			if(rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface){
-				ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		strcpy(desc->path, cur_dev->path);
 
-				strcpy(desc->driver, "OpenHMD Rift Driver");
-				strcpy(desc->vendor, "Oculus VR, Inc.");
-				strcpy(desc->product, rd[i].name);
+		desc->driver_ptr = driver;
 
-				desc->revision = rd[i].rev;
-
-				strcpy(desc->path, cur_dev->path);
-
-				desc->driver_ptr = driver;
-			}
-
-			cur_dev = cur_dev->next;
-		}
-
-		hid_free_enumeration(devs);
+		cur_dev = cur_dev->next;
 	}
+
+	hid_free_enumeration(devs);
 }
 
 static void destroy_driver(ohmd_driver* drv)
@@ -377,22 +314,20 @@ static void destroy_driver(ohmd_driver* drv)
 	LOGD("shutting down driver");
 	hid_exit();
 	free(drv);
-
-	ohmd_toggle_ovr_service(1); //re-enable OVRService if previously running
 }
 
-ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
+ohmd_driver* ohmd_create_deepoon_drv(ohmd_context* ctx)
 {
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 	if(drv == NULL)
 		return NULL;
 
-	ohmd_toggle_ovr_service(0); //disable OVRService if running
-
+	drv->get_device_list = get_device_list;
+	drv->open_device = open_device;
+	drv->ctx = ctx;
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->destroy = destroy_driver;
-	drv->ctx = ctx;
 
 	return drv;
 }

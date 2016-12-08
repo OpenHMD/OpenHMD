@@ -5,10 +5,10 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/* Oculus Rift Driver Internal Interface */
+/* Deepoon Driver Internal Interface */
 
-#ifndef RIFT_H
-#define RIFT_H
+#ifndef DEEPOON_H
+#define DEEPOON_H
 
 #include "../openhmdi.h"
 
@@ -18,8 +18,7 @@ typedef enum {
 	RIFT_CMD_SENSOR_CONFIG = 2,
 	RIFT_CMD_RANGE = 4,
 	RIFT_CMD_KEEP_ALIVE = 8,
-	RIFT_CMD_DISPLAY_INFO = 9,
-	RIFT_CMD_ENABLE_COMPONENTS = 0x1d
+	RIFT_CMD_DISPLAY_INFO = 9
 } rift_sensor_feature_cmd;
 
 typedef enum {
@@ -28,8 +27,7 @@ typedef enum {
 } rift_coordinate_frame;
 
 typedef enum {
-	RIFT_IRQ_SENSORS = 1,
-	RIFT_IRQ_SENSORS_DK2 = 11
+	RIFT_IRQ_SENSORS = 1
 } rift_irq_cmd;
 
 typedef enum {
@@ -62,11 +60,11 @@ typedef struct {
 } pkt_tracker_sample;
 
 typedef struct {
-	uint8_t num_samples;
-	uint16_t timestamp;
-	uint16_t last_command_id;
-	int16_t temperature;
-	pkt_tracker_sample samples[3];
+	uint8_t report_id;
+	uint8_t sample_delta;
+	uint16_t sample_number;
+	uint32_t tick;
+	pkt_tracker_sample samples[2];
 	int16_t mag[3];
 } pkt_tracker_sensor;
 
@@ -95,21 +93,19 @@ typedef struct {
 } pkt_keep_alive;
 
 
-bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
-bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
-bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
-bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
-bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
+bool dp_decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
+bool dp_decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
+bool dp_decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
+bool dp_decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 
-void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
+void vec3f_from_dp_vec(const int32_t* smp, vec3f* out_vec);
 
-int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
-int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
-int encode_enable_components(unsigned char* buffer, bool display, bool audio);
+int dp_encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
+int dp_encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
 
-void dump_packet_sensor_range(const pkt_sensor_range* range);
-void dump_packet_sensor_config(const pkt_sensor_config* config);
-void dump_packet_sensor_display_info(const pkt_sensor_display_info* info);
-void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor);
+void dp_dump_packet_sensor_range(const pkt_sensor_range* range);
+void dp_dump_packet_sensor_config(const pkt_sensor_config* config);
+void dp_dump_packet_sensor_display_info(const pkt_sensor_display_info* info);
+void dp_dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor);
 
 #endif

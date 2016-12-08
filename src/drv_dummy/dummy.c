@@ -38,7 +38,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		break;
 
 	default:
-		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%d)", type);
+		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
 		return -1;
 		break;
 	}
@@ -66,8 +66,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.093600f;
 	priv->base.properties.hres = 1280;
 	priv->base.properties.vres = 800;
-	priv->base.properties.lens_sep = 0.063500;
-	priv->base.properties.lens_vpos = 0.046800;
+	priv->base.properties.lens_sep = 0.063500f;
+	priv->base.properties.lens_vpos = 0.046800f;
 	priv->base.properties.fov = DEG_TO_RAD(125.5144f);
 	priv->base.properties.ratio = (1280.0f / 800.0f) / 2.0f;
 

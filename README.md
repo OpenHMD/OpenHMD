@@ -5,7 +5,8 @@ This project aims to provide a Free and Open Source API and drivers for immersiv
 OpenHMD is released under the permissive Boost Software License (see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very appreciated.
 
 ## Supported Devices
-  * Oculus Rift DK1 and DK2 (rotation only)
+  * Oculus Rift DK1, DK2 and CV1 (rotation only)
+  * Deepoon E2
   * Android based devices
   * External Sensor (passthrough for external sensors)
 
@@ -26,6 +27,8 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 ## Language Bindings
   * Java bindings by Joey Ferwerda and Koen Mertens
     * https://github.com/OpenHMD/OpenHMD-Java
+  * .NET bindings by Jurrien Fakkeldij
+    * https://github.com/jurrien-fakkeldij/OpenHMD.NET
   * Perl bindings by CandyAngel
     * https://github.com/CandyAngel/perl-openhmd
   * Python bindings by Lubosz Sarnecki
