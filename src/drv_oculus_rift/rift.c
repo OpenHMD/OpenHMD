@@ -137,7 +137,7 @@ static void update_device(ohmd_device* device)
 
 	// Handle keep alive messages
 	double t = ohmd_get_tick();
-	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0 - .2){
+	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0dd - 0.2dd){
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
 		int ka_size = encode_keep_alive(buffer, &keep_alive);

@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 // Running automatic updates at 144 Hz
-#define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
+#define AUTOMATIC_UPDATE_SLEEP (1.0f / 1000.0f)
 
 ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 {
@@ -463,7 +463,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 	// and with the given value offset the projection matrix.
 	float screen_center = props->hsize / 4.0f;
 	float lens_shift = screen_center - props->lens_sep / 2.0f;
-	// XXX: on CV1, props->hsize > props->lens_sep / 2.0,
+	// XXX: on CV1, props->hsize > props->lens_sep / 2.0f,
 	// I am not sure about the implications, but just taking the absolute
 	// value of the offset seems to work.
 	float proj_offset = fabs(4.0f * lens_shift / props->hsize);

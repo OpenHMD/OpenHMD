@@ -122,7 +122,7 @@ static void update_device(ohmd_device* device)
 
 	// Handle keep alive messages
 	double t = ohmd_get_tick();
-	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0 - .2){
+	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0dd - 0.2dd){
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
 		int ka_size = dp_encode_keep_alive(buffer, &keep_alive);
@@ -262,7 +262,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vres = 1080;
 	priv->base.properties.lens_sep = 0.0849f;
 	priv->base.properties.lens_vpos = 0.0468f;;
-	priv->base.properties.fov = DEG_TO_RAD(110.0); // TODO calculate.
+	priv->base.properties.fov = DEG_TO_RAD(110.0f); // TODO calculate.
 	priv->base.properties.ratio = ((float)1920 / (float)1080) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
