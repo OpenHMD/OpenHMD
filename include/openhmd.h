@@ -44,6 +44,7 @@ typedef enum {
 	OHMD_S_UNKNOWN_ERROR = -1,
 	OHMD_S_INVALID_PARAMETER = -2,
 	OHMD_S_UNSUPPORTED = -3,
+	OHMD_S_INVALID_OPERATION = -4,
 
 	/** OHMD_S_USER_RESERVED and below can be used for user purposes, such as errors within ohmd wrappers, etc. */
 	OHMD_S_USER_RESERVED = -16384,
@@ -125,6 +126,14 @@ typedef enum {
 	/** int[1] (get): Physical vertical resolution of the device screen. */
 	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
 
+	/** int[1] (get): Get number of events waiting in digital input event queue. */
+	OHMD_BUTTON_EVENT_COUNT               =  2,
+	/** int[1] (get): Get if the there was an overflow in the event queue causing events to be dropped. */
+	OHMD_BUTTON_EVENT_OVERFLOW            =  3,
+	/** int[1] (get): Get the number of physical digital input buttons on the device. */
+	OHMD_BUTTON_COUNT                     =  4,
+	/** int[2] (get): Performs an event pop action. Format: [button_index, button_state], where button_state is either OHMD_BUTTON_DOWN or OHMD_BUTTON_UP */
+	OHMD_BUTTON_POP_EVENT                 =  5,
 } ohmd_int_value;
 
 /** A collection of data information types used for setting information with ohmd_set_data(). */
@@ -145,6 +154,14 @@ typedef enum {
 	    Call ohmd_update(); must be called frequently, at least 10 times per second, if the background threads are disabled. */
 	OHMD_IDS_AUTOMATIC_UPDATE = 0,
 } ohmd_int_settings;
+
+/** Button states for digital input events. */
+typedef enum {
+	/** Button was pressed. */
+	OHMD_BUTTON_DOWN = 0,
+	/** Button was released. */
+	OHMD_BUTTON_UP   = 1
+} ohmd_button_state;
 
 /** An opaque pointer to a context structure. */
 typedef struct ohmd_context ohmd_context;

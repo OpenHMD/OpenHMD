@@ -9,7 +9,8 @@ libopenhmd_la_SOURCES = \
 	drv_dummy/dummy.c \
 	omath.c \
 	platform-posix.c \
-	fusion.c
+	fusion.c \
+	queue.c
 
 libopenhmd_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall 
