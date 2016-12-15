@@ -55,4 +55,7 @@ void test_ohmdq_push_pop()
 	}
 	
 	TAssert(ohmdq_get_size(q) == 0);
+
+	ohmdq_destroy(q);
+	ohmd_ctx_destroy(ctx);
 }

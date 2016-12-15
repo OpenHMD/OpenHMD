@@ -93,4 +93,5 @@ void ohmdq_destroy(ohmdq* me)
 {
 	free(me->elems);
 	ohmd_destroy_mutex(me->mutex);
+	free(me);
 }

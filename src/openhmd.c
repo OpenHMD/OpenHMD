@@ -196,18 +196,22 @@ int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 
 	ohmd_context* ctx = device->ctx;
 	int idx = device->active_device_idx;
+	ohmdq* dinq = device->digital_input_event_queue;
 
 	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1,
 		sizeof(ohmd_device*) * (ctx->num_active_devices - idx - 1));
 
 	device->close(device);
+	
+	if(dinq)
+		ohmdq_destroy(dinq);
 
 	ctx->num_active_devices--;
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->active_device_idx--;
 
-	ohmd_unlock_mutex(device->ctx->update_mutex);
+	ohmd_unlock_mutex(ctx->update_mutex);
 
 	return OHMD_S_OK;
 }
