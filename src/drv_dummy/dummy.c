@@ -70,6 +70,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_vpos = 0.046800f;
 	priv->base.properties.fov = DEG_TO_RAD(125.5144f);
 	priv->base.properties.ratio = (1280.0f / 800.0f) / 2.0f;
+	priv->base.properties.digital_button_count = 4;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);

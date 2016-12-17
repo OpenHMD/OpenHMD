@@ -38,6 +38,10 @@ int main()
 	Test(test_highlevel_open_close_device);
 	Test(test_highlevel_open_close_many_devices);
 	printf("\n");
+	
+	printf("queue tests\n");
+	Test(test_ohmdq_push_pop);
+	printf("\n");
 
 	printf("all a-ok\n");
 	return 0;

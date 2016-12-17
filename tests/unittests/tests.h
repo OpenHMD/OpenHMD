@@ -44,4 +44,7 @@ void test_oquatf_get_mat4x4();
 void test_highlevel_open_close_device();
 void test_highlevel_open_close_many_devices();
 
+// queue tests
+void test_ohmdq_push_pop();
+
 #endif

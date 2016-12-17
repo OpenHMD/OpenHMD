@@ -12,7 +12,9 @@
 #include <string.h>
 #include <stdio.h>
 
-// Running automatic updates at 144 Hz
+#define DIGITAL_INPUT_EVENT_QUEUE_SIZE 1024
+
+// Running automatic updates at 1000 Hz
 #define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
 
 ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
@@ -162,6 +164,9 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 		device->active_device_idx = ctx->num_active_devices;
 		ctx->active_devices[ctx->num_active_devices++] = device;
 
+		if(device->properties.digital_button_count > 0)
+			device->digital_input_event_queue = ohmdq_create(ctx, sizeof(ohmd_digital_input_event), DIGITAL_INPUT_EVENT_QUEUE_SIZE);
+
 		ohmd_unlock_mutex(ctx->update_mutex);
 
 		if(device->settings.automatic_update)
@@ -191,18 +196,22 @@ int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 
 	ohmd_context* ctx = device->ctx;
 	int idx = device->active_device_idx;
+	ohmdq* dinq = device->digital_input_event_queue;
 
 	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1,
 		sizeof(ohmd_device*) * (ctx->num_active_devices - idx - 1));
 
 	device->close(device);
+	
+	if(dinq)
+		ohmdq_destroy(dinq);
 
 	ctx->num_active_devices--;
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->active_device_idx--;
 
-	ohmd_unlock_mutex(device->ctx->update_mutex);
+	ohmd_unlock_mutex(ctx->update_mutex);
 
 	return OHMD_S_OK;
 }
@@ -372,15 +381,44 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, c
 
 int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
 {
+	ohmdq* dinq = device->digital_input_event_queue;
+
 	switch(type){
-	case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
-		*out = device->properties.hres;
-		return OHMD_S_OK;
-	case OHMD_SCREEN_VERTICAL_RESOLUTION:
-		*out = device->properties.vres;
-		return OHMD_S_OK;
-	default:
-		return OHMD_S_INVALID_PARAMETER;
+		case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
+			*out = device->properties.hres;
+			return OHMD_S_OK;
+
+		case OHMD_SCREEN_VERTICAL_RESOLUTION:
+			*out = device->properties.vres;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_EVENT_COUNT:
+			*out = dinq ? (int)ohmdq_get_size(dinq) : 0;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_EVENT_OVERFLOW:
+			*out = dinq ? (ohmdq_get_size(dinq) == ohmdq_get_max(dinq)) : 0;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_COUNT:
+			*out = device->properties.digital_button_count;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_POP_EVENT: {
+				ohmd_digital_input_event event;
+
+				if(!ohmdq_pop(dinq, &event)){
+					return OHMD_S_INVALID_OPERATION;
+				}
+
+				out[0] = event.idx;
+				out[1] = event.state;
+
+				return OHMD_S_OK;
+			}
+
+		default:
+				return OHMD_S_INVALID_PARAMETER;
 	}
 }
 
