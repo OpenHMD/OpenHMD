@@ -63,7 +63,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t num_samples;
-	uint16_t timestamp;
+	uint32_t timestamp;
 	uint16_t last_command_id;
 	int16_t temperature;
 	pkt_tracker_sample samples[3];
