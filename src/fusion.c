@@ -98,7 +98,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 		if(me->grav_error_angle > min_tilt_error){
 			float use_angle;
 			// if less than 2000 iterations have passed, set the up axis to the correction value outright
-			if(me->grav_error_angle > gravity_tolerance && me->iterations < 2000){
+			if(me->iterations < 2000){
 				use_angle = -me->grav_error_angle;
 				me->grav_error_angle = 0;
 			}
