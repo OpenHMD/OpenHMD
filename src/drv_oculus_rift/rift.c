@@ -29,6 +29,7 @@ typedef struct {
 	rift_coordinate_frame coordinate_frame, hw_coordinate_frame;
 	pkt_sensor_config sensor_config;
 	pkt_tracker_sensor sensor;
+	uint32_t last_imu_timestamp;
 	double last_keep_alive;
 	fusion sensor_fusion;
 	vec3f raw_mag, raw_accel, raw_gyro;
@@ -112,22 +113,26 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 
 	dump_packet_tracker_sensor(s);
 
-	// TODO handle missed samples etc.
-
-	float dt = s->num_samples > 3 ? (s->num_samples - 2) * TICK_LEN : TICK_LEN;
-
 	int32_t mag32[] = { s->mag[0], s->mag[1], s->mag[2] };
 	vec3f_from_rift_vec(mag32, &priv->raw_mag);
 
-	for(int i = 0; i < OHMD_MIN(s->num_samples, 3); i++){
+	// TODO: handle overflows in a nicer way
+	float dt = TICK_LEN; // TODO: query the Rift for the sample rate
+	if (s->timestamp > priv->last_imu_timestamp)
+	{
+		dt = (s->timestamp - priv->last_imu_timestamp) / 1000000.0f;
+		dt -= (s->num_samples - 1) * TICK_LEN; // TODO: query the Rift for the sample rate
+	}
+
+	for(int i = 0; i < s->num_samples; i++){
 		vec3f_from_rift_vec(s->samples[i].accel, &priv->raw_accel);
 		vec3f_from_rift_vec(s->samples[i].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &priv->raw_mag);
-
-		// reset dt to tick_len for the last samples if there were more than one sample
-		dt = TICK_LEN;
+		dt = TICK_LEN; // TODO: query the Rift for the sample rate
 	}
+
+	priv->last_imu_timestamp = s->timestamp;
 }
 
 static void update_device(ohmd_device* device)
@@ -225,6 +230,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	rift_priv* priv = ohmd_alloc(driver->ctx, sizeof(rift_priv));
 	if(!priv)
 		goto cleanup;
+
+	priv->last_imu_timestamp = -1;
 
 	priv->base.ctx = driver->ctx;
 

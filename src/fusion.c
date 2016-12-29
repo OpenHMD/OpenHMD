@@ -64,7 +64,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 		// otherwise reset the counter and start over
 
 		me->device_level_count =
-			fabsf(ovec3f_get_length(accel) - 9.82f) < gravity_tolerance && ang_vel_length < ang_vel_tolerance
+			fabsf(ovec3f_get_length(accel) - 9.82f) < gravity_tolerance * 2.0f && ang_vel_length < ang_vel_tolerance
 			? me->device_level_count + 1 : 0;
 
 		// device has been level for long enough, grab mean from the accelerometer filter queue (last n values)
@@ -75,22 +75,24 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 
 			vec3f accel_mean;
 			ofq_get_mean(&me->accel_fq, &accel_mean);
+			if (ovec3f_get_length(&accel_mean) - 9.82f < gravity_tolerance)
+			{
+				// Calculate a cross product between what the device
+				// thinks is up and what gravity indicates is down.
+				// The values are optimized of what we would get out
+				// from the cross product.
+				vec3f tilt = {{accel_mean.z, 0, -accel_mean.x}};
 
-			// Calculate a cross product between what the device
-			// thinks is up and what gravity indicates is down.
-			// The values are optimized of what we would get out
-			// from the cross product.
-			vec3f tilt = {{accel_mean.z, 0, -accel_mean.x}};
+				ovec3f_normalize_me(&tilt);
+				ovec3f_normalize_me(&accel_mean);
 
-			ovec3f_normalize_me(&tilt);
-			ovec3f_normalize_me(&accel_mean);
+				vec3f up = {{0, 1.0f, 0}};
+				float tilt_angle = ovec3f_get_angle(&up, &accel_mean);
 
-			vec3f up = {{0, 1.0f, 0}};
-			float tilt_angle = ovec3f_get_angle(&up, &accel_mean);
-
-			if(tilt_angle > max_tilt_error){
-				me->grav_error_angle = tilt_angle;
-				me->grav_error_axis = tilt;
+				if(tilt_angle > max_tilt_error){
+					me->grav_error_angle = tilt_angle;
+					me->grav_error_axis = tilt;
+				}
 			}
 		}
 
@@ -98,7 +100,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 		if(me->grav_error_angle > min_tilt_error){
 			float use_angle;
 			// if less than 2000 iterations have passed, set the up axis to the correction value outright
-			if(me->grav_error_angle > gravity_tolerance && me->iterations < 2000){
+			if(me->iterations < 2000){
 				use_angle = -me->grav_error_angle;
 				me->grav_error_angle = 0;
 			}

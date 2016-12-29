@@ -107,11 +107,12 @@ bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buf
 	SKIP_CMD;
 	msg->num_samples = READ8;
 	msg->timestamp = READ16;
+	msg->timestamp *= 1000; // DK1 timestamps are in milliseconds
 	msg->last_command_id = READ16;
 	msg->temperature = READ16;
 
-	int actual = OHMD_MIN(msg->num_samples, 3);
-	for(int i = 0; i < actual; i++){
+	msg->num_samples = OHMD_MIN(msg->num_samples, 3);
+	for(int i = 0; i < msg->num_samples; i++){
 		decode_sample(buffer, msg->samples[i].accel);
 		buffer += 8;
 
@@ -120,7 +121,7 @@ bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buf
 	}
 
 	// Skip empty samples
-	buffer += (3 - actual) * 16;
+	buffer += (3 - msg->num_samples) * 16;
 	for(int i = 0; i < 3; i++){
 		msg->mag[i] = READ16;
 	}
@@ -138,12 +139,16 @@ bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char*
 	SKIP_CMD;
 	msg->last_command_id = READ16;
 	msg->num_samples = READ8;
+	/* Next is the number of samples since start, excluding the samples
+	contained in this packet */
 	buffer += 2; // unused: nb_samples_since_start
 	msg->temperature = READ16;
 	msg->timestamp = READ32;
 
-	int actual = OHMD_MIN(msg->num_samples, 2);
-	for(int i = 0; i < actual; i++){
+	/* Second sample value is junk (outdated/uninitialized) value if
+	num_samples < 2. */
+	msg->num_samples = OHMD_MIN(msg->num_samples, 2);
+	for(int i = 0; i < msg->num_samples; i++){
 		decode_sample(buffer, msg->samples[i].accel);
 		buffer += 8;
 
@@ -152,7 +157,7 @@ bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char*
 	}
 
 	// Skip empty samples
-	buffer += (2 - actual) * 16;
+	buffer += (2 - msg->num_samples) * 16;
 
 	for(int i = 0; i < 3; i++){
 		msg->mag[i] = READ16;
@@ -262,7 +267,7 @@ void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor)
 	LOGD("  num samples:     %u", sensor->num_samples);
 	LOGD("  magnetic field:  %i %i %i", sensor->mag[0], sensor->mag[1], sensor->mag[2]);
 
-	for(int i = 0; i < OHMD_MIN(sensor->num_samples, 3); i++){
+	for(int i = 0; i < sensor->num_samples; i++){
 		LOGD("    accel: %d %d %d", sensor->samples[i].accel[0], sensor->samples[i].accel[1], sensor->samples[i].accel[2]);
 		LOGD("    gyro:  %d %d %d", sensor->samples[i].gyro[0], sensor->samples[i].gyro[1], sensor->samples[i].gyro[2]);
 	}
