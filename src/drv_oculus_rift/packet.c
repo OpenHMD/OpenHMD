@@ -107,6 +107,7 @@ bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buf
 	SKIP_CMD;
 	msg->num_samples = READ8;
 	msg->timestamp = READ16;
+	msg->timestamp *= 1000; // DK1 timestamps are in milliseconds
 	msg->last_command_id = READ16;
 	msg->temperature = READ16;
 
