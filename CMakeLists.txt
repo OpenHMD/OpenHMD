@@ -27,11 +27,12 @@ set(openhmd_source_files
 )
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
+OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
 if(OPENHMD_DRIVER_OCULUS_RIFT)
-	set(openhmd_source_files ${openhmd_source_files} 
+	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/rift.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/packet.c
 	)
@@ -42,15 +43,27 @@ if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_OCULUS_RIFT)
 
+if(OPENHMD_DRIVER_DEEPOON)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_deepoon/deepoon.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_deepoon/packet.c
+	)
+	add_definitions(-DDRIVER_DEEPOON)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_DEEPOON)
+
 if (OPENHMD_DRIVER_EXTERNAL)
-	set(openhmd_source_files ${openhmd_source_files} 
+	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_external/external.c
 	)
 	add_definitions(-DDRIVER_EXTERNAL)
 endif(OPENHMD_DRIVER_EXTERNAL)
 
 if (OPENHMD_DRIVER_ANDROID)
-	set(openhmd_source_files ${openhmd_source_files} 
+	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_android/android.c
 	)
 	add_definitions(-DDRIVER_ANDROID)
@@ -58,3 +71,7 @@ endif(OPENHMD_DRIVER_ANDROID)
 
 add_library(openhmd ${openhmd_source_files} ${LIBS})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
+
+#install properties
+install (TARGETS openhmd DESTINATION lib)
+install (FILES include/openhmd.h DESTINATION include)
