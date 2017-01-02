@@ -31,6 +31,9 @@ OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
+OPTION(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
+OPTION(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
+
 if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/rift.c
@@ -69,7 +72,23 @@ if (OPENHMD_DRIVER_ANDROID)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
 
-add_library(openhmd ${openhmd_source_files} ${LIBS})
+if (OPENHMD_EXAMPLE_SIMPLE)
+	add_subdirectory(./examples/simple)
+endif(OPENHMD_EXAMPLE_SIMPLE)
+
+if (OPENHMD_EXAMPLE_SDL)
+	find_package(SDL REQUIRED)
+	find_package(GLEW REQUIRED)
+	find_package(OpenGL REQUIRED)
+	add_subdirectory(./examples/opengl)
+endif (OPENHMD_EXAMPLE_SDL)
+
+if (UNIX)
+	set(LIBS ${LIBS} rt pthread)
+endif (UNIX)
+
+link_libraries(${LIBS})
+add_library(openhmd ${openhmd_source_files})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
 
 #install properties
