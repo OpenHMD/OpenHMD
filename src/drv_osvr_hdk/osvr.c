@@ -188,15 +188,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties
-	//NOTE: These values are estimations, no one has taken one appart to check
-	priv->base.properties.hsize = 0.1698f;
-	priv->base.properties.vsize = 0.0936f;
+	//NOTE: display's each is 3.81" diagonal
+	//67.60 × 78.95 mm outline dimension, and 64.8 × 72.0 mm active area.
+	priv->base.properties.hsize = 0.1906f; //2 times sceens + ipd as estimation
+	priv->base.properties.vsize = 0.0720f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
-	priv->base.properties.lens_sep = 0.0849f;
+	priv->base.properties.lens_sep = 0.0610f;
 	priv->base.properties.lens_vpos = 0.0468f;;
-	priv->base.properties.fov = DEG_TO_RAD(110.0); // TODO calculate.
-	priv->base.properties.ratio = ((float)1920 / (float)1080) / 2.0f;
+	priv->base.properties.fov = DEG_TO_RAD(92.0); // TODO calculate.
+	priv->base.properties.ratio = ((float)2160 / (float)1200) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
