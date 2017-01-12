@@ -28,24 +28,9 @@ typedef enum {
 } drv_sensor_feature_cmd;
 
 typedef struct {
-	uint16_t command_id;
-	uint16_t accel_scale;
-	uint16_t gyro_scale;
-	uint16_t mag_scale;
-} pkt_sensor_range;
-
-typedef struct {
-	int32_t accel[3];
-	int32_t gyro[3];
-} pkt_tracker_sample;
-
-typedef struct {
-	uint8_t report_id;
-	uint8_t sample_delta;
-	uint16_t sample_number;
-	uint32_t tick;
-	pkt_tracker_sample samples[2];
-	int16_t mag[3];
+	uint8_t sequence_number;
+	int16_t device_quat[4];
+	int16_t accel[3];
 } pkt_tracker_sensor;
 
 typedef struct {
@@ -72,20 +57,12 @@ typedef struct {
 	uint16_t keep_alive_interval;
 } pkt_keep_alive;
 
+void quatf_from_device_quat(const int16_t* smp, quatf* out_quat);
 
-bool osvr_decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
 bool osvr_decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
 bool osvr_decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
 bool osvr_decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 
-void vec3f_from_vec(const int32_t* smp, vec3f* out_vec);
-
-int osvr_encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
-int osvr_encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
-
-void osvr_dump_packet_sensor_range(const pkt_sensor_range* range);
-void osvr_dump_packet_sensor_config(const pkt_sensor_config* config);
-void osvr_dump_packet_sensor_display_info(const pkt_sensor_display_info* info);
 void osvr_dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor);
 
 #endif

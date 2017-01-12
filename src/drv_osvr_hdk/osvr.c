@@ -27,13 +27,13 @@ typedef struct {
 	ohmd_device base;
 
 	hid_device* handle;
-	pkt_sensor_range sensor_range;
 	pkt_sensor_display_info display_info;
 	pkt_sensor_config sensor_config;
 	pkt_tracker_sensor sensor;
 	double last_keep_alive;
 	fusion sensor_fusion;
-	vec3f raw_mag, raw_accel, raw_gyro;
+	vec3f raw_accel;
+	quatf processed_quat;
 } drv_priv;
 
 static drv_priv* drv_priv_get(ohmd_device* device)
@@ -53,10 +53,16 @@ static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t
 	return hid_send_feature_report(priv->handle, data, length);
 }
 
+void quatf_from_device_quat(const int16_t* smp, quatf* out_quat)
+{
+	out_quat->x = (float)smp[0];
+	out_quat->y = (float)smp[1];
+	out_quat->z = (float)smp[2];
+	out_quat->w = (float)smp[3];
+}
+
 static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int size)
 {
-	uint32_t last_sample_tick = priv->sensor.tick;
-
 	if(!osvr_decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
@@ -64,23 +70,8 @@ static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int
 	pkt_tracker_sensor* s = &priv->sensor;
 
 	osvr_dump_packet_tracker_sensor(s);
-
-	uint32_t tick_delta = 1000;
-	if(last_sample_tick > 0) //startup correction
-		tick_delta = s->tick - last_sample_tick;
-
-	float dt = tick_delta * TICK_LEN;
-	vec3f mag = {{0.0f, 0.0f, 0.0f}};
-
-	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for this frame
-		vec3f_from_vec(s->samples[i].accel, &priv->raw_accel);
-		vec3f_from_vec(s->samples[i].gyro, &priv->raw_gyro);
-
-		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
-
-		// reset dt to tick_len for the last samples if there were more than one sample
-		dt = TICK_LEN;
-	}
+	quatf_from_device_quat(s->device_quat, &priv->processed_quat);
+	priv->sensor_fusion.orient = priv->processed_quat;
 }
 
 static void update_device(ohmd_device* device)
