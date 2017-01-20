@@ -86,30 +86,12 @@ AM_CONDITIONAL([BUILD_OPENGL_EXAMPLE], [test "x$openglexample_enabled" != "xno"]
 
 # Libs required by OpenGL test
 AS_IF([test "x$openglexample_enabled" != "xno"], [
-	PKG_CHECK_MODULES([sdl], [sdl])
+	PKG_CHECK_MODULES([sdl2], [sdl2])
 
-	# Try to find OpenGL with pkg-config
-	PKG_CHECK_MODULES([GL], [gl], [],
-			# and try to find which lib to link to, -lGL first
-			[AC_CHECK_LIB(GL, glBegin, [GL_LIBS=-lGL],
+	PKG_CHECK_MODULES([epoxy], [epoxy])
 
-				# if that fails, try -lopengl32 (win32)
-				[AC_CHECK_LIB(opengl32, main, [GL_LIBS=-lopengl32],
-					AC_MSG_ERROR([GL not found])
-				)]
-			)]
-	)
-
-	AC_SUBST(GL_LIBS)
-
-	# Try to find GLEW with pkg-config
-	PKG_CHECK_MODULES([GLEW], [glew], [],
-		# if that fails, check if there's a glew header
-		[AC_CHECK_HEADER([GL/glew.h], [GLEW_LIBS=-lGLEW; GLEW_CFLAGS=-DGLEW_STATIC], AC_MSG_ERROR([GLEW not found]))]
-	)
-
-	AC_SUBST(GLEW_LIBS)
-	AC_SUBST(GLEW_CFLAGS)
+	AC_SUBST(epoxy_LIBS)
+	AC_SUBST(epoxy_CFLAGS)
 ])
 
 AC_PROG_CC

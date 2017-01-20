@@ -12,12 +12,18 @@
 
 #include <SDL.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include <epoxy/gl.h>
+#include <epoxy/glx.h>
+#include <epoxy/egl.h>
+
+// Check under windows - doesn't exist in fedora install, so ifdef appropriately
+//#include <epoxy/wgl.h>
 
 typedef struct {
 	int w, h;
-	SDL_Surface* screen;
+	SDL_Window* window;
+    SDL_GLContext glcontext;
+    int is_fullscreen;
 } gl_ctx;
 
 void ortho(gl_ctx* ctx);
