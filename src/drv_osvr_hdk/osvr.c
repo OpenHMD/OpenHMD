@@ -55,10 +55,17 @@ static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t
 
 void quatf_from_device_quat(const int16_t* smp, quatf* out_quat)
 {
-	out_quat->x = (float)smp[0];
-	out_quat->y = (float)smp[1];
-	out_quat->z = (float)smp[2];
-	out_quat->w = (float)smp[3];
+	out_quat->x = (float)smp[0] / (1 << 14);
+	out_quat->y = (float)smp[1] / (1 << 14);
+	out_quat->z = (float)smp[2] / (1 << 14);
+	out_quat->w = (float)smp[3] / (1 << 14);
+}
+
+void vec3f_from_device_accel(const int16_t* accel, vec3f* out_vec)
+{
+	out_vec->x = (float)accel[0] / (1 << 9);
+	out_vec->y = (float)accel[1] / (1 << 9);
+	out_vec->z = (float)accel[2] / (1 << 9);
 }
 
 static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int size)
@@ -71,6 +78,7 @@ static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int
 
 	osvr_dump_packet_tracker_sensor(s);
 	quatf_from_device_quat(s->device_quat, &priv->processed_quat);
+	vec3f_from_device_accel(s->accel, &priv->raw_accel);
 	priv->sensor_fusion.orient = priv->processed_quat;
 }
 

@@ -58,6 +58,7 @@ typedef struct {
 } pkt_keep_alive;
 
 void quatf_from_device_quat(const int16_t* smp, quatf* out_quat);
+void vec3f_from_device_accel(const int16_t* accel, vec3f* out_vec);
 
 bool osvr_decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
 bool osvr_decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
