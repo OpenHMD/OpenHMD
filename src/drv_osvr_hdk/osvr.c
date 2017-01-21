@@ -41,24 +41,32 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
-static int get_feature_report(drv_priv* priv, drv_sensor_feature_cmd cmd, unsigned char* buf)
-{
-	memset(buf, 0, FEATURE_BUFFER_SIZE);
-	buf[0] = (unsigned char)cmd;
-	return hid_get_feature_report(priv->handle, buf, FEATURE_BUFFER_SIZE);
-}
-
-static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t length)
-{
-	return hid_send_feature_report(priv->handle, data, length);
-}
-
 void quatf_from_device_quat(const int16_t* smp, quatf* out_quat)
 {
-	out_quat->x = (float)smp[0] / (1 << 14);
-	out_quat->y = (float)smp[1] / (1 << 14);
-	out_quat->z = (float)smp[2] / (1 << 14);
-	out_quat->w = (float)smp[3] / (1 << 14);
+	// see https://github.com/vrpn/vrpn/blob/9cfc1a536f39e8815066c39a1cef0f8a515a2860/vrpn_FixedPoint.h#L175
+	quatf sensor_quat = {
+		.x = ((float) smp[0]) / (1 << 14),
+		.y = ((float) smp[1]) / (1 << 14),
+		.z = ((float) smp[2]) / (1 << 14),
+		.w = ((float) smp[3]) / (1 << 14)
+	};
+
+	//printf("%6f %6f %6f% 6f\n", sensor_quat.x, sensor_quat.y, sensor_quat.z, sensor_quat.w);
+
+	// see https://github.com/OSVR/OSVR-Core/blob/7c69b804723b196e10b9c9818cd8801b2e06f6d3/plugins/multiserver/com_osvr_Multiserver_OSVRHackerDevKit.json#L28
+	quatf rotatex = {
+		.x = sqrt(0.5),
+		.y = 0,
+		.z = 0,
+		.w = sqrt(0.5)
+	};
+	oquatf_mult_me(&sensor_quat, &rotatex);
+	oquatf_normalize_me(&sensor_quat);
+
+	out_quat->x = -sensor_quat.x;
+	out_quat->y = -sensor_quat.z;
+	out_quat->z = sensor_quat.y;
+	out_quat->w = -sensor_quat.w;
 }
 
 void vec3f_from_device_accel(const int16_t* accel, vec3f* out_vec)
@@ -99,7 +107,8 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == 3) {
+		// 3 if display is off, 19 if display is on
+		if(buffer[0] == 3 || buffer[0] == 19) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
@@ -185,10 +194,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 	}
 
-	unsigned char buf[FEATURE_BUFFER_SIZE];
-
-	int size;
-
 	// Update the time of the last keep alive we have sent.
 	priv->last_keep_alive = ohmd_get_tick();
 
@@ -202,7 +207,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.0720f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
-	priv->base.properties.lens_sep = 0.0610f;
+	priv->base.properties.lens_sep = 0.0885f;
 	priv->base.properties.lens_vpos = 0.0468f;;
 	priv->base.properties.fov = DEG_TO_RAD(92.0); // TODO calculate.
 	priv->base.properties.ratio = ((float)2160 / (float)1200) / 2.0f;
