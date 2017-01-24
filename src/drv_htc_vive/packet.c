@@ -1,6 +1,8 @@
 #include "vive.h"
 
-//Supress the warnings for this include, since we don't care about them for external dependencies
+/* Suppress the warnings for this include, since we don't care about them for external dependencies
+/* Requires at least GCC 4.6 or higher
+*/
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #include "../ext_deps/miniz.c"

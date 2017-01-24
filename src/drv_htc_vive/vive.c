@@ -323,6 +323,46 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
 	//printf("enable lighthouse magic: %d\n", hret);
 
+	unsigned char buffer[128];
+	int bytes;
+	/*
+	FILE *fp;
+	fp = fopen( "report17.data" , "w" );*/
+	unsigned char packet_buffer[62];
+	unsigned int packet_buffer_pos = 0;
+
+	printf("Sending feature report 17 to LH\n");
+	buffer[0] = 17;
+	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	printf("got %i bytes\n", bytes);
+	packet_buffer[packet_buffer_pos] = buffer[2];
+	packet_buffer_pos++;
+	//fwrite(&buffer[2], 1, buffer[1], fp);
+	/*
+	for (int i = 0; i < bytes; i++) {
+		printf("%02hx ", buffer[i]);
+	}
+	printf("\n\n");*/
+
+	while (buffer[1] != 0) {
+		printf("Sending feature report 17 to LH\n");
+		buffer[0] = 17;
+		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+		printf("got %i bytes\n", bytes);
+		packet_buffer[packet_buffer_pos] = buffer[2];
+		packet_buffer_pos++;
+		//fwrite(&buffer[2], 1, buffer[1], fp);
+		/*
+		for (int i = 0; i < bytes; i++) {
+			printf("%02hx ", buffer[i]);
+		}
+		printf("\n\n");
+		*/
+	}
+	printf("Result: %s\n", packet_buffer);
+
+	//fclose(fp);
+
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
