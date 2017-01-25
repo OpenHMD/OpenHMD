@@ -88,9 +88,12 @@ if (UNIX)
 endif (UNIX)
 
 link_libraries(${LIBS})
-add_library(openhmd ${openhmd_source_files})
+add_library(openhmd-shared SHARED ${openhmd_source_files})
+SET_TARGET_PROPERTIES(openhmd-shared PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1)
+add_library(openhmd-static STATIC ${openhmd_source_files})
+SET_TARGET_PROPERTIES(openhmd-static PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
 
 #install properties
-install (TARGETS openhmd DESTINATION lib)
+install (TARGETS openhmd-shared openhmd-static DESTINATION lib)
 install (FILES include/openhmd.h DESTINATION include)
