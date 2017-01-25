@@ -39,6 +39,7 @@ typedef struct {
 	uint32_t last_ticks;
 	uint8_t last_seq;
 
+	vive_config_packet vive_config;
 	vec3f gyro_error;
 	filter_queue gyro_q;
 } vive_priv;
@@ -325,42 +326,38 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	unsigned char buffer[128];
 	int bytes;
-	/*
-	FILE *fp;
-	fp = fopen( "report17.data" , "w" );*/
-	unsigned char packet_buffer[62];
-	unsigned int packet_buffer_pos = 0;
 
-	printf("Sending feature report 17 to LH\n");
-	buffer[0] = 17;
+	printf("Getting feature report 16 to 39\n");
+	buffer[0] = 16;
 	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 	printf("got %i bytes\n", bytes);
-	packet_buffer[packet_buffer_pos] = buffer[2];
-	packet_buffer_pos++;
-	//fwrite(&buffer[2], 1, buffer[1], fp);
-	/*
 	for (int i = 0; i < bytes; i++) {
 		printf("%02hx ", buffer[i]);
 	}
-	printf("\n\n");*/
+	printf("\n\n");
 
+	/*
+	FILE *fp;
+	fp = fopen( "report17.data" , "w" );*/
+	//unsigned char packet_buffer[4069];
+	unsigned char* packet_buffer = malloc(4096);
+	unsigned int packet_buffer_pos = 0;
+
+	int offset = 0;
 	while (buffer[1] != 0) {
-		printf("Sending feature report 17 to LH\n");
+		//printf("Sending feature report 17 to LH\n");
 		buffer[0] = 17;
 		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-		printf("got %i bytes\n", bytes);
-		packet_buffer[packet_buffer_pos] = buffer[2];
-		packet_buffer_pos++;
-		//fwrite(&buffer[2], 1, buffer[1], fp);
-		/*
-		for (int i = 0; i < bytes; i++) {
-			printf("%02hx ", buffer[i]);
-		}
-		printf("\n\n");
-		*/
-	}
-	printf("Result: %s\n", packet_buffer);
+		//printf("got %i bytes\n", bytes);
 
+ 		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
+ 		offset += buffer[1];
+ 		//rintf("Offset: %i\n", offset);
+	}
+	packet_buffer[offset] = '\0';
+	//printf("Result: %s\n", packet_buffer);
+	vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
+//	exit(0); //test
 	//fclose(fp);
 
 	// Set default device properties

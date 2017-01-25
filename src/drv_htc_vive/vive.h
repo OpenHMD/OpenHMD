@@ -30,12 +30,12 @@ typedef struct
 typedef struct
 {
 	uint8_t report_id;
-	uint8_t length;
-	uint8_t config_data;
+	uint16_t length;
+	unsigned char config_data[99999];
 } vive_config_packet;
 
 void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec);
 bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size);
-bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, int size);
+bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, uint16_t size);
 
 #endif
