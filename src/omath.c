@@ -249,6 +249,39 @@ void omat4x4f_init_perspective(mat4x4f* me, float fovy_rad, float aspect, float 
 	me->m[3][3] = 0;
 }
 
+void omat4x4f_init_frustum(mat4x4f* me, float left, float right, float bottom, float top, float znear, float zfar)
+{
+    omat4x4f_init_ident(me);
+
+    float delta_x = right - left;
+    float delta_y = top - bottom;
+	float delta_z = zfar - znear;
+	if ((delta_x == 0.0f) || (delta_y == 0.0f) || (delta_z == 0.0f)) {
+        /* can't divide by zero, so just give back identity */
+		return;
+	}
+
+	me->m[0][0] = 2.0f * znear / delta_x;
+	me->m[0][1] = 0;
+	me->m[0][2] = (right + left) / delta_x;
+	me->m[0][3] = 0;
+
+	me->m[1][0] = 0;
+	me->m[1][1] = 2.0f * znear / delta_y;
+	me->m[1][2] = (top + bottom) / delta_y;
+	me->m[1][3] = 0;
+
+	me->m[2][0] = 0;
+	me->m[2][1] = 0;
+	me->m[2][2] = (zfar + znear) / delta_z;
+	me->m[2][3] = 2.0f * zfar * znear / delta_z;
+
+	me->m[3][0] = 0;
+	me->m[3][1] = 0;
+	me->m[3][2] = -1.0f;
+	me->m[3][3] = 0;
+}
+
 void omat4x4f_init_look_at(mat4x4f* me, const quatf* rot, const vec3f* eye)
 {
 	quatf q;
