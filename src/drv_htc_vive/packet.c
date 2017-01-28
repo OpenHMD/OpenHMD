@@ -1,14 +1,5 @@
 #include "vive.h"
-
-/* Suppress the warnings for this include, since we don't care about them for external dependencies
- * Requires at least GCC 4.6 or higher
-*/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#pragma GCC diagnostic ignored "-Wmisleading-indentation"
-#include "../ext_deps/miniz.c"
-#include "../ext_deps/jsmn.h"
-#pragma GCC diagnostic pop
+#include "config.h"
 
 inline static uint8_t read8(const unsigned char** buffer)
 {
@@ -58,6 +49,23 @@ bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buf
 	return true;
 }
 
+//Trim function for removing tabs and spaces from string buffers
+void trim(const char* src, char* buff, const unsigned int sizeBuff)
+{
+    if(sizeBuff < 1)
+    return;
+
+    const char* current = src;
+    unsigned int i = 0;
+    while(current != '\0' && i < sizeBuff-1)
+    {
+        if(*current != ' ' && *current != '\t')
+            buff[i++] = *current;
+        ++current;
+    }
+    buff[i] = '\0';
+}
+
 bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, uint16_t size)
 {/*
 	if(size != 4069){
@@ -83,20 +91,22 @@ bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buf
 	//printf("Debug print all the RAW JSON things!\n%s", output);
 	//pUncomp should now be the uncompressed data, lets get the json from it
 	/** DEBUG JSON PARSER CODE **/
-	//const char* uncompressed_vive_data = (char*)pUncomp;
+	trim((char*)output,(char*)output,output_size);
+	//printf("%s\n",output);
 	/*
-	int resultCode;
-	jsmn_parser p;
-	jsmntok_t tokens[128]; // a number >= total number of tokens
+	FILE* dfp;
+	dfp = fopen("jsondebug.json","w");
+	json_enable_debug(3, dfp);*/
+	int status = json_read_object((char*)output, sensor_offsets, NULL);
+	printf("\n--- Converted Vive JSON Data ---\n\n");
+	printf("acc_bias = %f %f %f\n", acc_bias[0], acc_bias[1], acc_bias[2]);
+	printf("acc_scale = %f %f %f\n", acc_scale[0], acc_scale[1], acc_scale[2]);
+	printf("gyro_bias = %f %f %f\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
+	printf("gyro_scale = %f %f %f\n", gyro_scale[0], gyro_scale[1], gyro_scale[2]);
+	printf("\n--- End of Vive JSON Data ---\n\n");
 
-	jsmn_init(&p);
-	resultCode = jsmn_parse(&p, output, pkt->length, tokens, 256);
-	jsmntok_t key = tokens[1];
-	unsigned int length = key.end - key.start;
-	char keyString[length + 1];
-	memcpy(keyString, &output[key.start], length);
-	keyString[length] = '\0';
-	printf("Key: %s\n", keyString);*/
+	if (status != 0)
+		puts(json_error_string(status));
 	/** END OF DEBUG JSON PARSER CODE **/
 
 //	free(pCmp);

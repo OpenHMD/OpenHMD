@@ -336,29 +336,19 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 	printf("\n\n");
 
-	/*
-	FILE *fp;
-	fp = fopen( "report17.data" , "w" );*/
-	//unsigned char packet_buffer[4069];
 	unsigned char* packet_buffer = malloc(4096);
-	unsigned int packet_buffer_pos = 0;
 
 	int offset = 0;
 	while (buffer[1] != 0) {
-		//printf("Sending feature report 17 to LH\n");
 		buffer[0] = 17;
 		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-		//printf("got %i bytes\n", bytes);
 
  		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
  		offset += buffer[1];
- 		//rintf("Offset: %i\n", offset);
 	}
 	packet_buffer[offset] = '\0';
 	//printf("Result: %s\n", packet_buffer);
 	vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
-//	exit(0); //test
-	//fclose(fp);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
