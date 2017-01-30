@@ -313,11 +313,38 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vres = priv->display_info.v_resolution;
 	priv->base.properties.lens_sep = priv->display_info.lens_separation;
 	priv->base.properties.lens_vpos = priv->display_info.v_center;
-	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
 	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
-	ohmd_calc_default_proj_matrices(&priv->base.properties);
+	//ohmd_calc_default_proj_matrices(&priv->base.properties);
+	float l,r,t,b,n,f;
+	mat4x4f l_proj; // left projection matrix
+	mat4x4f r_proj; // right projection matrix
+	mat4x4f translate;
+	// left eye screen bounds
+	l = -1.0f * (priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2);
+	r = priv->display_info.lens_separation/2;
+	t = priv->display_info.v_screen_size - priv->display_info.v_center;
+	b = -1.0f * priv->display_info.v_center;
+	n = priv->display_info.eye_to_screen_distance[0];
+	f = n*10e6;
+	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
+	omat4x4f_init_frustum(&l_proj, l, r, b, t, n, f);
+	omat4x4f_init_translate(&translate, r, 0, 0); //shift over eye offset
+	omat4x4f_mult(&translate, &l_proj, &priv->base.properties.proj_left); //LEFT multiply inside OpenHMD
+	//right eye screen bounds
+	l = -1.0f * priv->display_info.lens_separation/2;
+	r = priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2;
+	n = priv->display_info.eye_to_screen_distance[1];
+	f = n*10e6;
+	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
+	omat4x4f_init_frustum(&r_proj, l, r, b, t, n, f);
+	omat4x4f_init_translate(&translate, l, 0, 0); //shift over eye offset
+	omat4x4f_mult(&translate, &r_proj, &priv->base.properties.proj_right); //LEFT multiply inside OpenHMD
+
+	priv->base.properties.fov = 2 * atan2f(
+			priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2,
+			priv->display_info.eye_to_screen_distance[0]);
 
 	// set up device callbacks
 	priv->base.update = update_device;
