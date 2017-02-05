@@ -67,6 +67,7 @@ typedef union {
 
 void omat4x4f_init_ident(mat4x4f* me);
 void omat4x4f_init_perspective(mat4x4f* me, float fov_rad, float aspect, float znear, float zfar);
+void omat4x4f_init_frustum(mat4x4f* me, float left, float right, float bottom, float top, float znear, float zfar);
 void omat4x4f_init_look_at(mat4x4f* me, const quatf* ret, const vec3f* eye);
 void omat4x4f_init_translate(mat4x4f* me, float x, float y, float z);
 void omat4x4f_mult(const mat4x4f* left, const mat4x4f* right, mat4x4f* out_mat);
