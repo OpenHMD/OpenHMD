@@ -64,6 +64,15 @@ as root, run:
 
 After this you have to unplug your Rift and plug it back in. You should now be able to access the Oculus Rift as a normal user.
 
+### Compiling on Windows
+CMake has a lot of generators available for IDE's and build systems.
+The easiest way to find one that fits your system is by checking the supported generators for you CMake version online.
+Example using VC2013.
+
+	cmake . -G "Visual Studio 12 2013 Win64"
+
+This will generate a project file for Visual Studio 2013 for 64 bit systems.
+Open the project file and compile as you usually would do.
 
 ### Cross compiling for windows using mingw
 Using Make:
