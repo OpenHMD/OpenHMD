@@ -55,10 +55,13 @@ static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t
 
 void quatf_from_device_quat(const int16_t* smp, quatf* out_quat)
 {
-	out_quat->x = (float)smp[0] / (1 << 14);
-	out_quat->y = (float)smp[1] / (1 << 14);
-	out_quat->z = (float)smp[2] / (1 << 14);
-	out_quat->w = (float)smp[3] / (1 << 14);
+	out_quat->x = ((float)smp[0] / (1 << 14)) * -1;
+	out_quat->y = ((float)smp[2] / (1 << 14)) * -1;
+	out_quat->z = ((float)smp[1] / (1 << 14)) * 1;
+	out_quat->w = ((float)smp[3] / (1 << 14)) * -1;
+
+	quatf abs_rotate_offset = { sqrt(0.5), 0, 0 ,sqrt(0.5) };
+	oquatf_mult_me(out_quat, &abs_rotate_offset);
 }
 
 void vec3f_from_device_accel(const int16_t* accel, vec3f* out_vec)
@@ -99,7 +102,7 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == 3) {
+		if(buffer[0] == 3 || buffer[0] == 19) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
@@ -198,13 +201,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Set device properties
 	//NOTE: display's each is 3.81" diagonal
 	//67.60 × 78.95 mm outline dimension, and 64.8 × 72.0 mm active area.
-	priv->base.properties.hsize = 0.1906f; //2 times sceens + ipd as estimation
+	priv->base.properties.hsize = 0.1296f; //2 times sceens + ipd as estimation
 	priv->base.properties.vsize = 0.0720f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
-	priv->base.properties.lens_sep = 0.0610f;
-	priv->base.properties.lens_vpos = 0.0468f;;
-	priv->base.properties.fov = DEG_TO_RAD(92.0); // TODO calculate.
+	priv->base.properties.lens_sep = 0.0725f;
+	priv->base.properties.lens_vpos = 0.03125;
+	priv->base.properties.fov = DEG_TO_RAD(110.0); // TODO calculate.
 	priv->base.properties.ratio = ((float)2160 / (float)1200) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
