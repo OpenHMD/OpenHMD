@@ -273,8 +273,8 @@ void omat4x4f_init_frustum(mat4x4f* me, float left, float right, float bottom, f
 
 	me->m[2][0] = 0;
 	me->m[2][1] = 0;
-	me->m[2][2] = (zfar + znear) / delta_z;
-	me->m[2][3] = 2.0f * zfar * znear / delta_z;
+	me->m[2][2] = -(zfar + znear) / delta_z;
+	me->m[2][3] = -2.0f * zfar * znear / delta_z;
 
 	me->m[3][0] = 0;
 	me->m[3][1] = 0;
