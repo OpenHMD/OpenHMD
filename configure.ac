@@ -49,6 +49,15 @@ AC_ARG_ENABLE([driver-deepoon],
 
 AM_CONDITIONAL([BUILD_DRIVER_DEEPOON], [test "x$driver_deepoon_enabled" != "xno"])
 
+# Pimax Driver
+AC_ARG_ENABLE([driver-pimax],
+        [AS_HELP_STRING([--disable-driver-pimax],
+                [disable building of Pimax driver [default=yes]])],
+        [driver_pimax_enabled=$enableval],
+        [driver_pimax_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_PIMAX], [test "x$driver_pimax_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],

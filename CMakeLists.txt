@@ -28,6 +28,7 @@ set(openhmd_source_files
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
+OPTION(OPENHMD_DRIVER_PIMAX "Pimax 4k" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -57,6 +58,19 @@ if(OPENHMD_DRIVER_DEEPOON)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_DEEPOON)
+
+if(OPENHMD_DRIVER_PIMAX)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_pimax/pimax.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_pimax/packet.c
+	)
+	add_definitions(-DDRIVER_DEEPOON)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_PIMAX)
+
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files}

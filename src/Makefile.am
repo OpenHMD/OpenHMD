@@ -37,6 +37,17 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_PIMAX
+
+libopenhmd_la_SOURCES += \
+	drv_pimax/pimax.c \
+	drv_pimax/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_PIMAX
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
 if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \

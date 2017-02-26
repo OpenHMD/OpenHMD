@@ -29,6 +29,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
 #endif
 
+#if DRIVER_PIMAX
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_pimax_drv(ctx);
+#endif
+
 #if DRIVER_DEEPOON
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_deepoon_drv(ctx);
 #endif
