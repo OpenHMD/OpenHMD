@@ -30,6 +30,7 @@ OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
+OPTION(OPENHMD_DRIVER_DUMMY "Dummy driver for testing" ON)
 
 OPTION(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
 OPTION(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
@@ -71,6 +72,18 @@ if (OPENHMD_DRIVER_ANDROID)
 	)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
+
+if (OPENHMD_DRIVER_DUMMY)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_dummy/dummy.c
+	)
+	add_definitions(-DDRIVER_DUMMY)
+endif(OPENHMD_DRIVER_DUMMY)
+
+if (NOT (OPENHMD_DRIVER_OCULUS_RIFT OR OPENHMD_DRIVER_DEEPOON OR OPENHMD_DRIVER_EXTERNAL OR
+	     OPENHMD_DRIVER_ANDROID OR OPENHMD_DRIVER_DUMMY))
+	message(WARNING "No driver enabled, OpenHMD will compile but no device will work.")
+endif()
 
 if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)

@@ -40,8 +40,11 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 #if DRIVER_ANDROID
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
 #endif
+
+#if DRIVER_DUMMY
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
+#endif
 
 	ctx->update_request_quit = false;
 
