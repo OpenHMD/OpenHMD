@@ -315,6 +315,30 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_vpos = priv->display_info.v_center;
 	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
 
+	//setup generic distortion coeffs, from hand-calibration
+	switch (desc->revision) {
+		case REV_DK2:
+			priv->base.properties.universal_distortion_k[0] = 0.247;
+			priv->base.properties.universal_distortion_k[1] = -0.145;
+			priv->base.properties.universal_distortion_k[2] = 0.103;
+			priv->base.properties.universal_distortion_k[3] = 0.795;
+			priv->base.properties.universal_aberration_k[0] = 0.985;
+			priv->base.properties.universal_aberration_k[1] = 1.000;
+			priv->base.properties.universal_aberration_k[2] = 1.015;
+			break;
+		case REV_DK1:
+			priv->base.properties.universal_distortion_k[0] = 1.003;
+			priv->base.properties.universal_distortion_k[1] = -1.005;
+			priv->base.properties.universal_distortion_k[2] = 0.403;
+			priv->base.properties.universal_distortion_k[3] = 0.599;
+			priv->base.properties.universal_aberration_k[0] = 0.985;
+			priv->base.properties.universal_aberration_k[1] = 1.000;
+			priv->base.properties.universal_aberration_k[2] = 1.015;
+			break;
+		default:
+			break;
+	}
+
 	// calculate projection eye projection matrices from the device properties
 	//ohmd_calc_default_proj_matrices(&priv->base.properties);
 	float l,r,t,b,n,f;
