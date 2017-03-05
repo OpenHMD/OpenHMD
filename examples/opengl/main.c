@@ -13,8 +13,12 @@
 #include <math.h>
 #include "gl.h"
 
-#define TEST_WIDTH 1280
-#define TEST_HEIGHT 800
+/* DK1 */
+//#define TEST_WIDTH 1280
+//#define TEST_HEIGHT 800
+/* DK2 */
+#define TEST_WIDTH 1920
+#define TEST_HEIGHT 1080
 
 #define EYE_WIDTH (TEST_WIDTH / 2 * 2)
 #define EYE_HEIGHT (TEST_HEIGHT * 2)
@@ -79,6 +83,18 @@ void draw_scene(GLuint list)
 {
 	// draw cubes
 	glCallList(list);
+}
+static inline void
+print_matrix(float m[])
+{
+    printf("[[%0.4f, %0.4f, %0.4f, %0.4f],\n"
+            "[%0.4f, %0.4f, %0.4f, %0.4f],\n"
+            "[%0.4f, %0.4f, %0.4f, %0.4f],\n"
+            "[%0.4f, %0.4f, %0.4f, %0.4f]]\n",
+            m[0], m[4], m[8], m[12],
+            m[1], m[5], m[9], m[13],
+            m[2], m[6], m[10], m[14],
+            m[3], m[7], m[11], m[15]);
 }
 
 int main(int argc, char** argv)
@@ -151,6 +167,23 @@ int main(int argc, char** argv)
 						ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
 					}
 					break;
+				case SDLK_F3:
+					{
+						float mat[16];
+						ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_PROJECTION_MATRIX, mat);
+						printf("Projection L: ");
+						print_matrix(mat);
+						printf("\n");
+						ohmd_device_getf(hmd, OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX, mat);
+						printf("Projection R: ");
+						print_matrix(mat);
+						printf("\n");
+						ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX, mat);
+						printf("View: ");
+						print_matrix(mat);
+						printf("\n");
+					}
+					break;
 				default:
 					break;
 				}
@@ -174,6 +207,7 @@ int main(int argc, char** argv)
 		// Draw scene into framebuffer.
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, left_fbo);
 		glViewport(0, 0, EYE_WIDTH, EYE_HEIGHT);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		draw_scene(list);
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
