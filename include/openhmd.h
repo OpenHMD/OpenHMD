@@ -57,6 +57,12 @@ typedef enum {
 	OHMD_PATH      = 2,
 } ohmd_string_value;
 
+/** A collection of string descriptions, used for getting strings with ohmd_gets(). */
+typedef enum {
+	OHMD_GLSL_DISTORTION_VERT_SRC = 0,
+	OHMD_GLSL_DISTORTION_FRAG_SRC = 1,
+} ohmd_string_description;
+
 /** A collection of float value information types, used for getting and setting information with
     ohmd_device_getf() and ohmd_device_setf(). */
 typedef enum {
@@ -109,13 +115,19 @@ typedef enum {
 
 	/** float[6] (get): Device specific distortion value. */
 	OHMD_DISTORTION_K                     = 18,
-	
+
 	/**
 	 * float[10] (set): Perform sensor fusion on values from external sensors.
 	 *
 	 * Values are: dt (time since last update in seconds) X, Y, Z gyro, X, Y, Z accelerometer and X, Y, Z magnetometer.
 	 **/
 	OHMD_EXTERNAL_SENSOR_FUSION           = 19,
+
+	/** float[4] (get): Universal shader distortion coefficients (PanoTools model <a,b,c,d>. */
+	OHMD_UNIVERSAL_DISTORTION_K           = 20,
+
+	/** float[3] (get): Universal shader aberration coefficients (post warp scaling <r,g,b>. */
+	OHMD_UNIVERSAL_ABERRATION_K           = 21,
 
 } ohmd_float_value;
 
@@ -224,6 +236,17 @@ OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
  * @return the number of devices found on the system.
  **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
+
+/**
+ * Get string from openhmd.
+ *
+ * Gets a string from OpenHMD. This is where non-device specific strings reside.
+ * This is where the distortion shader sources can be retrieved.
+ *
+ * @param type The name of the string to fetch. One of OHMD_GLSL_DISTORTION_FRAG_SRC, and OHMD_GLSL_DISTORTION_FRAG_SRC.
+ * @return a string with a human readable device name.
+ **/
+OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_gets(ohmd_string_description type);
 
 /**
  * Get device description from enumeration list index.
