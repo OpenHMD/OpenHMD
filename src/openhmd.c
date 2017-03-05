@@ -8,6 +8,7 @@
 /* Main Lib Implemenation */
 
 #include "openhmdi.h"
+#include "shaders.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -95,6 +96,18 @@ int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 	}
 
 	return ctx->list.num_devices;
+}
+
+const char* OHMD_APIENTRY ohmd_gets(ohmd_string_description type)
+{
+	switch(type){
+	case OHMD_GLSL_DISTORTION_VERT_SRC:
+		return distortion_vert;
+	case OHMD_GLSL_DISTORTION_FRAG_SRC:
+		return distortion_frag;
+	default:
+		return NULL;
+	}
 }
 
 const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
@@ -303,7 +316,18 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 
 		return OHMD_S_OK;
 	}
-
+	case OHMD_UNIVERSAL_DISTORTION_K: {
+		for (int i = 0; i < 4; i++) {
+			out[i] = device->properties.universal_distortion_k[i];
+		}
+		break;
+	}
+	case OHMD_UNIVERSAL_ABERRATION_K: {
+		for (int i = 0; i < 3; i++) {
+			out[i] = device->properties.universal_aberration_k[i];
+		}
+		break;
+	}
 	default:
 		return device->getf(device, type, out);
 	}
@@ -491,6 +515,13 @@ void ohmd_set_default_device_properties(ohmd_device_properties* props)
 	props->ipd = 0.061f;
 	props->znear = 0.1f;
 	props->zfar = 1000.0f;
+	props->universal_distortion_k[0] = 0.0;
+	props->universal_distortion_k[1] = 0.0;
+	props->universal_distortion_k[2] = 0.0;
+	props->universal_distortion_k[3] = 1.0;
+	props->universal_aberration_k[0] = 1.0;
+	props->universal_aberration_k[1] = 1.0;
+	props->universal_aberration_k[2] = 1.0;
 }
 
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)

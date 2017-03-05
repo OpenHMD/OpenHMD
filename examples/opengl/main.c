@@ -13,8 +13,12 @@
 #include <math.h>
 #include "gl.h"
 
-#define TEST_WIDTH 1280
-#define TEST_HEIGHT 800
+/* DK1 */
+//#define TEST_WIDTH 1280
+//#define TEST_HEIGHT 800
+/* DK2 */
+#define TEST_WIDTH 1920
+#define TEST_HEIGHT 1080
 
 #define EYE_WIDTH (TEST_WIDTH / 2 * 2)
 #define EYE_HEIGHT (TEST_HEIGHT * 2)
@@ -80,6 +84,18 @@ void draw_scene(GLuint list)
 	// draw cubes
 	glCallList(list);
 }
+static inline void
+print_matrix(float m[])
+{
+    printf("[[%0.4f, %0.4f, %0.4f, %0.4f],\n"
+            "[%0.4f, %0.4f, %0.4f, %0.4f],\n"
+            "[%0.4f, %0.4f, %0.4f, %0.4f],\n"
+            "[%0.4f, %0.4f, %0.4f, %0.4f]]\n",
+            m[0], m[4], m[8], m[12],
+            m[1], m[5], m[9], m[13],
+            m[2], m[6], m[10], m[14],
+            m[3], m[7], m[11], m[15]);
+}
 
 int main(int argc, char** argv)
 {
@@ -99,9 +115,30 @@ int main(int argc, char** argv)
 	ohmd_device_settings_seti(settings, OHMD_IDS_AUTOMATIC_UPDATE, &auto_update);
 
 	ohmd_device* hmd = ohmd_list_open_device_s(ctx, 0, settings);
+	float viewport_scale[2];
+	float distortion_coeffs[4];
+	float aberr_scale[3];
+	float sep;
+	float left_lens_center[2];
+	float right_lens_center[2];
+	//viewport is half the screen
+	ohmd_device_getf(hmd, OHMD_SCREEN_HORIZONTAL_SIZE, &(viewport_scale[0]));
+	viewport_scale[0] /= 2.0f;
+	ohmd_device_getf(hmd, OHMD_SCREEN_VERTICAL_SIZE, &(viewport_scale[1]));
+	//distortion coefficients
+	ohmd_device_getf(hmd, OHMD_UNIVERSAL_DISTORTION_K, &(distortion_coeffs[0]));
+	ohmd_device_getf(hmd, OHMD_UNIVERSAL_ABERRATION_K, &(aberr_scale[0]));
+	//calculate lens centers (assuming the eye separation is the distance betweenteh lense centers)
+	ohmd_device_getf(hmd, OHMD_LENS_HORIZONTAL_SEPARATION, &sep);
+	ohmd_device_getf(hmd, OHMD_LENS_VERTICAL_POSITION, &(left_lens_center[1]));
+	ohmd_device_getf(hmd, OHMD_LENS_VERTICAL_POSITION, &(right_lens_center[1]));
+	left_lens_center[0] = viewport_scale[0] - sep/2.0f;
+	right_lens_center[0] = sep/2.0f;
+	//asume calibration was for lens view to which ever edge of screen is further away from lens center
+	float warp_scale = (left_lens_center[0] > right_lens_center[0]) ? left_lens_center[0] : right_lens_center[0];
 
 	ohmd_device_settings_destroy(settings);
-	
+
 	if(!hmd){
 		printf("failed to open device: %s\n", ohmd_ctx_get_error(ctx));
 		return 1;
@@ -112,12 +149,16 @@ int main(int argc, char** argv)
 
 	SDL_ShowCursor(SDL_DISABLE);
 
-	char* vertex = read_file("shaders/test1.vert.glsl");
-	char* fragment = read_file("shaders/test1.frag.glsl");
+	const char* vertex = ohmd_gets(OHMD_GLSL_DISTORTION_VERT_SRC);
+	const char* fragment = ohmd_gets(OHMD_GLSL_DISTORTION_FRAG_SRC);
 
 	GLuint shader = compile_shader(vertex, fragment);
 	glUseProgram(shader);
 	glUniform1i(glGetUniformLocation(shader, "warpTexture"), 0);
+	glUniform2fv(glGetUniformLocation(shader, "ViewportScale"), 1, viewport_scale);
+	glUniform1f(glGetUniformLocation(shader, "WarpScale"), warp_scale);
+	glUniform4fv(glGetUniformLocation(shader, "HmdWarpParam"), 1, distortion_coeffs);
+	glUniform3fv(glGetUniformLocation(shader, "aberr"), 1, aberr_scale);
 	glUseProgram(0);
 
 	GLuint list = gen_cubes();
@@ -151,6 +192,29 @@ int main(int argc, char** argv)
 						ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
 					}
 					break;
+				case SDLK_F3:
+					{
+						float mat[16];
+						ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_PROJECTION_MATRIX, mat);
+						printf("Projection L: ");
+						print_matrix(mat);
+						printf("\n");
+						ohmd_device_getf(hmd, OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX, mat);
+						printf("Projection R: ");
+						print_matrix(mat);
+						printf("\n");
+						ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX, mat);
+						printf("View: ");
+						print_matrix(mat);
+						printf("\n");
+						printf("viewport_scale: [%0.4f, %0.4f]\n", viewport_scale[0], viewport_scale[1]);
+						printf("warp_scale: %0.4f\r\n", warp_scale);
+						printf("distoriton coeffs: [%0.4f, %0.4f, %0.4f, %0.4f]\n", distortion_coeffs[0], distortion_coeffs[1], distortion_coeffs[2], distortion_coeffs[3]);
+						printf("aberration coeffs: [%0.4f, %0.4f, %0.4f]\n", aberr_scale[0], aberr_scale[1], aberr_scale[2]);
+						printf("left_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
+						printf("right_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
+					}
+					break;
 				default:
 					break;
 				}
@@ -174,6 +238,7 @@ int main(int argc, char** argv)
 		// Draw scene into framebuffer.
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, left_fbo);
 		glViewport(0, 0, EYE_WIDTH, EYE_HEIGHT);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		draw_scene(list);
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -213,6 +278,7 @@ int main(int argc, char** argv)
 		glLoadIdentity();
 
 		// Draw left eye
+		glUniform2fv(glGetUniformLocation(shader, "LensCenter"), 1, left_lens_center);
 		glBindTexture(GL_TEXTURE_2D, left_color_tex);
 		glBegin(GL_QUADS);
 		glTexCoord2d( 0,  0);
@@ -226,6 +292,7 @@ int main(int argc, char** argv)
 		glEnd();
 
 		// Draw right eye
+		glUniform2fv(glGetUniformLocation(shader, "LensCenter"), 1, right_lens_center);
 		glBindTexture(GL_TEXTURE_2D, right_color_tex);
 		glBegin(GL_QUADS);
 		glTexCoord2d( 0,  0);
@@ -250,8 +317,5 @@ int main(int argc, char** argv)
 
 	ohmd_ctx_destroy(ctx);
 
-	free(vertex);
-	free(fragment);
-	
 	return 0;
 }

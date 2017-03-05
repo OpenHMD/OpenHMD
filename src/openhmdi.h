@@ -77,6 +77,8 @@ typedef struct {
 
 		mat4x4f proj_left; // adjusted projection matrix for left screen
 		mat4x4f proj_right; // adjusted projection matrix for right screen
+		float universal_distortion_k[4]; //PanoTools lens distiorion model [a,b,c,d]
+		float universal_aberration_k[3]; //post-warp per channel scaling [r,g,b]
 } ohmd_device_properties;
 
 struct ohmd_device_settings

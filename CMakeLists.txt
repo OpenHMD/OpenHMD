@@ -24,6 +24,7 @@ set(openhmd_source_files
 	${CMAKE_CURRENT_LIST_DIR}/src/platform-posix.c
 	${CMAKE_CURRENT_LIST_DIR}/src/fusion.c
 	${CMAKE_CURRENT_LIST_DIR}/src/queue.c
+	${CMAKE_CURRENT_LIST_DIR}/src/shaders.c
 )
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
@@ -32,7 +33,7 @@ OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
 OPTION(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
-OPTION(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
+OPTION(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" ON)
 
 if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(openhmd_source_files ${openhmd_source_files}
