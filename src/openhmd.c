@@ -515,13 +515,8 @@ void ohmd_set_default_device_properties(ohmd_device_properties* props)
 	props->ipd = 0.061f;
 	props->znear = 0.1f;
 	props->zfar = 1000.0f;
-	props->universal_distortion_k[0] = 0.0;
-	props->universal_distortion_k[1] = 0.0;
-	props->universal_distortion_k[2] = 0.0;
-	props->universal_distortion_k[3] = 1.0;
-	props->universal_aberration_k[0] = 1.0;
-	props->universal_aberration_k[1] = 1.0;
-	props->universal_aberration_k[2] = 1.0;
+	ohmd_set_universal_distortion_k(props, 0, 0, 0, 1);
+	ohmd_set_universal_aberration_k(props, 1.0, 1.0, 1.0);
 }
 
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
@@ -551,4 +546,19 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 
 	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
 	omat4x4f_mult(&translate, &proj_base, &props->proj_right);
+}
+
+void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d)
+{
+	props->universal_distortion_k[0] = a;
+	props->universal_distortion_k[1] = b;
+	props->universal_distortion_k[2] = c;
+	props->universal_distortion_k[3] = d;
+}
+
+void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b)
+{
+	props->universal_aberration_k[0] = r;
+	props->universal_aberration_k[1] = g;
+	props->universal_aberration_k[2] = b;
 }

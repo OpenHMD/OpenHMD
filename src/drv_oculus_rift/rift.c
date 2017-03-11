@@ -318,22 +318,12 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//setup generic distortion coeffs, from hand-calibration
 	switch (desc->revision) {
 		case REV_DK2:
-			priv->base.properties.universal_distortion_k[0] = 0.247;
-			priv->base.properties.universal_distortion_k[1] = -0.145;
-			priv->base.properties.universal_distortion_k[2] = 0.103;
-			priv->base.properties.universal_distortion_k[3] = 0.795;
-			priv->base.properties.universal_aberration_k[0] = 0.985;
-			priv->base.properties.universal_aberration_k[1] = 1.000;
-			priv->base.properties.universal_aberration_k[2] = 1.015;
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.247, -0.145, 0.103, 0.795);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
 			break;
 		case REV_DK1:
-			priv->base.properties.universal_distortion_k[0] = 1.003;
-			priv->base.properties.universal_distortion_k[1] = -1.005;
-			priv->base.properties.universal_distortion_k[2] = 0.403;
-			priv->base.properties.universal_distortion_k[3] = 0.599;
-			priv->base.properties.universal_aberration_k[0] = 0.985;
-			priv->base.properties.universal_aberration_k[1] = 1.000;
-			priv->base.properties.universal_aberration_k[2] = 1.015;
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 1.003, -1.005, 0.403, 0.599);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
 			break;
 		default:
 			break;
