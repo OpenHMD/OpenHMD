@@ -72,6 +72,27 @@ GLuint gen_cubes()
 	return list;
 }
 
+void draw_crosshairs(float len, float cx, float cy)
+{
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glBegin(GL_LINES);
+	float l = len/2.0f;
+	glVertex3f(cx - l, cy, 0.0);
+	glVertex3f(cx + l, cy, 0.0);
+	glVertex3f(cx, cy - l, 0.0);
+	glVertex3f(cx, cy + l, 0.0);
+	glEnd();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
 void draw_scene(GLuint list)
 {
 	// draw cubes
@@ -171,6 +192,7 @@ int main(int argc, char** argv)
 
 
 	bool done = false;
+	bool crosshair_overlay = false;
 	while(!done){
 		ohmd_ctx_update(ctx);
 
@@ -230,6 +252,9 @@ int main(int argc, char** argv)
 						ohmd_device_getf(hmd, OHMD_UNIVERSAL_DISTORTION_K, &(distortion_coeffs[0]));
 					}
 					break;
+				case SDLK_x:
+					crosshair_overlay = ! crosshair_overlay;
+					break;
 				default:
 					break;
 				}
@@ -256,6 +281,12 @@ int main(int argc, char** argv)
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		draw_scene(list);
+		if (crosshair_overlay) {
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glLineWidth(2.0*OVERSAMPLE_SCALE);
+			glColor4f(1.0, 0.5, 0.0, 1.0);
+			draw_crosshairs(0.1, 2*left_lens_center[0]/viewport_scale[0] - 1.0f, 2*left_lens_center[1]/viewport_scale[1] - 1.0f);
+		}
 
 		// set hmd rotation, for right eye.
 		glMatrixMode(GL_PROJECTION);
@@ -271,6 +302,12 @@ int main(int argc, char** argv)
 		glViewport(0, 0, eye_w, eye_h);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		draw_scene(list);
+		if (crosshair_overlay) {
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glLineWidth(5.0);
+			glColor4f(1.0, 0.5, 0.0, 1.0);
+			draw_crosshairs(0.1, 2*right_lens_center[0]/viewport_scale[0] - 1.0f, 2*right_lens_center[1]/viewport_scale[1] - 1.0f);
+		}
 
 		// Clean up common draw state
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
