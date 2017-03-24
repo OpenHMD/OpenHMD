@@ -156,7 +156,6 @@ int main(int argc, char** argv)
 	glUniform1i(glGetUniformLocation(shader, "warpTexture"), 0);
 	glUniform2fv(glGetUniformLocation(shader, "ViewportScale"), 1, viewport_scale);
 	glUniform1f(glGetUniformLocation(shader, "WarpScale"), warp_scale);
-	glUniform4fv(glGetUniformLocation(shader, "HmdWarpParam"), 1, distortion_coeffs);
 	glUniform3fv(glGetUniformLocation(shader, "aberr"), 1, aberr_scale);
 	glUseProgram(0);
 
@@ -209,11 +208,26 @@ int main(int argc, char** argv)
 						print_matrix(mat);
 						printf("\n");
 						printf("viewport_scale: [%0.4f, %0.4f]\n", viewport_scale[0], viewport_scale[1]);
+						printf("lens separation: %04f\n", sep);
 						printf("warp_scale: %0.4f\r\n", warp_scale);
 						printf("distoriton coeffs: [%0.4f, %0.4f, %0.4f, %0.4f]\n", distortion_coeffs[0], distortion_coeffs[1], distortion_coeffs[2], distortion_coeffs[3]);
 						printf("aberration coeffs: [%0.4f, %0.4f, %0.4f]\n", aberr_scale[0], aberr_scale[1], aberr_scale[2]);
 						printf("left_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
-						printf("right_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
+						printf("right_lens_center: [%0.4f, %0.4f]\n", right_lens_center[0], right_lens_center[1]);
+					}
+					break;
+				case SDLK_d:
+					/* toggle between distorted and undistorted views */
+					if ((distortion_coeffs[0] != 0.0) ||
+							(distortion_coeffs[1] != 0.0) ||
+							(distortion_coeffs[2] != 0.0) ||
+							(distortion_coeffs[3] != 1.0)) {
+						distortion_coeffs[0] = 0.0;
+						distortion_coeffs[1] = 0.0;
+						distortion_coeffs[2] = 0.0;
+						distortion_coeffs[3] = 1.0;
+					} else {
+						ohmd_device_getf(hmd, OHMD_UNIVERSAL_DISTORTION_K, &(distortion_coeffs[0]));
 					}
 					break;
 				default:
@@ -266,6 +280,7 @@ int main(int argc, char** argv)
 
 		// Setup ortho state.
 		glUseProgram(shader);
+		glUniform4fv(glGetUniformLocation(shader, "HmdWarpParam"), 1, distortion_coeffs);
 		glViewport(0, 0, hmd_w, hmd_h);
 		glEnable(GL_TEXTURE_2D);
 		glColor4d(1, 1, 1, 1);
