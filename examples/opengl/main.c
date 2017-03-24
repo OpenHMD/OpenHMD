@@ -154,6 +154,7 @@ int main(int argc, char** argv)
 	right_lens_center[0] = sep/2.0f;
 	//asume calibration was for lens view to which ever edge of screen is further away from lens center
 	float warp_scale = (left_lens_center[0] > right_lens_center[0]) ? left_lens_center[0] : right_lens_center[0];
+	float warp_adj = 1.0f;
 
 	ohmd_device_settings_destroy(settings);
 
@@ -176,7 +177,6 @@ int main(int argc, char** argv)
 	glUseProgram(shader);
 	glUniform1i(glGetUniformLocation(shader, "warpTexture"), 0);
 	glUniform2fv(glGetUniformLocation(shader, "ViewportScale"), 1, viewport_scale);
-	glUniform1f(glGetUniformLocation(shader, "WarpScale"), warp_scale);
 	glUniform3fv(glGetUniformLocation(shader, "aberr"), 1, aberr_scale);
 	glUseProgram(0);
 
@@ -237,6 +237,12 @@ int main(int argc, char** argv)
 						printf("left_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
 						printf("right_lens_center: [%0.4f, %0.4f]\n", right_lens_center[0], right_lens_center[1]);
 					}
+					break;
+				case SDLK_a:
+					warp_adj *= 1.0/0.9;
+					break;
+				case SDLK_z:
+					warp_adj *= 0.9;
 					break;
 				case SDLK_d:
 					/* toggle between distorted and undistorted views */
@@ -317,6 +323,7 @@ int main(int argc, char** argv)
 
 		// Setup ortho state.
 		glUseProgram(shader);
+		glUniform1f(glGetUniformLocation(shader, "WarpScale"), warp_scale*warp_adj);
 		glUniform4fv(glGetUniformLocation(shader, "HmdWarpParam"), 1, distortion_coeffs);
 		glViewport(0, 0, hmd_w, hmd_h);
 		glEnable(GL_TEXTURE_2D);
