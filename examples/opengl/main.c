@@ -13,15 +13,8 @@
 #include <math.h>
 #include "gl.h"
 
-/* DK1 */
-//#define TEST_WIDTH 1280
-//#define TEST_HEIGHT 800
-/* DK2 */
-#define TEST_WIDTH 1920
-#define TEST_HEIGHT 1080
 
-#define EYE_WIDTH (TEST_WIDTH / 2 * 2)
-#define EYE_HEIGHT (TEST_HEIGHT * 2)
+#define OVERSAMPLE_SCALE 2.0
 
 char* read_file(const char* filename)
 {
@@ -99,6 +92,8 @@ print_matrix(float m[])
 
 int main(int argc, char** argv)
 {
+	int hmd_w, hmd_h;
+
 	ohmd_context* ctx = ohmd_ctx_create();
 	int num_devices = ohmd_ctx_probe(ctx);
 	if(num_devices < 0){
@@ -115,6 +110,8 @@ int main(int argc, char** argv)
 	ohmd_device_settings_seti(settings, OHMD_IDS_AUTOMATIC_UPDATE, &auto_update);
 
 	ohmd_device* hmd = ohmd_list_open_device_s(ctx, 0, settings);
+	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, &hmd_w);
+	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, &hmd_h);
 	float viewport_scale[2];
 	float distortion_coeffs[4];
 	float aberr_scale[3];
@@ -145,7 +142,7 @@ int main(int argc, char** argv)
 	}
 
 	gl_ctx gl;
-	init_gl(&gl, TEST_WIDTH, TEST_HEIGHT);
+	init_gl(&gl, hmd_w, hmd_h);
 
 	SDL_ShowCursor(SDL_DISABLE);
 
@@ -165,11 +162,13 @@ int main(int argc, char** argv)
 
 	GLuint list = gen_cubes();
 
+	int eye_w = hmd_w/2*OVERSAMPLE_SCALE;
+	int eye_h = hmd_h*OVERSAMPLE_SCALE;
 	GLuint left_color_tex = 0, left_depth_tex = 0, left_fbo = 0;
-	create_fbo(EYE_WIDTH, EYE_HEIGHT, &left_fbo, &left_color_tex, &left_depth_tex);
+	create_fbo(eye_w, eye_h, &left_fbo, &left_color_tex, &left_depth_tex);
 
 	GLuint right_color_tex = 0, right_depth_tex = 0, right_fbo = 0;
-	create_fbo(EYE_WIDTH, EYE_HEIGHT, &right_fbo, &right_color_tex, &right_depth_tex);
+	create_fbo(eye_w, eye_h, &right_fbo, &right_color_tex, &right_depth_tex);
 
 
 	bool done = false;
@@ -239,12 +238,10 @@ int main(int argc, char** argv)
 
 		// Draw scene into framebuffer.
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, left_fbo);
-		glViewport(0, 0, EYE_WIDTH, EYE_HEIGHT);
+		glViewport(0, 0, eye_w, eye_h);
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		draw_scene(list);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
 
 		// set hmd rotation, for right eye.
 		glMatrixMode(GL_PROJECTION);
@@ -257,7 +254,7 @@ int main(int argc, char** argv)
 
 		// Draw scene into framebuffer.
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, right_fbo);
-		glViewport(0, 0, EYE_WIDTH, EYE_HEIGHT);
+		glViewport(0, 0, eye_w, eye_h);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		draw_scene(list);
 
@@ -269,7 +266,7 @@ int main(int argc, char** argv)
 
 		// Setup ortho state.
 		glUseProgram(shader);
-		glViewport(0, 0, TEST_WIDTH, TEST_HEIGHT);
+		glViewport(0, 0, hmd_w, hmd_h);
 		glEnable(GL_TEXTURE_2D);
 		glColor4d(1, 1, 1, 1);
 
