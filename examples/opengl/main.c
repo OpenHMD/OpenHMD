@@ -133,6 +133,8 @@ int main(int argc, char** argv)
 	ohmd_device* hmd = ohmd_list_open_device_s(ctx, 0, settings);
 	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, &hmd_w);
 	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, &hmd_h);
+	float ipd;
+	ohmd_device_getf(hmd, OHMD_EYE_IPD, &ipd);
 	float viewport_scale[2];
 	float distortion_coeffs[4];
 	float aberr_scale[3];
@@ -231,6 +233,7 @@ int main(int argc, char** argv)
 						printf("\n");
 						printf("viewport_scale: [%0.4f, %0.4f]\n", viewport_scale[0], viewport_scale[1]);
 						printf("lens separation: %04f\n", sep);
+						printf("IPD: %0.4f\n", ipd);
 						printf("warp_scale: %0.4f\r\n", warp_scale);
 						printf("distoriton coeffs: [%0.4f, %0.4f, %0.4f, %0.4f]\n", distortion_coeffs[0], distortion_coeffs[1], distortion_coeffs[2], distortion_coeffs[3]);
 						printf("aberration coeffs: [%0.4f, %0.4f, %0.4f]\n", aberr_scale[0], aberr_scale[1], aberr_scale[2]);
@@ -243,6 +246,14 @@ int main(int argc, char** argv)
 					break;
 				case SDLK_z:
 					warp_adj *= 0.9;
+					break;
+				case SDLK_i:
+					ipd -= 0.001;
+					ohmd_device_setf(hmd, OHMD_EYE_IPD, &ipd);
+					break;
+				case SDLK_o:
+					ipd += 0.001;
+					ohmd_device_setf(hmd, OHMD_EYE_IPD, &ipd);
 					break;
 				case SDLK_d:
 					/* toggle between distorted and undistorted views */
