@@ -149,8 +149,10 @@ int main(int argc, char** argv)
 
 	SDL_ShowCursor(SDL_DISABLE);
 
-	const char* vertex = ohmd_gets(OHMD_GLSL_DISTORTION_VERT_SRC);
-	const char* fragment = ohmd_gets(OHMD_GLSL_DISTORTION_FRAG_SRC);
+	const char* vertex;
+	ohmd_gets(OHMD_GLSL_DISTORTION_VERT_SRC, &vertex);
+	const char* fragment;
+	ohmd_gets(OHMD_GLSL_DISTORTION_FRAG_SRC, &fragment);
 
 	GLuint shader = compile_shader(vertex, fragment);
 	glUseProgram(shader);
