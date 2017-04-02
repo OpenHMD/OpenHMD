@@ -1,4 +1,4 @@
-const char * distortion_vert =
+const char distortion_vert[] =
 "#version 120\n"
 "void main(void)\n"
 "{\n"
@@ -6,7 +6,7 @@ const char * distortion_vert =
     "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;\n"
 "}";
 
-const char * distortion_frag =
+const char distortion_frag[] =
 "#version 120\n"
 "\n"
 "//per eye texture to warp for lens distortion\n"

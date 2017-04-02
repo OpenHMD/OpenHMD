@@ -98,15 +98,17 @@ int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 	return ctx->list.num_devices;
 }
 
-const char* OHMD_APIENTRY ohmd_gets(ohmd_string_description type)
+int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
 {
 	switch(type){
 	case OHMD_GLSL_DISTORTION_VERT_SRC:
-		return distortion_vert;
+		*out = distortion_vert;
+		return OHMD_S_OK;
 	case OHMD_GLSL_DISTORTION_FRAG_SRC:
-		return distortion_frag;
+		*out = distortion_frag;
+		return OHMD_S_OK;
 	default:
-		return NULL;
+		return OHMD_S_UNSUPPORTED;
 	}
 }
 

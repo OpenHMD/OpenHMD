@@ -244,9 +244,10 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
  * This is where the distortion shader sources can be retrieved.
  *
  * @param type The name of the string to fetch. One of OHMD_GLSL_DISTORTION_FRAG_SRC, and OHMD_GLSL_DISTORTION_FRAG_SRC.
- * @return a string with a human readable device name.
+ * @param outt The location to return a const char*
+ * @return 0 on success, <0 on failure.
  **/
-OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_gets(ohmd_string_description type);
+OHMD_APIENTRYDLL int ohmd_gets(ohmd_string_description type, const char ** dst);
 
 /**
  * Get device description from enumeration list index.
