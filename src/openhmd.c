@@ -322,13 +322,13 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 		for (int i = 0; i < 4; i++) {
 			out[i] = device->properties.universal_distortion_k[i];
 		}
-		break;
+		return OHMD_S_OK;
 	}
 	case OHMD_UNIVERSAL_ABERRATION_K: {
 		for (int i = 0; i < 3; i++) {
 			out[i] = device->properties.universal_aberration_k[i];
 		}
-		break;
+		return OHMD_S_OK;
 	}
 	default:
 		return device->getf(device, type, out);
