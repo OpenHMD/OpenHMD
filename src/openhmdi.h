@@ -77,6 +77,8 @@ typedef struct {
 
 		mat4x4f proj_left; // adjusted projection matrix for left screen
 		mat4x4f proj_right; // adjusted projection matrix for right screen
+		float universal_distortion_k[4]; //PanoTools lens distiorion model [a,b,c,d]
+		float universal_aberration_k[3]; //post-warp per channel scaling [r,g,b]
 } ohmd_device_properties;
 
 struct ohmd_device_settings
@@ -131,6 +133,8 @@ struct ohmd_context {
 // helper functions
 void ohmd_set_default_device_properties(ohmd_device_properties* props);
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
+void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d);
+void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b);
 
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);

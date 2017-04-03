@@ -315,12 +315,29 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_vpos = priv->display_info.v_center;
 	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
 
+	//setup generic distortion coeffs, from hand-calibration
+	switch (desc->revision) {
+		case REV_DK2:
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.247, -0.145, 0.103, 0.795);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
+			break;
+		case REV_DK1:
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 1.003, -1.005, 0.403, 0.599);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
+			break;
+		case REV_CV1:
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.098, .324, -0.241, 0.819);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.9952420, 1.0, 1.0008074);
+			/* CV1 reports IPD, but not lens center, at least not anywhere I could find, so use the manually measured value of 0.054 */
+			priv->display_info.lens_separation = 0.054;
+			priv->base.properties.lens_sep = priv->display_info.lens_separation;
+		default:
+			break;
+	}
+
 	// calculate projection eye projection matrices from the device properties
 	//ohmd_calc_default_proj_matrices(&priv->base.properties);
 	float l,r,t,b,n,f;
-	mat4x4f l_proj; // left projection matrix
-	mat4x4f r_proj; // right projection matrix
-	mat4x4f translate;
 	// left eye screen bounds
 	l = -1.0f * (priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2);
 	r = priv->display_info.lens_separation/2;
@@ -329,18 +346,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	n = priv->display_info.eye_to_screen_distance[0];
 	f = n*10e6;
 	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
-	omat4x4f_init_frustum(&l_proj, l, r, b, t, n, f);
-	omat4x4f_init_translate(&translate, r, 0, 0); //shift over eye offset
-	omat4x4f_mult(&translate, &l_proj, &priv->base.properties.proj_left); //LEFT multiply inside OpenHMD
+	/* eye separation is handled by IPD in the Modelview matrix */
+	omat4x4f_init_frustum(&priv->base.properties.proj_left, l, r, b, t, n, f);
 	//right eye screen bounds
 	l = -1.0f * priv->display_info.lens_separation/2;
 	r = priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2;
 	n = priv->display_info.eye_to_screen_distance[1];
 	f = n*10e6;
 	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
-	omat4x4f_init_frustum(&r_proj, l, r, b, t, n, f);
-	omat4x4f_init_translate(&translate, l, 0, 0); //shift over eye offset
-	omat4x4f_mult(&translate, &r_proj, &priv->base.properties.proj_right); //LEFT multiply inside OpenHMD
+	/* eye separation is handled by IPD in the Modelview matrix */
+	omat4x4f_init_frustum(&priv->base.properties.proj_right, l, r, b, t, n, f);
 
 	priv->base.properties.fov = 2 * atan2f(
 			priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2,

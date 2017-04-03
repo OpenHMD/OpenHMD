@@ -24,6 +24,7 @@ set(openhmd_source_files
 	${CMAKE_CURRENT_LIST_DIR}/src/platform-posix.c
 	${CMAKE_CURRENT_LIST_DIR}/src/fusion.c
 	${CMAKE_CURRENT_LIST_DIR}/src/queue.c
+	${CMAKE_CURRENT_LIST_DIR}/src/shaders.c
 )
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)

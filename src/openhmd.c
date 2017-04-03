@@ -8,6 +8,7 @@
 /* Main Lib Implemenation */
 
 #include "openhmdi.h"
+#include "shaders.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -95,6 +96,20 @@ int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 	}
 
 	return ctx->list.num_devices;
+}
+
+int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
+{
+	switch(type){
+	case OHMD_GLSL_DISTORTION_VERT_SRC:
+		*out = distortion_vert;
+		return OHMD_S_OK;
+	case OHMD_GLSL_DISTORTION_FRAG_SRC:
+		*out = distortion_frag;
+		return OHMD_S_OK;
+	default:
+		return OHMD_S_UNSUPPORTED;
+	}
 }
 
 const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
@@ -303,7 +318,18 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 
 		return OHMD_S_OK;
 	}
-
+	case OHMD_UNIVERSAL_DISTORTION_K: {
+		for (int i = 0; i < 4; i++) {
+			out[i] = device->properties.universal_distortion_k[i];
+		}
+		return OHMD_S_OK;
+	}
+	case OHMD_UNIVERSAL_ABERRATION_K: {
+		for (int i = 0; i < 3; i++) {
+			out[i] = device->properties.universal_aberration_k[i];
+		}
+		return OHMD_S_OK;
+	}
 	default:
 		return device->getf(device, type, out);
 	}
@@ -491,6 +517,8 @@ void ohmd_set_default_device_properties(ohmd_device_properties* props)
 	props->ipd = 0.061f;
 	props->znear = 0.1f;
 	props->zfar = 1000.0f;
+	ohmd_set_universal_distortion_k(props, 0, 0, 0, 1);
+	ohmd_set_universal_aberration_k(props, 1.0, 1.0, 1.0);
 }
 
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
@@ -520,4 +548,19 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 
 	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
 	omat4x4f_mult(&translate, &proj_base, &props->proj_right);
+}
+
+void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d)
+{
+	props->universal_distortion_k[0] = a;
+	props->universal_distortion_k[1] = b;
+	props->universal_distortion_k[2] = c;
+	props->universal_distortion_k[3] = d;
+}
+
+void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b)
+{
+	props->universal_aberration_k[0] = r;
+	props->universal_aberration_k[1] = g;
+	props->universal_aberration_k[2] = b;
 }
