@@ -27,7 +27,6 @@
 #include <stdbool.h>
 
 #include "vive.h"
-#include "openhmdi.h"
 
 typedef struct {
 	ohmd_device base;

@@ -23,7 +23,6 @@
 #include <stdbool.h>
 
 #include "psvr.h"
-#include "openhmdi.h"
 
 typedef struct {
 	ohmd_device base;

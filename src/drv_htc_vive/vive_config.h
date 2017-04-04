@@ -4,6 +4,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #pragma GCC diagnostic ignored "-Wswitch"
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
 #include "../ext_deps/miniz.c"
 #include "../ext_deps/mjson.h"
 #pragma GCC diagnostic pop
