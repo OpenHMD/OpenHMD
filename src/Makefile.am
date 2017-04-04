@@ -37,6 +37,17 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_PSVR
+
+libopenhmd_la_SOURCES += \
+	drv_psvr/psvr.c \
+	drv_psvr/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_PSVR
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
 if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \
