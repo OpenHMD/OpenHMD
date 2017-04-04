@@ -1,6 +1,10 @@
 #include "vive.h"
 #include "vive_config.h"
 
+#ifdef _MSC_VER
+#define inline __inline
+#endif
+
 inline static uint8_t read8(const unsigned char** buffer)
 {
 	uint8_t ret = **buffer;

@@ -58,8 +58,9 @@ bool dp_decodesensor_display_info(pkt_sensor_display_info* info, const unsigned 
 
 	info->distortion_type_opts = 0;
 
-	for(int i = 0; i < 6; i++)
+	for(int i = 0; i < 6; i++){
 		info->distortion_k[i] = READFLOAT;
+	}
 
 	return true;
 }

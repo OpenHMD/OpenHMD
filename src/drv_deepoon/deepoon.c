@@ -191,13 +191,12 @@ static void close_device(ohmd_device* device)
 
 static char* _hid_to_unix_path(char* path)
 {
-	const int len = 4;
-	char bus [len];
-	char dev [len];
+	char bus [4];
+	char dev [4];
 	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
 
-	sprintf (bus, "%.*s\n", len, path);
-	sprintf (dev, "%.*s\n", len, path + 5);
+	sprintf (bus, "%.*s\n", 4, path);
+	sprintf (dev, "%.*s\n", 4, path + 5);
 
 	sprintf (result, "/dev/bus/usb/%03d/%03d",
 		(int)strtol(bus, NULL, 16),

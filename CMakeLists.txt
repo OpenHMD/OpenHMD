@@ -29,6 +29,8 @@ set(openhmd_source_files
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
+OPTION(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
+OPTION(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -58,6 +60,30 @@ if(OPENHMD_DRIVER_DEEPOON)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_DEEPOON)
+
+if(OPENHMD_DRIVER_PSVR)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/psvr.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/packet.c
+	)
+	add_definitions(-DDRIVER_PSVR)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_PSVR)
+
+if(OPENHMD_DRIVER_HTC_VIVE)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_htc_vive/vive.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_htc_vive/packet.c
+	)
+	add_definitions(-DDRIVER_HTC_VIVE)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_HTC_VIVE)
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files}
