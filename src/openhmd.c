@@ -8,11 +8,14 @@
 /* Main Lib Implemenation */
 
 #include "openhmdi.h"
+#include "shaders.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-// Running automatic updates at 144 Hz
+#define DIGITAL_INPUT_EVENT_QUEUE_SIZE 1024
+
+// Running automatic updates at 1000 Hz
 #define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
 
 ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
@@ -25,6 +28,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 
 #if DRIVER_OCULUS_RIFT
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
+#endif
+
+#if DRIVER_DEEPOON
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_deepoon_drv(ctx);
 #endif
 
 #if DRIVER_HTC_VIVE
@@ -95,6 +102,20 @@ int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 	return ctx->list.num_devices;
 }
 
+int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
+{
+	switch(type){
+	case OHMD_GLSL_DISTORTION_VERT_SRC:
+		*out = distortion_vert;
+		return OHMD_S_OK;
+	case OHMD_GLSL_DISTORTION_FRAG_SRC:
+		*out = distortion_frag;
+		return OHMD_S_OK;
+	default:
+		return OHMD_S_UNSUPPORTED;
+	}
+}
+
 const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
 {
 	if(index >= ctx->list.num_devices)
@@ -162,6 +183,9 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 		device->active_device_idx = ctx->num_active_devices;
 		ctx->active_devices[ctx->num_active_devices++] = device;
 
+		if(device->properties.digital_button_count > 0)
+			device->digital_input_event_queue = ohmdq_create(ctx, sizeof(ohmd_digital_input_event), DIGITAL_INPUT_EVENT_QUEUE_SIZE);
+
 		ohmd_unlock_mutex(ctx->update_mutex);
 
 		if(device->settings.automatic_update)
@@ -191,18 +215,22 @@ int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 
 	ohmd_context* ctx = device->ctx;
 	int idx = device->active_device_idx;
+	ohmdq* dinq = device->digital_input_event_queue;
 
 	memmove(ctx->active_devices + idx, ctx->active_devices + idx + 1,
 		sizeof(ohmd_device*) * (ctx->num_active_devices - idx - 1));
 
 	device->close(device);
+	
+	if(dinq)
+		ohmdq_destroy(dinq);
 
 	ctx->num_active_devices--;
 
 	for(int i = idx; i < ctx->num_active_devices; i++)
 		ctx->active_devices[i]->active_device_idx--;
 
-	ohmd_unlock_mutex(device->ctx->update_mutex);
+	ohmd_unlock_mutex(ctx->update_mutex);
 
 	return OHMD_S_OK;
 }
@@ -294,7 +322,18 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 
 		return OHMD_S_OK;
 	}
-
+	case OHMD_UNIVERSAL_DISTORTION_K: {
+		for (int i = 0; i < 4; i++) {
+			out[i] = device->properties.universal_distortion_k[i];
+		}
+		return OHMD_S_OK;
+	}
+	case OHMD_UNIVERSAL_ABERRATION_K: {
+		for (int i = 0; i < 3; i++) {
+			out[i] = device->properties.universal_aberration_k[i];
+		}
+		return OHMD_S_OK;
+	}
 	default:
 		return device->getf(device, type, out);
 	}
@@ -372,15 +411,44 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, c
 
 int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
 {
+	ohmdq* dinq = device->digital_input_event_queue;
+
 	switch(type){
-	case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
-		*out = device->properties.hres;
-		return OHMD_S_OK;
-	case OHMD_SCREEN_VERTICAL_RESOLUTION:
-		*out = device->properties.vres;
-		return OHMD_S_OK;
-	default:
-		return OHMD_S_INVALID_PARAMETER;
+		case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
+			*out = device->properties.hres;
+			return OHMD_S_OK;
+
+		case OHMD_SCREEN_VERTICAL_RESOLUTION:
+			*out = device->properties.vres;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_EVENT_COUNT:
+			*out = dinq ? (int)ohmdq_get_size(dinq) : 0;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_EVENT_OVERFLOW:
+			*out = dinq ? (ohmdq_get_size(dinq) == ohmdq_get_max(dinq)) : 0;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_COUNT:
+			*out = device->properties.digital_button_count;
+			return OHMD_S_OK;
+
+		case OHMD_BUTTON_POP_EVENT: {
+				ohmd_digital_input_event event;
+
+				if(!ohmdq_pop(dinq, &event)){
+					return OHMD_S_INVALID_OPERATION;
+				}
+
+				out[0] = event.idx;
+				out[1] = event.state;
+
+				return OHMD_S_OK;
+			}
+
+		default:
+				return OHMD_S_INVALID_PARAMETER;
 	}
 }
 
@@ -453,6 +521,8 @@ void ohmd_set_default_device_properties(ohmd_device_properties* props)
 	props->ipd = 0.061f;
 	props->znear = 0.1f;
 	props->zfar = 1000.0f;
+	ohmd_set_universal_distortion_k(props, 0, 0, 0, 1);
+	ohmd_set_universal_aberration_k(props, 1.0, 1.0, 1.0);
 }
 
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
@@ -482,4 +552,19 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 
 	omat4x4f_init_translate(&translate, -proj_offset, 0, 0);
 	omat4x4f_mult(&translate, &proj_base, &props->proj_right);
+}
+
+void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d)
+{
+	props->universal_distortion_k[0] = a;
+	props->universal_distortion_k[1] = b;
+	props->universal_distortion_k[2] = c;
+	props->universal_distortion_k[3] = d;
+}
+
+void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b)
+{
+	props->universal_aberration_k[0] = r;
+	props->universal_aberration_k[1] = g;
+	props->universal_aberration_k[2] = b;
 }

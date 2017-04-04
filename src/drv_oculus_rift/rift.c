@@ -29,6 +29,7 @@ typedef struct {
 	rift_coordinate_frame coordinate_frame, hw_coordinate_frame;
 	pkt_sensor_config sensor_config;
 	pkt_tracker_sensor sensor;
+	uint32_t last_imu_timestamp;
 	double last_keep_alive;
 	fusion sensor_fusion;
 	vec3f raw_mag, raw_accel, raw_gyro;
@@ -112,22 +113,26 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 
 	dump_packet_tracker_sensor(s);
 
-	// TODO handle missed samples etc.
-
-	float dt = s->num_samples > 3 ? (s->num_samples - 2) * TICK_LEN : TICK_LEN;
-
 	int32_t mag32[] = { s->mag[0], s->mag[1], s->mag[2] };
 	vec3f_from_rift_vec(mag32, &priv->raw_mag);
 
-	for(int i = 0; i < OHMD_MIN(s->num_samples, 3); i++){
+	// TODO: handle overflows in a nicer way
+	float dt = TICK_LEN; // TODO: query the Rift for the sample rate
+	if (s->timestamp > priv->last_imu_timestamp)
+	{
+		dt = (s->timestamp - priv->last_imu_timestamp) / 1000000.0f;
+		dt -= (s->num_samples - 1) * TICK_LEN; // TODO: query the Rift for the sample rate
+	}
+
+	for(int i = 0; i < s->num_samples; i++){
 		vec3f_from_rift_vec(s->samples[i].accel, &priv->raw_accel);
 		vec3f_from_rift_vec(s->samples[i].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &priv->raw_mag);
-
-		// reset dt to tick_len for the last samples if there were more than one sample
-		dt = TICK_LEN;
+		dt = TICK_LEN; // TODO: query the Rift for the sample rate
 	}
+
+	priv->last_imu_timestamp = s->timestamp;
 }
 
 static void update_device(ohmd_device* device)
@@ -141,7 +146,8 @@ static void update_device(ohmd_device* device)
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
 		int ka_size = encode_keep_alive(buffer, &keep_alive);
-		send_feature_report(priv, buffer, ka_size);
+		if (send_feature_report(priv, buffer, ka_size) == -1)
+			LOGE("error sending keepalive");
 
 		// Update the time of the last keep alive we have sent.
 		priv->last_keep_alive = t;
@@ -225,6 +231,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv)
 		goto cleanup;
 
+	priv->last_imu_timestamp = -1;
+
 	priv->base.ctx = driver->ctx;
 
 	// Open the HID device
@@ -276,13 +284,15 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if (desc->revision == REV_CV1)
 	{
 		size = encode_enable_components(buf, true, true);
-		send_feature_report(priv, buf, size);
+		if (send_feature_report(priv, buf, size) == -1)
+			LOGE("error turning the screens on");
 	}
 
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
 	size = encode_keep_alive(buf, &keep_alive);
-	send_feature_report(priv, buf, size);
+	if (send_feature_report(priv, buf, size) == -1)
+		LOGE("error setting up keepalive");
 
 	// Update the time of the last keep alive we have sent.
 	priv->last_keep_alive = ohmd_get_tick();
@@ -303,11 +313,53 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vres = priv->display_info.v_resolution;
 	priv->base.properties.lens_sep = priv->display_info.lens_separation;
 	priv->base.properties.lens_vpos = priv->display_info.v_center;
-	priv->base.properties.fov = DEG_TO_RAD(125.5144f); // TODO calculate.
 	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
 
+	//setup generic distortion coeffs, from hand-calibration
+	switch (desc->revision) {
+		case REV_DK2:
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.247, -0.145, 0.103, 0.795);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
+			break;
+		case REV_DK1:
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 1.003, -1.005, 0.403, 0.599);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
+			break;
+		case REV_CV1:
+			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.098, .324, -0.241, 0.819);
+			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.9952420, 1.0, 1.0008074);
+			/* CV1 reports IPD, but not lens center, at least not anywhere I could find, so use the manually measured value of 0.054 */
+			priv->display_info.lens_separation = 0.054;
+			priv->base.properties.lens_sep = priv->display_info.lens_separation;
+		default:
+			break;
+	}
+
 	// calculate projection eye projection matrices from the device properties
-	ohmd_calc_default_proj_matrices(&priv->base.properties);
+	//ohmd_calc_default_proj_matrices(&priv->base.properties);
+	float l,r,t,b,n,f;
+	// left eye screen bounds
+	l = -1.0f * (priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2);
+	r = priv->display_info.lens_separation/2;
+	t = priv->display_info.v_screen_size - priv->display_info.v_center;
+	b = -1.0f * priv->display_info.v_center;
+	n = priv->display_info.eye_to_screen_distance[0];
+	f = n*10e6;
+	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
+	/* eye separation is handled by IPD in the Modelview matrix */
+	omat4x4f_init_frustum(&priv->base.properties.proj_left, l, r, b, t, n, f);
+	//right eye screen bounds
+	l = -1.0f * priv->display_info.lens_separation/2;
+	r = priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2;
+	n = priv->display_info.eye_to_screen_distance[1];
+	f = n*10e6;
+	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
+	/* eye separation is handled by IPD in the Modelview matrix */
+	omat4x4f_init_frustum(&priv->base.properties.proj_right, l, r, b, t, n, f);
+
+	priv->base.properties.fov = 2 * atan2f(
+			priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2,
+			priv->display_info.eye_to_screen_distance[0]);
 
 	// set up device callbacks
 	priv->base.update = update_device;
@@ -374,6 +426,8 @@ static void destroy_driver(ohmd_driver* drv)
 	LOGD("shutting down driver");
 	hid_exit();
 	free(drv);
+
+	ohmd_toggle_ovr_service(1); //re-enable OVRService if previously running
 }
 
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
@@ -381,6 +435,8 @@ ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 	if(drv == NULL)
 		return NULL;
+
+	ohmd_toggle_ovr_service(0); //disable OVRService if running
 
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;

@@ -14,6 +14,7 @@
 
 double ohmd_get_tick();
 void ohmd_sleep(double seconds);
+void ohmd_toggle_ovr_service(int state);
 
 typedef struct ohmd_thread ohmd_thread;
 typedef struct ohmd_mutex ohmd_mutex;

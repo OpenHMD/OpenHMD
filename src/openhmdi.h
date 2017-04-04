@@ -10,14 +10,15 @@
 #ifndef OPENHMDI_H
 #define OPENHMDI_H
 
-#include "openhmd.h"
-#include "omath.h"
-#include "platform.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "openhmd.h"
+#include "omath.h"
+#include "platform.h"
+#include "queue.h"
 
 #define OHMD_MAX_DEVICES 16
 
@@ -28,8 +29,7 @@
 
 typedef struct ohmd_driver ohmd_driver;
 
-typedef struct
-{
+typedef struct {
 	char driver[OHMD_STR_SIZE];
 	char vendor[OHMD_STR_SIZE];
 	char product[OHMD_STR_SIZE];
@@ -43,6 +43,11 @@ typedef struct {
 	ohmd_device_desc devices[OHMD_MAX_DEVICES];
 } ohmd_device_list;
 
+typedef struct {
+	int idx;
+	ohmd_button_state state; 
+} ohmd_digital_input_event;
+
 struct ohmd_driver {
 	void (*get_device_list)(ohmd_driver* driver, ohmd_device_list* list);
 	ohmd_device* (*open_device)(ohmd_driver* driver, ohmd_device_desc* desc);
@@ -53,6 +58,8 @@ struct ohmd_driver {
 typedef struct {
 		int hres;
 		int vres;
+		int digital_button_count;
+
 		float hsize;
 		float vsize;
 
@@ -70,6 +77,8 @@ typedef struct {
 
 		mat4x4f proj_left; // adjusted projection matrix for left screen
 		mat4x4f proj_right; // adjusted projection matrix for right screen
+		float universal_distortion_k[4]; //PanoTools lens distiorion model [a,b,c,d]
+		float universal_aberration_k[3]; //post-warp per channel scaling [r,g,b]
 } ohmd_device_properties;
 
 struct ohmd_device_settings
@@ -99,6 +108,8 @@ struct ohmd_device {
 
 	quatf rotation;
 	vec3f position;
+	
+	ohmdq* digital_input_event_queue;
 };
 
 
@@ -122,10 +133,13 @@ struct ohmd_context {
 // helper functions
 void ohmd_set_default_device_properties(ohmd_device_properties* props);
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
+void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d);
+void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b);
 
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_deepoon_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_htc_vive_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx);

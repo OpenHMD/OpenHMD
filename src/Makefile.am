@@ -9,7 +9,8 @@ libopenhmd_la_SOURCES = \
 	drv_dummy/dummy.c \
 	omath.c \
 	platform-posix.c \
-	fusion.c
+	fusion.c \
+	queue.c
 
 libopenhmd_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall
@@ -37,6 +38,16 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_DEEPOON
+
+libopenhmd_la_SOURCES += \
+	drv_deepoon/deepoon.c \
+	drv_deepoon/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_DEEPOON
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
 
 if BUILD_DRIVER_EXTERNAL
 
@@ -51,3 +62,4 @@ libopenhmd_la_SOURCES += \
 endif
 
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)
+

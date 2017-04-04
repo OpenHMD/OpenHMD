@@ -44,6 +44,7 @@ typedef enum {
 	OHMD_S_UNKNOWN_ERROR = -1,
 	OHMD_S_INVALID_PARAMETER = -2,
 	OHMD_S_UNSUPPORTED = -3,
+	OHMD_S_INVALID_OPERATION = -4,
 
 	/** OHMD_S_USER_RESERVED and below can be used for user purposes, such as errors within ohmd wrappers, etc. */
 	OHMD_S_USER_RESERVED = -16384,
@@ -55,6 +56,12 @@ typedef enum {
 	OHMD_PRODUCT   = 1,
 	OHMD_PATH      = 2,
 } ohmd_string_value;
+
+/** A collection of string descriptions, used for getting strings with ohmd_gets(). */
+typedef enum {
+	OHMD_GLSL_DISTORTION_VERT_SRC = 0,
+	OHMD_GLSL_DISTORTION_FRAG_SRC = 1,
+} ohmd_string_description;
 
 /** A collection of float value information types, used for getting and setting information with
     ohmd_device_getf() and ohmd_device_setf(). */
@@ -108,13 +115,19 @@ typedef enum {
 
 	/** float[6] (get): Device specific distortion value. */
 	OHMD_DISTORTION_K                     = 18,
-	
+
 	/**
 	 * float[10] (set): Perform sensor fusion on values from external sensors.
 	 *
 	 * Values are: dt (time since last update in seconds) X, Y, Z gyro, X, Y, Z accelerometer and X, Y, Z magnetometer.
 	 **/
 	OHMD_EXTERNAL_SENSOR_FUSION           = 19,
+
+	/** float[4] (get): Universal shader distortion coefficients (PanoTools model <a,b,c,d>. */
+	OHMD_UNIVERSAL_DISTORTION_K           = 20,
+
+	/** float[3] (get): Universal shader aberration coefficients (post warp scaling <r,g,b>. */
+	OHMD_UNIVERSAL_ABERRATION_K           = 21,
 
 } ohmd_float_value;
 
@@ -125,6 +138,14 @@ typedef enum {
 	/** int[1] (get): Physical vertical resolution of the device screen. */
 	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
 
+	/** int[1] (get): Get number of events waiting in digital input event queue. */
+	OHMD_BUTTON_EVENT_COUNT               =  2,
+	/** int[1] (get): Get if the there was an overflow in the event queue causing events to be dropped. */
+	OHMD_BUTTON_EVENT_OVERFLOW            =  3,
+	/** int[1] (get): Get the number of physical digital input buttons on the device. */
+	OHMD_BUTTON_COUNT                     =  4,
+	/** int[2] (get): Performs an event pop action. Format: [button_index, button_state], where button_state is either OHMD_BUTTON_DOWN or OHMD_BUTTON_UP */
+	OHMD_BUTTON_POP_EVENT                 =  5,
 } ohmd_int_value;
 
 /** A collection of data information types used for setting information with ohmd_set_data(). */
@@ -145,6 +166,14 @@ typedef enum {
 	    Call ohmd_update(); must be called frequently, at least 10 times per second, if the background threads are disabled. */
 	OHMD_IDS_AUTOMATIC_UPDATE = 0,
 } ohmd_int_settings;
+
+/** Button states for digital input events. */
+typedef enum {
+	/** Button was pressed. */
+	OHMD_BUTTON_DOWN = 0,
+	/** Button was released. */
+	OHMD_BUTTON_UP   = 1
+} ohmd_button_state;
 
 /** An opaque pointer to a context structure. */
 typedef struct ohmd_context ohmd_context;
@@ -207,6 +236,18 @@ OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx);
  * @return the number of devices found on the system.
  **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx);
+
+/**
+ * Get string from openhmd.
+ *
+ * Gets a string from OpenHMD. This is where non-device specific strings reside.
+ * This is where the distortion shader sources can be retrieved.
+ *
+ * @param type The name of the string to fetch. One of OHMD_GLSL_DISTORTION_FRAG_SRC, and OHMD_GLSL_DISTORTION_FRAG_SRC.
+ * @param out The location to return a const char*
+ * @return 0 on success, <0 on failure.
+ **/
+OHMD_APIENTRYDLL int ohmd_gets(ohmd_string_description type, const char** out);
 
 /**
  * Get device description from enumeration list index.

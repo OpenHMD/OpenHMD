@@ -49,6 +49,15 @@ AC_ARG_ENABLE([driver-htc-vive],
 
 AM_CONDITIONAL([BUILD_DRIVER_HTC_VIVE], [test "x$driver_oculus_rift_enabled" != "xno"])
 
+# Deepoon Driver
+AC_ARG_ENABLE([driver-deepoon],
+        [AS_HELP_STRING([--disable-driver-deepoon],
+                [disable building of Deepoon driver [default=yes]])],
+        [driver_deepoon_enabled=$enableval],
+        [driver_deepoon_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_DEEPOON], [test "x$driver_deepoon_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -73,6 +82,10 @@ AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
 
 # Libs required by HTC Vive Driver
 AS_IF([test "x$driver_htc_vive_enabled" != "xno"],
+	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by Depoon Driver
+AS_IF([test "x$driver_deepoon_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?
@@ -118,3 +131,4 @@ AC_PROG_CC_C99
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
 AC_OUTPUT 
+

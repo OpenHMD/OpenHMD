@@ -5,8 +5,9 @@ This project aims to provide a Free and Open Source API and drivers for immersiv
 OpenHMD is released under the permissive Boost Software License (see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very appreciated.
 
 ## Supported Devices
-  * Oculus Rift DK1 and DK2 (rotation only)
-  * HTC Vive (In Development)
+  * Oculus Rift DK1, DK2 and CV1 (rotation only)
+  * Deepoon E2
+  * HTC Vive (rotation only)
   * Android based devices
   * External Sensor (passthrough for external sensors)
 
@@ -66,12 +67,23 @@ as root, run:
 
 After this you have to unplug your device and plug it back in. You should now be able to access the HMD as a normal user.
 
+### Compiling on Windows
+CMake has a lot of generators available for IDE's and build systems.
+The easiest way to find one that fits your system is by checking the supported generators for you CMake version online.
+Example using VC2013.
+
+	cmake . -G "Visual Studio 12 2013 Win64"
+
+This will generate a project file for Visual Studio 2013 for 64 bit systems.
+Open the project file and compile as you usually would do.
+
 ### Cross compiling for windows using mingw
 Using Make:
 
     export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
     PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
     make
+    
 the library will end up in the .lib directory, you can use microsoft's lib.exe to make a .lib file for it
 
 Using CMake:
@@ -92,5 +104,6 @@ Will be available soon.
 See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL, glew and OpenGL.
 
 An API reference can be generated using doxygen and is also available here: http://openhmd.net/doxygen/0.1.0/openhmd_8h.html
+
 
 
