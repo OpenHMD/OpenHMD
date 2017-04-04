@@ -97,4 +97,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
 
 #install properties
 install (TARGETS openhmd-shared openhmd-static DESTINATION lib)
-install (FILES include/openhmd.h DESTINATION include)
+install (FILES include/openhmd.h DESTINATION include/openhmd/)

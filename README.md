@@ -7,6 +7,7 @@ OpenHMD is released under the permissive Boost Software License (see LICENSE for
 ## Supported Devices
   * Oculus Rift DK1, DK2 and CV1 (rotation only)
   * Deepoon E2
+  * HTC Vive (rotation only)
   * Android based devices
   * External Sensor (passthrough for external sensors)
 
@@ -60,9 +61,11 @@ To avoid having to run your applications as root to access USB devices you have 
 as root, run:
 
     echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2833", MODE="0666", GROUP="plugdev"' > /etc/udev/rules.d/83-hmd.rules
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="0bb4", MODE="0666", GROUP="plugdev"' >> /etc/udev/rules.d/83-hmd.rules
+    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="28de", MODE="0666", GROUP="plugdev"' >> /etc/udev/rules.d/83-hmd.rules
     udevadm control --reload-rules
 
-After this you have to unplug your Rift and plug it back in. You should now be able to access the Oculus Rift as a normal user.
+After this you have to unplug your device and plug it back in. You should now be able to access the HMD as a normal user.
 
 ### Compiling on Windows
 CMake has a lot of generators available for IDE's and build systems.
@@ -80,6 +83,7 @@ Using Make:
     export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
     PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
     make
+    
 the library will end up in the .lib directory, you can use microsoft's lib.exe to make a .lib file for it
 
 Using CMake:
@@ -100,5 +104,3 @@ Will be available soon.
 See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL, glew and OpenGL.
 
 An API reference can be generated using doxygen and is also available here: http://openhmd.net/doxygen/0.1.0/openhmd_8h.html
-
-
