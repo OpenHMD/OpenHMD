@@ -38,6 +38,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_htc_vive_drv(ctx);
 #endif
 
+#if DRIVER_PSVR
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_psvr_drv(ctx);
+#endif
+
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
