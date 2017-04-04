@@ -1,5 +1,5 @@
 #include "vive.h"
-#include "config.h"
+#include "vive_config.h"
 
 inline static uint8_t read8(const unsigned char** buffer)
 {

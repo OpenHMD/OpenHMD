@@ -124,4 +124,3 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 	// inprecision with quat multiplication.
 	oquatf_normalize_me(&me->orient);
 }
-
