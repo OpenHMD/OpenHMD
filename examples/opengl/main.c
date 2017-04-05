@@ -241,6 +241,16 @@ int main(int argc, char** argv)
 						printf("right_lens_center: [%0.4f, %0.4f]\n", right_lens_center[0], right_lens_center[1]);
 					}
 					break;
+				case SDLK_w:
+					sep += 0.001;
+					left_lens_center[0] = viewport_scale[0] - sep/2.0f;
+					right_lens_center[0] = sep/2.0f;
+					break;
+				case SDLK_q:
+					sep -= 0.001;
+					left_lens_center[0] = viewport_scale[0] - sep/2.0f;
+					right_lens_center[0] = sep/2.0f;
+					break;
 				case SDLK_a:
 					warp_adj *= 1.0/0.9;
 					break;
