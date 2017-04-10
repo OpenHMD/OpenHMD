@@ -1,5 +1,5 @@
 project (openglexample)
 include_directories(${CMAKE_BINARY_DIR}/include ${SDL_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR})
-link_libraries (openhmd m ${SDL_LIBRARY} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES})
 add_executable(openglexample gl.c main.c)
+target_link_libraries(openglexample PRIVATE openhmd-shared m ${SDL_LIBRARY} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES})
