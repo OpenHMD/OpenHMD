@@ -112,7 +112,7 @@ AM_CONDITIONAL([BUILD_OPENGL_EXAMPLE], [test "x$openglexample_enabled" != "xno"]
 
 # Libs required by OpenGL test
 AS_IF([test "x$openglexample_enabled" != "xno"], [
-	PKG_CHECK_MODULES([sdl], [sdl])
+	PKG_CHECK_MODULES([sdl2], [sdl2])
 
 	# Try to find OpenGL with pkg-config
 	PKG_CHECK_MODULES([GL], [gl], [],

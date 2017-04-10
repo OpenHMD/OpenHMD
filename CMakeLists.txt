@@ -104,7 +104,7 @@ if (OPENHMD_EXAMPLE_SIMPLE)
 endif(OPENHMD_EXAMPLE_SIMPLE)
 
 if (OPENHMD_EXAMPLE_SDL)
-	find_package(SDL REQUIRED)
+	find_package(SDL2 REQUIRED)
 	find_package(GLEW REQUIRED)
 	find_package(OpenGL REQUIRED)
 	add_subdirectory(./examples/opengl)
