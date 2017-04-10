@@ -1,5 +1,5 @@
 bin_PROGRAMS = openglexample
-AM_CPPFLAGS = -Wall -Werror -I$(top_srcdir)/include -DOHMD_STATIC $(sdl_CFLAGS) $(GLEW_CFLAGS)
+AM_CPPFLAGS = -Wall -Werror -I$(top_srcdir)/include -DOHMD_STATIC $(sdl2_CFLAGS) $(epoxy_CFLAGS)
 openglexample_SOURCES = gl.c main.c
 openglexample_LDADD = $(top_builddir)/src/libopenhmd.la -lm
-openglexample_LDFLAGS = -static-libtool-libs $(sdl_LIBS) $(GLEW_LIBS) $(GL_LIBS)
+openglexample_LDFLAGS = -static-libtool-libs $(sdl2_LIBS) $(epoxy_LIBS)

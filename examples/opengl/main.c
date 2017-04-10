@@ -184,7 +184,8 @@ int main(int argc, char** argv)
 					done = true;
 					break;
 				case SDLK_F1:
-					SDL_WM_ToggleFullScreen(gl.screen);
+                    gl.is_fullscreen = !gl.is_fullscreen;
+					SDL_SetWindowFullscreen(gl.window, gl.is_fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
 					break;
 				case SDLK_F2:
 					{
@@ -313,7 +314,7 @@ int main(int argc, char** argv)
 		glUseProgram(0);
 
 		// Da swap-dawup!
-		SDL_GL_SwapBuffers();
+		SDL_GL_SwapWindow(gl.window);
 		SDL_Delay(10);
 	}
 

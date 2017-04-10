@@ -31,13 +31,23 @@ void init_gl(gl_ctx* ctx, int w, int h)
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 
-	ctx->screen = SDL_SetVideoMode(w, h, 0, SDL_OPENGL | SDL_GL_DOUBLEBUFFER);
-	if(ctx->screen == NULL){
-		printf("SDL_SetVideoMode failed\n");
+	ctx->window = SDL_CreateWindow("OpenHMD opengl example",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        w, h, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL | SDL_GL_DOUBLEBUFFER);
+	if(ctx->window == NULL){
+		printf("SDL_CreateWindow failed\n");
 		exit(-1);
 	}
+
+    ctx->glcontext = SDL_GL_CreateContext(ctx->window);
+    if(ctx->glcontext == NULL){
+        printf("SDL_GL_CreateContext\n");
+        exit(-1);
+    }
+
+	SDL_GL_SetSwapInterval(1);
 
 	// Disable ctrl-c catching on linux (and OS X?) 
 	#ifdef __unix
@@ -45,7 +55,7 @@ void init_gl(gl_ctx* ctx, int w, int h)
 	#endif
 
 	// Load extensions.
-	glewInit();
+	//glewInit();
 
 	printf("OpenGL Renderer: %s\n", glGetString(GL_RENDERER));
 	printf("OpenGL Vendor: %s\n", glGetString(GL_VENDOR));
@@ -69,7 +79,10 @@ void init_gl(gl_ctx* ctx, int w, int h)
 	glEnable(GL_POLYGON_SMOOTH); 
 	glLoadIdentity();
 
-	glViewport(0, 0, ctx->screen->w, ctx->screen->h);
+    SDL_GetWindowSize(ctx->window, &w, &h);
+    printf("Actual window size: %dx%d\n", w, h);
+
+	glViewport(0, 0, w, h);
 }
 
 void ortho(gl_ctx* ctx)
@@ -78,7 +91,9 @@ void ortho(gl_ctx* ctx)
 	//glPushMatrix();
 	glLoadIdentity();
 
-	glOrtho(0.0f, ctx->screen->w, ctx->screen->h, 0.0f, -1.0f, 1.0f);
+    int w, h;
+    SDL_GetWindowSize(ctx->window, &w, &h);
+	glOrtho(0.0f, w, h, 0.0f, -1.0f, 1.0f);
 	glMatrixMode(GL_MODELVIEW);
 	//glPushMatrix();
 	glLoadIdentity();
