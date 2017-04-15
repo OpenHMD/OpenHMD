@@ -77,6 +77,8 @@ if(OPENHMD_DRIVER_HTC_VIVE)
 	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_htc_vive/vive.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_htc_vive/packet.c
+	#${CMAKE_CURRENT_LIST_DIR}/src/ext_deps/miniz.c
+	${CMAKE_CURRENT_LIST_DIR}/src/ext_deps/mjson.c
 	)
 	add_definitions(-DDRIVER_HTC_VIVE)
 
