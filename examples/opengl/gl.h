@@ -17,7 +17,9 @@
 
 typedef struct {
 	int w, h;
-	SDL_Surface* screen;
+	SDL_Window* window;
+	SDL_GLContext glcontext;
+	int is_fullscreen;
 } gl_ctx;
 
 void ortho(gl_ctx* ctx);
