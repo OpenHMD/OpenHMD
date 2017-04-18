@@ -357,14 +357,22 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.068234f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
+    /*
     // calculated from here: https://www.gamedev.net/topic/683698-projection-matrix-model-of-the-htc-vive/
 	priv->base.properties.lens_sep = 0.057863;
 	priv->base.properties.lens_vpos = 0.033896;
+    */
+    // estimated 'by eye' on jsarret's vive
+	priv->base.properties.lens_sep = 0.056;
+	priv->base.properties.lens_vpos = 0.032;
     float eye_to_screen_distance = 0.023226876441867737;
 	//priv->base.properties.fov = DEG_TO_RAD(111.435f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (2160.0f / 1200.0f) / 2.0f;
 
-	ohmd_set_universal_distortion_k(&(priv->base.properties), 0.394119, -0.508383, 0.323322, 0.790942);
+	/*
+    ohmd_set_universal_distortion_k(&(priv->base.properties), 0.394119, -0.508383, 0.323322, 0.790942);
+    */
+	ohmd_set_universal_distortion_k(&(priv->base.properties), 1.318397, -1.490242, 0.663824, 0.508021);
 	ohmd_set_universal_aberration_k(&(priv->base.properties), 1.00010147892f, 1.000f, 1.00019614479f);
 
 
