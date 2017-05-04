@@ -26,10 +26,13 @@ AS_CASE(["$host"],
 		[AC_MSG_RESULT([$host (Linux)])
 		hidapi="hidapi-libusb"
 
-		#link with realtime lib on linux for clock_gettime
-		AC_SUBST(EXTRA_LD_FLAGS, "-lrt -lpthread")],
+		#link with realtime lib on linux for clock_gettime, and libm for math functions such as sincosf
+		AC_SUBST(EXTRA_LD_FLAGS, "-lrt -lpthread -lm")],
 	[*-freebsd*],
-		[AC_SUBST(PKG_CONFIG_EXTRA_PATH, "libdata/")])
+		[AC_SUBST(PKG_CONFIG_EXTRA_PATH, "libdata/")
+		AC_SUBST(EXTRA_LD_FLAGS, "-lthr")],
+	[*-kfreebsd*],
+		[AC_SUBST(EXTRA_LD_FLAGS, "-lpthread")])
 
 # Oculus Rift Driver
 AC_ARG_ENABLE([driver-oculus-rift],
