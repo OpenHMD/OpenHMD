@@ -42,7 +42,6 @@ static void update_device(ohmd_device* device)
 	drv_priv* priv = drv_priv_get(device);
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
-
 	// Read all the messages from the device.
 	while(true){
 		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
@@ -52,6 +51,8 @@ static void update_device(ohmd_device* device)
 		} else if(size == 0) {
 			return; // No more messages, return.
 		}
+
+		nolo_decrypt_data(buffer);
 
 		// currently the only message type the hardware supports
 		switch (buffer[0]) {

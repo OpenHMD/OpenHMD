@@ -46,7 +46,32 @@ void btea_decrypt(uint32_t *v, int n, int base_rounds, uint32_t const key[4])
 	} while (--rounds);
 }
 
-void nolo_decode_position(const unsigned char* data, vec3f* pos) 
+void nolo_decrypt_data(unsigned char* buf)
+{
+	const int cryptwords = (64-4)/4, cryptoffset = 1;
+	static const uint32_t key[4] = {0x875bcc51, 0xa7637a66, 0x50960967, 0xf8536c51};
+	uint32_t cryptpart[cryptwords];
+
+	// Decrypt encrypted portion
+	for (int i = 0; i < cryptwords; i++) {
+	cryptpart[i] =
+		((uint32_t)buf[cryptoffset+4*i  ]) << 0  |
+		((uint32_t)buf[cryptoffset+4*i+1]) << 8  |
+		((uint32_t)buf[cryptoffset+4*i+2]) << 16 |
+		((uint32_t)buf[cryptoffset+4*i+3]) << 24;
+	}
+
+	btea_decrypt(cryptpart, cryptwords, 1, key);
+
+	for (int i = 0; i < cryptwords; i++) {
+		buf[cryptoffset+4*i  ] = cryptpart[i] >> 0;
+		buf[cryptoffset+4*i+1] = cryptpart[i] >> 8;
+		buf[cryptoffset+4*i+2] = cryptpart[i] >> 16;
+		buf[cryptoffset+4*i+3] = cryptpart[i] >> 24;
+	}
+}
+
+void nolo_decode_position(const unsigned char* data, vec3f* pos)
 {
 	const double scale = 0.0001f;
 
@@ -55,7 +80,7 @@ void nolo_decode_position(const unsigned char* data, vec3f* pos)
 	pos->z = (scale *          (data[4]<<8 | data[5]));
 }
 
-void nolo_decode_orientation(const unsigned char* data, quatf* quat) 
+void nolo_decode_orientation(const unsigned char* data, quatf* quat)
 {
 	double w,i,j,k, scale;
 	// CV1 order
@@ -74,7 +99,7 @@ void nolo_decode_orientation(const unsigned char* data, quatf* quat)
 	i *= scale;
 	j *= scale;
 	k *= scale;
-	
+
 	// Reorder
 	quat->w = w;
 	quat->x = i;
@@ -82,13 +107,13 @@ void nolo_decode_orientation(const unsigned char* data, quatf* quat)
 	quat->z = -j;
 }
 
-void nolo_decode_controller(int idx, unsigned char* data) 
+void nolo_decode_controller(int idx, unsigned char* data)
 {
 	uint8_t buttons, bit;
 
 	if (data[0] != 2 || data[1] != 1) {
 	// Unknown version
-	/* Happens when controllers aren't on. 
+	/* Happens when controllers aren't on.
 	std::cout << "Nolo: Unknown controller " << idx
 	  << " version " << (int)data[0] << " " << (int)data[1]
 	  << std::endl;
@@ -105,7 +130,7 @@ void nolo_decode_controller(int idx, unsigned char* data)
 	buttons = data[3+3*2+4*2];
 }
 
-void nolo_decode_hmd_marker(drv_priv* priv, unsigned char* data) 
+void nolo_decode_hmd_marker(drv_priv* priv, unsigned char* data)
 {
 	if (data[0] != 2 || data[1] != 1) {
 		/* Happens with corrupt packages (mixed with controller data)
@@ -131,8 +156,8 @@ void nolo_decode_hmd_marker(drv_priv* priv, unsigned char* data)
 	priv->base.rotation = orientation;
 }
 
-void nolo_decode_base_station(drv_priv* priv, unsigned char* data) 
-{	
+void nolo_decode_base_station(drv_priv* priv, unsigned char* data)
+{
 	// Unknown version
 	if (data[0] != 2 || data[1] != 1)
 		return;

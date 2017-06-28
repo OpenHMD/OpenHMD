@@ -30,6 +30,7 @@ typedef enum {
 
 
 void btea_decrypt(uint32_t *v, int n, int base_rounds, uint32_t const key[4]);
+void nolo_decrypt_data(unsigned char* buf);
 
 void nolo_decode_base_station(drv_priv* priv, unsigned char* data);
 void nolo_decode_hmd_marker(drv_priv* priv, unsigned char* data);
