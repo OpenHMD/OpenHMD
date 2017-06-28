@@ -93,7 +93,7 @@ if(OPENHMD_DRIVER_NOLO)
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_nolo/nolo.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_nolo/packet.c
 	)
-	add_definitions(-DDRIVER_HTC_VIVE)
+	add_definitions(-DDRIVER_NOLO)
 
 	find_package(HIDAPI REQUIRED)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
