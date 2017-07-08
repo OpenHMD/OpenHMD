@@ -195,9 +195,11 @@ typedef enum
 typedef enum
 {
 	/** Device is a null (dummy) device. */
-	OHMD_DEVICE_FLAGS_NULL_DEVICE = 1,
+	OHMD_DEVICE_FLAGS_NULL_DEVICE         = 1,
 	OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING = 2,
 	OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING = 4,
+	OHMD_DEVICE_FLAGS_LEFT_CONTROLLER     = 8,
+	OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER    = 16,
 } ohmd_device_flags;
 
 /** An opaque pointer to a context structure. */
