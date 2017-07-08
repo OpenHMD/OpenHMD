@@ -233,6 +233,9 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 	strcpy(desc->path, "(none)");
 
+	desc->device_class = OHMD_DEVICE_CLASS_HMD;
+	desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+
 	desc->driver_ptr = driver;
 }
 

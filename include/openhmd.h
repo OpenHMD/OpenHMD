@@ -80,7 +80,7 @@ typedef enum {
 	    left eye of the HMD. */
 	OHMD_LEFT_EYE_GL_PROJECTION_MATRIX    =  4,
 	/** float[16] (get): A "ready to use" OpenGL style 4x4 matrix with a projection matrix for the
-	    right eye of the HMD. */
+	    right eye of the HMD. */	
 	OHMD_RIGHT_EYE_GL_PROJECTION_MATRIX   =  5,
 
 	/** float[3] (get): A 3-D vector representing the absolute position of the device, in space. */
@@ -133,19 +133,24 @@ typedef enum {
 
 /** A collection of int value information types used for getting information with ohmd_device_geti(). */
 typedef enum {
-	/** int[1] (get): Physical horizontal resolution of the device screen. */
+	/** int[1] (get, ohmd_geti()): Physical horizontal resolution of the device screen. */
 	OHMD_SCREEN_HORIZONTAL_RESOLUTION     =  0,
-	/** int[1] (get): Physical vertical resolution of the device screen. */
+	/** int[1] (get, ohmd_geti()): Physical vertical resolution of the device screen. */
 	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
 
-	/** int[1] (get): Get number of events waiting in digital input event queue. */
+	/** int[1] (get, ohmd_geti()): Get number of events waiting in digital input event queue. */
 	OHMD_BUTTON_EVENT_COUNT               =  2,
-	/** int[1] (get): Get if the there was an overflow in the event queue causing events to be dropped. */
+	/** int[1] (get, ohmd_geti()): Get if the there was an overflow in the event queue causing events to be dropped. */
 	OHMD_BUTTON_EVENT_OVERFLOW            =  3,
-	/** int[1] (get): Get the number of physical digital input buttons on the device. */
+	/** int[1] (get, ohmd_geti()): Get the number of physical digital input buttons on the device. */
 	OHMD_BUTTON_COUNT                     =  4,
-	/** int[2] (get): Performs an event pop action. Format: [button_index, button_state], where button_state is either OHMD_BUTTON_DOWN or OHMD_BUTTON_UP */
+	/** int[2] (get, ohmd_geti()): Performs an event pop action. Format: [button_index, button_state], where button_state is either OHMD_BUTTON_DOWN or OHMD_BUTTON_UP */
 	OHMD_BUTTON_POP_EVENT                 =  5,
+
+	/** int[1] (get, ohmd_geti()/ohmd_list_geti()): Gets the class of the device. See: ohmd_device_class. */
+	OHMD_DEVICE_CLASS                     =  6,
+	/** int[1] (get, ohmd_geti()/ohmd_list_geti()): Gets the flags of the device. See: ohmd_device_flags. */
+	OHMD_DEVICE_FLAGS                     =  7,
 } ohmd_int_value;
 
 /** A collection of data information types used for setting information with ohmd_set_data(). */
@@ -174,6 +179,26 @@ typedef enum {
 	/** Button was released. */
 	OHMD_BUTTON_UP   = 1
 } ohmd_button_state;
+
+/** Device classes. */
+typedef enum 
+{
+	/** HMD device. */
+	OHMD_DEVICE_CLASS_HMD        = 0,
+	/** Controller device. */
+	OHMD_DEVICE_CLASS_CONTROLLER = 1,
+	/** Generic tracker device. */
+	OHMD_DEVICE_CLASS_GENERIC_TRACKER = 2,
+} ohmd_device_class;
+
+/** Device flags. */
+typedef enum
+{
+	/** Device is a null (dummy) device. */
+	OHMD_DEVICE_FLAGS_NULL_DEVICE = 1,
+	OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING = 2,
+	OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING = 4,
+} ohmd_device_flags;
 
 /** An opaque pointer to a context structure. */
 typedef struct ohmd_context ohmd_context;
@@ -266,6 +291,21 @@ OHMD_APIENTRYDLL int ohmd_gets(ohmd_string_description type, const char** out);
  * @return a string with a human readable device name.
  **/
 OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type);
+
+
+/**
+ * Get integer value from enumeration list index.
+ *
+ * 
+ *
+ * ohmd_ctx_probe must be called before calling ohmd_list_gets.
+ *
+ * @param ctx A (probed) context.
+ * @param index An index, between 0 and the value returned from ohmd_ctx_probe.
+ * @param type What type of value to retrieve, ohmd_int_value section for more information.
+ * @return 0 on success, <0 on failure.
+ **/
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_list_geti(ohmd_context* ctx, int index, ohmd_int_value type, int* out);
 
 /**
  * Open a device.

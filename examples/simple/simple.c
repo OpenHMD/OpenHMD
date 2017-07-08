@@ -49,10 +49,21 @@ int main(int argc, char** argv)
 
 	// Print device information
 	for(int i = 0; i < num_devices; i++){
+		int device_class = 0, device_flags = 0;
+		char* device_class_s[] = {"HMD", "Controller", "Generic Tracker", "Unknown"};
+
+		ohmd_list_geti(ctx, i, OHMD_DEVICE_CLASS, &device_class);
+		ohmd_list_geti(ctx, i, OHMD_DEVICE_FLAGS, &device_flags);
+
 		printf("device %d\n", i);
 		printf("  vendor:  %s\n", ohmd_list_gets(ctx, i, OHMD_VENDOR));
 		printf("  product: %s\n", ohmd_list_gets(ctx, i, OHMD_PRODUCT));
-		printf("  path:    %s\n\n", ohmd_list_gets(ctx, i, OHMD_PATH));
+		printf("  path:    %s\n", ohmd_list_gets(ctx, i, OHMD_PATH));
+		printf("  class:   %s\n", device_class_s[device_class > OHMD_DEVICE_CLASS_GENERIC_TRACKER ? 4 : device_class]);
+		printf("  flags:   %02x\n",  device_flags);
+		printf("    null device:         %s\n", device_flags & OHMD_DEVICE_FLAGS_NULL_DEVICE ? "yes" : "no");
+		printf("    rotational tracking: %s\n", device_flags & OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING ? "yes" : "no");
+		printf("    positional tracking: %s\n\n", device_flags & OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING ? "yes" : "no");
 	}
 
 	// Open default device (0)

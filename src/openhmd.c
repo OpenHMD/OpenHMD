@@ -137,6 +137,25 @@ const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 	}
 }
 
+int OHMD_APIENTRY ohmd_list_geti(ohmd_context* ctx, int index, ohmd_int_value type, int* out)
+{
+	if(index >= ctx->list.num_devices)
+		return OHMD_S_INVALID_PARAMETER;
+
+	switch(type){
+	case OHMD_DEVICE_CLASS:
+		*out = ctx->list.devices[index].device_class;
+		return OHMD_S_OK;
+
+	case OHMD_DEVICE_FLAGS:
+		*out = ctx->list.devices[index].device_flags;
+		return OHMD_S_OK;
+
+	default:
+		return OHMD_S_INVALID_PARAMETER;
+	}
+}
+
 static unsigned int ohmd_update_thread(void* arg)
 {
 	ohmd_context* ctx = (ohmd_context*)arg;
