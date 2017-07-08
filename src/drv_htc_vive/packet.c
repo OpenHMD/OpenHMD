@@ -61,7 +61,7 @@ void trim(const char* src, char* buff, const unsigned int sizeBuff)
 
     const char* current = src;
     unsigned int i = 0;
-    while(current != '\0' && i < sizeBuff-1)
+    while(*current != '\0' && i < sizeBuff-1)
     {
         if(*current != ' ' && *current != '\t')
             buff[i++] = *current;
