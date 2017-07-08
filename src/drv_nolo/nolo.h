@@ -7,8 +7,8 @@
 
 /* NOLO VR - Internal Interface */
 
-#ifndef TEMPLATEDRIVER_H
-#define TEMPLATEDRIVER_H
+#ifndef NOLODRIVER_H
+#define NOLODRIVER_H
 
 #include "../openhmdi.h"
 #include <hidapi.h>
@@ -20,14 +20,6 @@ typedef struct {
 
 	hid_device* handle;
 } drv_priv;
-
-typedef enum {
-	DRV_CMD_SENSOR_CONFIG = 2,
-	DRV_CMD_RANGE = 4,
-	DRV_CMD_KEEP_ALIVE = 8,
-	DRV_CMD_DISPLAY_INFO = 9
-} drv_sensor_feature_cmd;
-
 
 void btea_decrypt(uint32_t *v, int n, int base_rounds, uint32_t const key[4]);
 void nolo_decrypt_data(unsigned char* buf);

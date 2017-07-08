@@ -10,17 +10,6 @@
 #include <stdio.h>
 #include "nolo.h"
 
-#define SKIP_CMD (buffer++)
-#define READ8 *(buffer++);
-#define READ16 *buffer | (*(buffer + 1) << 8); buffer += 2;
-#define READ32 *buffer | (*(buffer + 1) << 8) | (*(buffer + 2) << 16) | (*(buffer + 3) << 24); buffer += 4;
-#define READFLOAT ((float)(*buffer)); buffer += 4;
-#define READFIXED (float)(*buffer | (*(buffer + 1) << 8) | (*(buffer + 2) << 16) | (*(buffer + 3) << 24)) / 1000000.0f; buffer += 4;
-
-#define WRITE8(_val) *(buffer++) = (_val);
-#define WRITE16(_val) WRITE8((_val) & 0xff); WRITE8(((_val) >> 8) & 0xff);
-#define WRITE32(_val) WRITE16((_val) & 0xffff) *buffer; WRITE16(((_val) >> 16) & 0xffff);
-
 #define DELTA 0x9e3779b9
 #define MX (((z>>5^y<<2) + (y>>3^z<<4)) ^ ((sum^y) + (key[(p&3)^e] ^ z)))
 
@@ -40,6 +29,7 @@ void btea_decrypt(uint32_t *v, int n, int base_rounds, uint32_t const key[4])
 			z = v[p-1];
 			y = v[p] -= MX;
 		}
+
 		z = v[n-1];
 		y = v[0] -= MX;
 		sum -= DELTA;
