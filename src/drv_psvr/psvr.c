@@ -213,6 +213,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// turn the display on
 	hid_write(priv->hmd_control, psvr_power_on, sizeof(psvr_power_on));
+	
 	// set VR mode for the hmd
 	hid_write(priv->hmd_control, psvr_vrmode_on, sizeof(psvr_vrmode_on));
 
