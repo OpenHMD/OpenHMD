@@ -96,15 +96,18 @@ int main(int argc, char** argv)
 
 	printf("\n");
 
-	// Ask for n rotation quaternions
+	// Ask for n rotation quaternions and position vectors
 	for(int i = 0; i < 10000; i++){
 		ohmd_ctx_update(ctx);
 
-		float zero[] = {.0, .1, .2, 1};
-		ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
-		ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
+		// this can be used to set a different zero point
+		// for rotation and position, but is not required.
+		//float zero[] = {.0, .0, .0, 1};
+		//ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
+		//ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
 
 		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
+		print_infof(hmd, "position vec: ", 3, OHMD_POSITION_VECTOR);
 		print_infoi(hmd, "button event count:", 1, OHMD_BUTTON_EVENT_COUNT);
 		
 		int event_count = 0;

@@ -35,6 +35,7 @@ typedef struct {
 	char product[OHMD_STR_SIZE];
 	char path[OHMD_STR_SIZE];
 	int revision;
+	int id;
 	ohmd_device_flags device_flags;
 	ohmd_device_class device_class;
 	ohmd_driver* driver_ptr;

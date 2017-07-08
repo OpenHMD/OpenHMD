@@ -12,6 +12,7 @@
 
 typedef struct {
 	ohmd_device base;
+	int id;
 } dummy_priv;
 
 static void update_device(ohmd_device* device)
@@ -23,13 +24,28 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	dummy_priv* priv = (dummy_priv*)device;
 
 	switch(type){
-	case OHMD_ROTATION_QUAT: 
+	case OHMD_ROTATION_QUAT:
 		out[0] = out[1] = out[2] = 0;
 		out[3] = 1.0f;
 		break;
 
 	case OHMD_POSITION_VECTOR:
-		out[0] = out[1] = out[2] = 0;
+		if(priv->id == 0){
+			// HMD
+			out[0] = out[1] = out[2] = 0;
+		}
+		else if(priv->id == 1)
+		{
+			// Left Controller
+			out[0] = -.5f;
+			out[1] = out[2] = 0;
+		}
+		else
+		{
+			// Right Controller
+			out[0] = .5f;
+			out[1] = out[2] = 0;
+		}
 		break;
 
 	case OHMD_DISTORTION_K:
@@ -58,6 +74,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv)
 		return NULL;
 	
+	priv->id = desc->id;
+	
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
@@ -85,11 +103,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-	ohmd_device_desc* desc = &list->devices[list->num_devices++];
+	int id = 0;
+	ohmd_device_desc* desc;
 
-	strcpy(desc->driver, "OpenHMD Dummy Driver");
+	// HMD
+
+	desc = &list->devices[list->num_devices++];
+
+	strcpy(desc->driver, "OpenHMD Null Driver");
 	strcpy(desc->vendor, "OpenHMD");
-	strcpy(desc->product, "Dummy Device");
+	strcpy(desc->product, "HMD Null Device");
 
 	strcpy(desc->path, "(none)");
 
@@ -97,6 +120,50 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 	desc->device_flags = OHMD_DEVICE_FLAGS_NULL_DEVICE | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 	desc->device_class = OHMD_DEVICE_CLASS_HMD;
+
+	desc->id = id++;
+
+	// Left Controller
+	
+	desc = &list->devices[list->num_devices++];
+
+	strcpy(desc->driver, "OpenHMD Null Driver");
+	strcpy(desc->vendor, "OpenHMD");
+	strcpy(desc->product, "Left Controller Null Device");
+
+	strcpy(desc->path, "(none)");
+
+	desc->driver_ptr = driver;
+
+	desc->device_flags = OHMD_DEVICE_FLAGS_NULL_DEVICE | 
+		OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | 
+		OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING | 
+		OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
+
+	desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+
+	desc->id = id++;
+	
+	// Right Controller
+	
+	desc = &list->devices[list->num_devices++];
+
+	strcpy(desc->driver, "OpenHMD Null Driver");
+	strcpy(desc->vendor, "OpenHMD");
+	strcpy(desc->product, "Right Controller Null Device");
+
+	strcpy(desc->path, "(none)");
+
+	desc->driver_ptr = driver;
+
+	desc->device_flags = OHMD_DEVICE_FLAGS_NULL_DEVICE | 
+		OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | 
+		OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING | 
+		OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
+
+	desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+
+	desc->id = id++;
 }
 
 static void destroy_driver(ohmd_driver* drv)

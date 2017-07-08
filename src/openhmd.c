@@ -339,10 +339,9 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	case OHMD_POSITION_VECTOR:
 	{
 		*(vec3f*)out = device->position;
-
 		for(int i = 0; i < 3; i++)
 			out[i] += device->position_correction.arr[i];
-
+		
 		return OHMD_S_OK;
 	}
 	case OHMD_UNIVERSAL_DISTORTION_K: {
