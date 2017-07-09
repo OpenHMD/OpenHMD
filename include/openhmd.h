@@ -129,6 +129,9 @@ typedef enum {
 	/** float[3] (get): Universal shader aberration coefficients (post warp scaling <r,g,b>. */
 	OHMD_UNIVERSAL_ABERRATION_K           = 21,
 
+	/** float[OHMD_ANALOG_AXIS_COUNT] (get): Get the state of the analog axes on the device. */
+	OHMD_ANALOG_AXES_STATE                = 22,
+
 } ohmd_float_value;
 
 /** A collection of int value information types used for getting information with ohmd_device_geti(). */
@@ -151,6 +154,9 @@ typedef enum {
 	OHMD_DEVICE_CLASS                     =  6,
 	/** int[1] (get, ohmd_geti()/ohmd_list_geti()): Gets the flags of the device. See: ohmd_device_flags. */
 	OHMD_DEVICE_FLAGS                     =  7,
+
+	/** int[1] (get, ohmd_geti()): Get the number of analog axes on the device. */
+	OHMD_ANALOG_AXIS_COUNT                =  8,
 } ohmd_int_value;
 
 /** A collection of data information types used for setting information with ohmd_set_data(). */

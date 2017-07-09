@@ -93,8 +93,12 @@ int main(int argc, char** argv)
 	print_infof(hmd, "distortion k:",     6, OHMD_DISTORTION_K);
 	
 	print_infoi(hmd, "digital button count:", 1, OHMD_BUTTON_COUNT);
+	print_infoi(hmd, "analog axis count:   ", 1, OHMD_ANALOG_AXIS_COUNT);
 
 	printf("\n");
+
+	int analog_axis_count;
+	ohmd_device_geti(hmd, OHMD_ANALOG_AXIS_COUNT, &analog_axis_count);
 
 	// Ask for n rotation quaternions and position vectors
 	for(int i = 0; i < 10000; i++){
@@ -106,8 +110,22 @@ int main(int argc, char** argv)
 		//ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
 		//ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
 
+		// get rotation and postition
 		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
 		print_infof(hmd, "position vec: ", 3, OHMD_POSITION_VECTOR);
+
+		// read analog axes
+		float axes[256];
+		ohmd_device_getf(hmd, OHMD_ANALOG_AXES_STATE, axes);
+
+		printf("%-25s", "axes:");
+		for(int i = 0; i < analog_axis_count; i++)
+		{
+			printf("%f ", axes[i]);
+		}
+		puts("");
+
+		// handle digital button events
 		print_infoi(hmd, "button event count:", 1, OHMD_BUTTON_EVENT_COUNT);
 		
 		int event_count = 0;
@@ -119,7 +137,7 @@ int main(int argc, char** argv)
 			ohmd_device_geti(hmd, OHMD_BUTTON_POP_EVENT, event);
 			printf("button %d: %s", event[0], event[1] == OHMD_BUTTON_DOWN ? "down" : "up");
 		}
-
+			
 		ohmd_sleep(.01);
 	}
 

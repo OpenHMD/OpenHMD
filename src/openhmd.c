@@ -455,7 +455,7 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 		case OHMD_BUTTON_COUNT:
 			*out = device->properties.digital_button_count;
 			return OHMD_S_OK;
-
+		
 		case OHMD_BUTTON_POP_EVENT: {
 				ohmd_digital_input_event event;
 
@@ -468,6 +468,10 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 
 				return OHMD_S_OK;
 			}
+		
+		case OHMD_ANALOG_AXIS_COUNT:
+			*out = device->properties.analog_axis_count;
+			return OHMD_S_OK;
 
 		default:
 				return OHMD_S_INVALID_PARAMETER;

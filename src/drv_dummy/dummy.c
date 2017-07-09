@@ -52,14 +52,19 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		// TODO this should be set to the equivalent of no distortion
 		memset(out, 0, sizeof(float) * 6);
 		break;
+	
+	case OHMD_ANALOG_AXES_STATE:
+		out[0] = .1f;
+		out[1] = .2f;
+		break;
 
 	default:
 		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
-		return -1;
+		return OHMD_S_INVALID_PARAMETER;
 		break;
 	}
 
-	return 0;
+	return OHMD_S_OK;
 }
 
 static void close_device(ohmd_device* device)
@@ -88,7 +93,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_vpos = 0.046800f;
 	priv->base.properties.fov = DEG_TO_RAD(125.5144f);
 	priv->base.properties.ratio = (1280.0f / 800.0f) / 2.0f;
+	
+	// Some buttons and axes
 	priv->base.properties.digital_button_count = 4;
+	priv->base.properties.analog_axis_count = 2;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
