@@ -28,5 +28,8 @@ void ohmd_unlock_mutex(ohmd_mutex* mutex);
 ohmd_thread* ohmd_create_thread(ohmd_context* ctx, unsigned int (*routine)(void* arg), void* arg);
 void ohmd_destroy_thread(ohmd_thread* thread);
 
+/* String functions */
+
+int findEndPoint(char* path, int endpoint);
 
 #endif
