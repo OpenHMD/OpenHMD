@@ -61,6 +61,8 @@ typedef enum {
 typedef enum {
 	OHMD_GLSL_DISTORTION_VERT_SRC = 0,
 	OHMD_GLSL_DISTORTION_FRAG_SRC = 1,
+	OHMD_GLSL_330_DISTORTION_VERT_SRC = 2,
+	OHMD_GLSL_330_DISTORTION_FRAG_SRC = 3,
 } ohmd_string_description;
 
 /** A collection of float value information types, used for getting and setting information with
