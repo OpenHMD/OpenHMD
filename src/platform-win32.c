@@ -105,6 +105,18 @@ void ohmd_unlock_mutex(ohmd_mutex* mutex)
 		ReleaseMutex(mutex->handle);
 }
 
+int findEndPoint(char* path, int endpoint)
+{
+	char comp[8];
+	sprintf(comp,"mi_0%d",endpoint);
+
+	if (strstr(path, comp) != NULL) {
+		return 1;
+	}
+
+	return 0;
+}
+
 /// Handling ovr service
 static int _enable_ovr_service = 0;
 

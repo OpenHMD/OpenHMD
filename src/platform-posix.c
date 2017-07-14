@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "platform.h"
 #include "openhmdi.h"
@@ -127,6 +128,16 @@ void ohmd_unlock_mutex(ohmd_mutex* mutex)
 /// Handling ovr service
 void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
 {
-	//Empty implementation	
+	//Empty implementation
+}
+
+int findEndPoint(char* path, int endpoint)
+{
+	char comp[6];
+	sprintf(comp,":0%d",endpoint);
+	if (strstr(path, comp) != NULL) {
+		return 1;
+	}
+	return 0;
 }
 #endif

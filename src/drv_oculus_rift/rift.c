@@ -212,18 +212,20 @@ static void close_device(ohmd_device* device)
 
 static char* _hid_to_unix_path(char* path)
 {
-	char bus [4];
-	char dev [4];
+	char bus [5];
+	char dev [5];
 	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
 
-	sprintf (bus, "%.*s\n", 4, path);
-	sprintf (dev, "%.*s\n", 4, path + 5);
+	sprintf (bus, "%.*s", 4, path);
+	sprintf (dev, "%.*s", 4, path + 5);
 
 	sprintf (result, "/dev/bus/usb/%03d/%03d",
 		(int)strtol(bus, NULL, 16),
 		(int)strtol(dev, NULL, 16));
 	return result;
 }
+
+#define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
@@ -240,8 +242,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	if(!priv->handle) {
 		char* path = _hid_to_unix_path(desc->path);
-		ohmd_set_error(driver->ctx, "Could not open %s. "
-		                            "Check your rights.", path);
+		ohmd_set_error(driver->ctx, "Could not open %s.\n"
+		                            "Check your rights: "
+		                            UDEV_WIKI_URL, path);
 		free(path);
 		goto cleanup;
 	}
