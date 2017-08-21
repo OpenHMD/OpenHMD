@@ -190,12 +190,14 @@ static void close_device(ohmd_device* device)
 
 	LOGD("closing HTC Vive device");
 
-	// turn the display off
-	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off1, sizeof(vive_magic_power_off1));
-	printf("power off magic 1: %d\n", hret);
+	if (!device->settings.keep_on_at_close) {
+		// turn the display off
+		hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off1, sizeof(vive_magic_power_off1));
+		printf("power off magic 1: %d\n", hret);
 
-	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off2, sizeof(vive_magic_power_off2));
-	printf("power off magic 2: %d\n", hret);
+		hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off2, sizeof(vive_magic_power_off2));
+		printf("power off magic 2: %d\n", hret);
+	}
 
 	hid_close(priv->hmd_handle);
 	hid_close(priv->imu_handle);

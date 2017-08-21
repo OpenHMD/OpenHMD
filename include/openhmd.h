@@ -165,6 +165,9 @@ typedef enum {
 	/** int[1] (set, default: 1): Set this to 0 to prevent OpenHMD from creating background threads to do automatic device ticking.
 	    Call ohmd_update(); must be called frequently, at least 10 times per second, if the background threads are disabled. */
 	OHMD_IDS_AUTOMATIC_UPDATE = 0,
+	/** int[1] (set, default: 0): Set this to 1 to prevent OpenHMD from trying to power off the device on ohmd_close_device().
+	    Useful to prevent device display from hot-unplugging, needed on X-Windows to have a separate-x-screen for the HMD. */
+	OHMD_IDS_KEEP_ON_AT_CLOSE = 1,
 } ohmd_int_settings;
 
 /** Button states for digital input events. */

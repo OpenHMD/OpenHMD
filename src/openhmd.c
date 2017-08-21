@@ -211,6 +211,7 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 	ohmd_device_settings settings;
 
 	settings.automatic_update = true;
+	settings.keep_on_at_close = false;
 
 	return ohmd_list_open_device_s(ctx, index, &settings);
 }
@@ -497,6 +498,10 @@ ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settin
 	switch(key){
 	case OHMD_IDS_AUTOMATIC_UPDATE:
 		settings->automatic_update = val[0] == 0 ? false : true;
+		return OHMD_S_OK;
+
+	case OHMD_IDS_KEEP_ON_AT_CLOSE:
+		settings->keep_on_at_close = val[0] == 0 ? false : true;
 		return OHMD_S_OK;
 
 	default:
