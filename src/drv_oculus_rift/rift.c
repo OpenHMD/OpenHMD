@@ -290,6 +290,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		if (send_feature_report(priv, buf, size) == -1)
 			LOGE("error turning the screens on");
 	}
+	else if (desc->revision == REV_DK2)
+	{
+		hid_write(priv->handle, rift_enable_leds_dk2, sizeof(rift_enable_leds_dk2));
+	}
 
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };

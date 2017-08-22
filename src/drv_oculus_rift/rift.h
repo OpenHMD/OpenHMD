@@ -47,7 +47,9 @@ typedef enum {
 #define RIFT_SCF_COMMAND_KEEP_ALIVE 0x20
 #define RIFT_SCF_SENSOR_COORDINATES 0x40
 
-
+static const unsigned char rift_enable_leds_dk2[17] = {
+	0x0c, 0x00, 0x00, 0x00, 0x01, 0x00, 0x5E, 0x01, 0x1A, 0x41, 0x00, 0x00, 0x7F,
+};
 
 typedef struct {
 	uint16_t command_id;
