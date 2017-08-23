@@ -19,7 +19,8 @@ typedef enum {
 	RIFT_CMD_RANGE = 4,
 	RIFT_CMD_KEEP_ALIVE = 8,
 	RIFT_CMD_DISPLAY_INFO = 9,
-	RIFT_CMD_ENABLE_COMPONENTS = 0x1d
+	RIFT_CMD_ENABLE_COMPONENTS = 0x1d,
+	RIFT_CMD_POSITION_INFO = 15,
 } rift_sensor_feature_cmd;
 
 typedef enum {
@@ -96,12 +97,31 @@ typedef struct {
 	uint16_t keep_alive_interval;
 } pkt_keep_alive;
 
+typedef struct {
+	uint8_t flags;
+	int32_t pos_x;
+	int32_t pos_y;
+	int32_t pos_z;
+	int16_t dir_x;
+	int16_t dir_y;
+	int16_t dir_z;
+	uint8_t index;
+	uint8_t num;
+} pkt_position_info;
+
+typedef struct {
+	// Relative position in micrometers
+	vec3f pos;
+	// Normal
+	vec3f dir;
+} rift_led;
 
 bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
 bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
 bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
 bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
+bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int size);
 
 void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
 
