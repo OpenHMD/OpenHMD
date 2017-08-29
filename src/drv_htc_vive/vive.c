@@ -349,6 +349,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//printf("Result: %s\n", packet_buffer);
 	vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
 
+	free(packet_buffer);
+
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 

@@ -180,8 +180,10 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 		ohmd_driver* driver = (ohmd_driver*)desc->driver_ptr;
 		ohmd_device* device = driver->open_device(driver, desc);
 
-		if (device == NULL)
+		if (device == NULL) {
+			ohmd_unlock_mutex(ctx->update_mutex);
 			return NULL;
+		}
 
 		device->rotation_correction.w = 1;
 
