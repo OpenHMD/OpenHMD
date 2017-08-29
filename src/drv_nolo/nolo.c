@@ -25,13 +25,6 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
-static int get_feature_report(drv_priv* priv, drv_sensor_feature_cmd cmd, unsigned char* buf)
-{
-	memset(buf, 0, FEATURE_BUFFER_SIZE);
-	buf[0] = (unsigned char)cmd;
-	return hid_get_feature_report(priv->handle, buf, FEATURE_BUFFER_SIZE);
-}
-
 static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t length)
 {
 	return hid_send_feature_report(priv->handle, data, length);
@@ -148,6 +141,18 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
+	// DEBUG: Using PSVR settings to allow OpenGLExample to work
+	priv->base.properties.hsize = 0.126; //from calculated specs
+	priv->base.properties.vsize = 0.071; //from calculated specs
+	priv->base.properties.hres = 1920;
+	priv->base.properties.vres = 1080;
+	priv->base.properties.lens_sep = 0.063500;
+	priv->base.properties.lens_vpos = 0.049694;
+	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact mesurements
+	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
+
+	// calculate projection eye projection matrices from the device properties
+	ohmd_calc_default_proj_matrices(&priv->base.properties);
 	// set up device callbacks
 	priv->base.update = update_device;
 	priv->base.close = close_device;
