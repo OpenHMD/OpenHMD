@@ -97,14 +97,14 @@ void nolo_decode_orientation(const unsigned char* data, quatf* quat)
 	quat->z = -j;
 }
 
-void nolo_decode_controller(int idx, unsigned char* data)
+void nolo_decode_controller(drv_priv* priv, unsigned char* data)
 {
 	uint8_t buttons, bit;
 
 	if (data[0] != 2 || data[1] != 1) {
 	// Unknown version
 	/* Happens when controllers aren't on.
-	std::cout << "Nolo: Unknown controller " << idx
+	std::cout << "Nolo: Unknown controller "
 	  << " version " << (int)data[0] << " " << (int)data[1]
 	  << std::endl;
 	*/
@@ -118,6 +118,9 @@ void nolo_decode_controller(int idx, unsigned char* data)
 	nolo_decode_orientation(data+3+3*2, &orientation);
 
 	buttons = data[3+3*2+4*2];
+
+	priv->base.position = position;
+	priv->base.rotation = orientation;
 }
 
 void nolo_decode_hmd_marker(drv_priv* priv, unsigned char* data)

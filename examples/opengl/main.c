@@ -131,6 +131,11 @@ int main(int argc, char** argv)
 	ohmd_device_settings_seti(settings, OHMD_IDS_AUTOMATIC_UPDATE, &auto_update);
 
 	ohmd_device* hmd = ohmd_list_open_device_s(ctx, 0, settings);
+	ohmd_device* nolo_tracker = ohmd_list_open_device_s(ctx, 1, settings);
+
+	ohmd_device* controller0 = ohmd_list_open_device_s(ctx, 2, settings);
+	ohmd_device* controller1 = ohmd_list_open_device_s(ctx, 3, settings);
+
 	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, &hmd_w);
 	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, &hmd_h);
 	float ipd;
@@ -302,7 +307,7 @@ int main(int argc, char** argv)
 		glLoadMatrixf(matrix);
 
 		glMatrixMode(GL_MODELVIEW);
-		ohmd_device_getf(hmd, OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX, matrix);
+		ohmd_device_getf(nolo_tracker, OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX, matrix);
 		glLoadMatrixf(matrix);
 
 		// Draw scene into framebuffer.
@@ -324,7 +329,7 @@ int main(int argc, char** argv)
 		glLoadMatrixf(matrix);
 
 		glMatrixMode(GL_MODELVIEW);
-		ohmd_device_getf(hmd, OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX, matrix);
+		ohmd_device_getf(nolo_tracker, OHMD_RIGHT_EYE_GL_MODELVIEW_MATRIX, matrix);
 		glLoadMatrixf(matrix);
 
 		// Draw scene into framebuffer.

@@ -19,6 +19,7 @@
 #define NOLO_HMD				0x5750
 
 static const int controllerLength = 3 + (3+4)*2 + 2 + 2 + 1;
+static devices_t* nolo_devices;
 
 static drv_priv* drv_priv_get(ohmd_device* device)
 {
@@ -35,6 +36,27 @@ static void update_device(ohmd_device* device)
 	drv_priv* priv = drv_priv_get(device);
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
+	// Only update when physical device
+	if (priv->id != 0)
+		return;
+
+	devices_t* current = nolo_devices;
+	drv_priv* controller0 = NULL;
+	drv_priv* controller1 = NULL;
+
+	//Check if controllers exist
+	while (current != NULL) {
+		if (current->drv->hmd_tracker == priv)
+		{
+			if (current->drv->controller0)
+				controller0 = current->drv->controller0;
+			if (current->drv->controller1)
+				controller1 = current->drv->controller1;
+			break;
+		}
+		current = current->next;
+	}
+
 	// Read all the messages from the device.
 	while(true){
 		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
@@ -50,8 +72,10 @@ static void update_device(ohmd_device* device)
 		// currently the only message type the hardware supports
 		switch (buffer[0]) {
 			case 0xa5:  // Controllers packet
-				nolo_decode_controller(0, buffer+1);
-				nolo_decode_controller(1, buffer+64-controllerLength);
+				if (controller0)
+					nolo_decode_controller(controller0, buffer+1);
+				if (controller1)
+					nolo_decode_controller(controller1, buffer+64-controllerLength);
 			break;
 			case 0xa6: // HMD packet
 				nolo_decode_hmd_marker(priv, buffer+0x15);
@@ -78,7 +102,18 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		}
 
 	case OHMD_POSITION_VECTOR:
-		*(vec3f*)out = priv->base.position;
+		if(priv->id == 0) {
+			// HMD
+			*(vec3f*)out = priv->base.position;
+		}
+		else if(priv->id == 1) {
+			// Controller 0
+			*(vec3f*)out = priv->base.position;
+		}
+		else if(priv->id == 2) {
+			// Controller 1
+			*(vec3f*)out = priv->base.position;
+		}
 		break;
 
 	default:
@@ -114,34 +149,87 @@ static char* _hid_to_unix_path(char* path)
 	return result;
 }
 
+
+void push_device(devices_t * head, drv_nolo* val) {
+    devices_t* current = head;
+
+    if (!current)
+    {
+	    current = malloc(sizeof(devices_t));
+	    current->drv = val;
+	    current->next = NULL;
+	    return;
+	}
+
+    while (current->next != NULL) {
+        current = current->next;
+    }
+
+    /* now we can add a new variable */
+    current->next = malloc(sizeof(devices_t));
+    current->next->drv = val;
+    current->next->next = NULL;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	drv_priv* priv = ohmd_alloc(driver->ctx, sizeof(drv_priv));
 	if(!priv)
 		goto cleanup;
 
+	priv->id = desc->id;
 	priv->base.ctx = driver->ctx;
 
-	// Open the HID device
-	priv->handle = hid_open_path(desc->path);
+	// Open the HID device when physical device
+	if (priv->id == 0)
+	{
+		priv->handle = hid_open_path(desc->path);
 
-	if(!priv->handle) {
-		char* path = _hid_to_unix_path(desc->path);
-		ohmd_set_error(driver->ctx, "Could not open %s. "
-		                            "Check your rights.", path);
-		free(path);
-		goto cleanup;
+		if(!priv->handle) {
+			char* path = _hid_to_unix_path(desc->path);
+			ohmd_set_error(driver->ctx, "Could not open %s. "
+										"Check your rights.", path);
+			free(path);
+			goto cleanup;
+		}
+
+		if(hid_set_nonblocking(priv->handle, 1) == -1){
+			ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
+			goto cleanup;
+		}
+
 	}
 
-	if(hid_set_nonblocking(priv->handle, 1) == -1){
-		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
-		goto cleanup;
+	devices_t* current = nolo_devices;
+	drv_nolo* mNOLO = NULL;
+
+	//Check if the opened device is part of a group
+	while (current != NULL) {
+		if (strcmp(current->drv->path, desc->path)==0)
+			mNOLO = current->drv;
+		current = current->next;
 	}
+
+	if (!mNOLO)
+	{
+		//Create new group
+		mNOLO = malloc(sizeof(drv_nolo));
+		strcpy(mNOLO->path, desc->path);
+		push_device(nolo_devices, mNOLO);
+	}
+
+	if (priv->id == 0)
+		mNOLO->hmd_tracker = priv;
+	else if (priv->id == 1)
+		mNOLO->controller0 = priv;
+	else if (priv->id == 2)
+		mNOLO->controller1 = priv;
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// DEBUG: Using PSVR settings to allow OpenGLExample to work
+	/*
 	priv->base.properties.hsize = 0.126; //from calculated specs
 	priv->base.properties.vsize = 0.071; //from calculated specs
 	priv->base.properties.hres = 1920;
@@ -150,6 +238,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_vpos = 0.049694;
 	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
+	*/
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
@@ -172,6 +261,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	struct hid_device_info* devs = hid_enumerate(NOLO_ID, NOLO_HMD);
 	struct hid_device_info* cur_dev = devs;
 
+	int id = 0;
 	while (cur_dev) {
 		ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
@@ -187,8 +277,33 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->path, cur_dev->path);
 
 			desc->driver_ptr = driver;
+			desc->id = id++;
 
 			cur_dev = cur_dev->next;
+
+			//Controller 0
+			desc = &list->devices[list->num_devices++];
+
+			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+			strcpy(desc->vendor, "LYRobotix");
+			strcpy(desc->product, "NOLO CV1: Controller 0");
+
+			strcpy(desc->path, "(none)");
+
+			desc->driver_ptr = driver;
+			desc->id = id++;
+
+			// Controller 1
+			desc = &list->devices[list->num_devices++];
+
+			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+			strcpy(desc->vendor, "LYRobotix");
+			strcpy(desc->product, "NOLO CV1: Controller 1");
+
+			strcpy(desc->path, "(none)");
+
+			desc->driver_ptr = driver;
+			desc->id = id++;
 		}
 	}
 
