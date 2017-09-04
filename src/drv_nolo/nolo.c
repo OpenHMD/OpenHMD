@@ -72,11 +72,13 @@ static void update_device(ohmd_device* device)
 		// currently the only message type the hardware supports
 		switch (buffer[0]) {
 			case 0xa5:  // Controllers packet
+			{
 				if (controller0)
 					nolo_decode_controller(controller0, buffer+1);
 				if (controller1)
 					nolo_decode_controller(controller1, buffer+64-controllerLength);
 			break;
+			}
 			case 0xa6: // HMD packet
 				nolo_decode_hmd_marker(priv, buffer+0x15);
 				nolo_decode_base_station(priv, buffer+0x36);
@@ -153,11 +155,11 @@ static char* _hid_to_unix_path(char* path)
 void push_device(devices_t * head, drv_nolo* val) {
     devices_t* current = head;
 
-    if (!current)
+    if (!nolo_devices)
     {
-	    current = malloc(sizeof(devices_t));
-	    current->drv = val;
-	    current->next = NULL;
+	    nolo_devices = malloc(sizeof(devices_t));
+	    nolo_devices->drv = val;
+	    nolo_devices->next = NULL;
 	    return;
 	}
 
@@ -214,6 +216,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	{
 		//Create new group
 		mNOLO = malloc(sizeof(drv_nolo));
+		mNOLO->hmd_tracker = NULL;
+		mNOLO->controller0 = NULL;
+		mNOLO->controller1 = NULL;
 		strcpy(mNOLO->path, desc->path);
 		push_device(nolo_devices, mNOLO);
 	}
@@ -241,7 +246,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	*/
 
 	// calculate projection eye projection matrices from the device properties
-	ohmd_calc_default_proj_matrices(&priv->base.properties);
+	//ohmd_calc_default_proj_matrices(&priv->base.properties);
 	// set up device callbacks
 	priv->base.update = update_device;
 	priv->base.close = close_device;
@@ -279,8 +284,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			desc->driver_ptr = driver;
 			desc->id = id++;
 
-			cur_dev = cur_dev->next;
-
 			//Controller 0
 			desc = &list->devices[list->num_devices++];
 
@@ -288,7 +291,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->vendor, "LYRobotix");
 			strcpy(desc->product, "NOLO CV1: Controller 0");
 
-			strcpy(desc->path, "(none)");
+			strcpy(desc->path, cur_dev->path);
 
 			desc->driver_ptr = driver;
 			desc->id = id++;
@@ -300,10 +303,12 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->vendor, "LYRobotix");
 			strcpy(desc->product, "NOLO CV1: Controller 1");
 
-			strcpy(desc->path, "(none)");
+			strcpy(desc->path, cur_dev->path);
 
 			desc->driver_ptr = driver;
 			desc->id = id++;
+
+			cur_dev = cur_dev->next;
 		}
 	}
 
