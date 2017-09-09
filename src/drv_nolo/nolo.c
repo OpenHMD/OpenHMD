@@ -268,10 +268,9 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 	int id = 0;
 	while (cur_dev) {
-		ohmd_device_desc* desc = &list->devices[list->num_devices++];
-
 		if (wcscmp(cur_dev->manufacturer_string, L"LYRobotix")==0 &&
 			wcscmp(cur_dev->product_string, L"NOLO")==0) {
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
 			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
 			strcpy(desc->vendor, "LYRobotix");
