@@ -307,11 +307,9 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			desc->driver_ptr = driver;
 			desc->id = id++;
-
-			cur_dev = cur_dev->next;
 		}
+		cur_dev = cur_dev->next;
 	}
-
 	hid_free_enumeration(devs);
 }
 
