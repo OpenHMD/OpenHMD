@@ -137,9 +137,9 @@ static void close_device(ohmd_device* device)
 
 static char* _hid_to_unix_path(char* path)
 {
-	const int len = 4;
-	char bus [4];
-	char dev [4];
+	const int len = 16;
+	char bus [16];
+	char dev [16];
 	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
 
 	sprintf (bus, "%.*s\n", len, path);
