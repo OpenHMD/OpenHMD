@@ -124,9 +124,9 @@ void nolo_decode_controller(drv_priv* priv, unsigned char* data)
 
 		for (bit=0; bit<6; bit++)
 		{
-			ohmd_digital_input_event event = { /* button index */ bit, /* button state */ (priv->button_state & 1<<bit ? OHMD_BUTTON_UP : OHMD_BUTTON_DOWN) };
+			ohmd_digital_input_event event = { /* button index */ bit, /* button state */ (priv->button_state & 1<<bit ? OHMD_BUTTON_DOWN : OHMD_BUTTON_UP) };
 			ohmdq_push(priv->base.digital_input_event_queue, &event);
-			//printf("Button state for controller is: %i\n", (priv->button_state & 1<<bit ? OHMD_BUTTON_UP : OHMD_BUTTON_DOWN));
+			//printf("Button state for controller is: %i\n", (priv->button_state & 1<<bit ? OHMD_BUTTON_DOWN : OHMD_BUTTON_UP));
 		}
 	}
 
