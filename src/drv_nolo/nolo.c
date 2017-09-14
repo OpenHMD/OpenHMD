@@ -223,12 +223,17 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		push_device(nolo_devices, mNOLO);
 	}
 
-	if (priv->id == 0)
+	if (priv->id == 0) {
 		mNOLO->hmd_tracker = priv;
-	else if (priv->id == 1)
+	}
+	else if (priv->id == 1) {
 		mNOLO->controller0 = priv;
-	else if (priv->id == 2)
+		priv->base.properties.digital_button_count = 6;
+	}
+	else if (priv->id == 2) {
 		mNOLO->controller1 = priv;
+		priv->base.properties.digital_button_count = 6;
+	}
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
