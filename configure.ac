@@ -71,6 +71,15 @@ AC_ARG_ENABLE([driver-psvr],
 
 AM_CONDITIONAL([BUILD_DRIVER_PSVR], [test "x$driver_psvr_enabled" != "xno"])
 
+# NOLO
+AC_ARG_ENABLE([driver-nolo],
+        [AS_HELP_STRING([--disable-driver-nolo],
+                [disable building of NOLO VR driver [default=yes]])],
+        [driver_nolo_enabled=$enableval],
+        [driver_nolo_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_NOLO], [test "x$driver_nolo_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -103,6 +112,10 @@ AS_IF([test "x$driver_deepoon_enabled" != "xno"],
 
 # Libs required by Sony PSVR Driver
 AS_IF([test "x$driver_psvr_enabled" != "xno"],
+	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by NOLO VR Driver
+AS_IF([test "x$driver_nolo_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?

@@ -218,7 +218,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv->handle) {
 		char* path = _hid_to_unix_path(desc->path);
 		ohmd_set_error(driver->ctx, "Could not open %s. "
-		                            "Check your rights.", path);
+									"Check your rights.", path);
 		free(path);
 		goto cleanup;
 	}
@@ -290,18 +290,21 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	struct hid_device_info* cur_dev = devs;
 
 	while (cur_dev) {
-		ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		if (wcscmp(cur_dev->manufacturer_string, L"DeePoon VR, Inc.")==0 &&
+			wcscmp(cur_dev->product_string, L"DeePoon Tracker Device")==0) {
 
-		strcpy(desc->driver, "Deepoon Driver");
-		strcpy(desc->vendor, "Deepoon");
-		strcpy(desc->product, "Deepoon E2");
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-		desc->revision = 0;
+			strcpy(desc->driver, "Deepoon Driver");
+			strcpy(desc->vendor, "Deepoon");
+			strcpy(desc->product, "Deepoon E2");
 
-		strcpy(desc->path, cur_dev->path);
+			desc->revision = 0;
 
-		desc->driver_ptr = driver;
+			strcpy(desc->path, cur_dev->path);
 
+			desc->driver_ptr = driver;
+		}
 		cur_dev = cur_dev->next;
 	}
 
