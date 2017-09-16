@@ -153,24 +153,24 @@ static char* _hid_to_unix_path(char* path)
 
 
 void push_device(devices_t * head, drv_nolo* val) {
-    devices_t* current = head;
+	devices_t* current = head;
 
-    if (!nolo_devices)
-    {
-	    nolo_devices = malloc(sizeof(devices_t));
-	    nolo_devices->drv = val;
-	    nolo_devices->next = NULL;
-	    return;
+	if (!nolo_devices)
+	{
+		nolo_devices = calloc(1, sizeof(devices_t));
+		nolo_devices->drv = val;
+		nolo_devices->next = NULL;
+		return;
 	}
 
-    while (current->next != NULL) {
-        current = current->next;
-    }
+	while (current->next != NULL) {
+		current = current->next;
+	}
 
-    /* now we can add a new variable */
-    current->next = malloc(sizeof(devices_t));
-    current->next->drv = val;
-    current->next->next = NULL;
+	/* now we can add a new variable */
+	current->next = calloc(1, sizeof(devices_t));
+	current->next->drv = val;
+	current->next->next = NULL;
 }
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
@@ -215,7 +215,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if (!mNOLO)
 	{
 		//Create new group
-		mNOLO = malloc(sizeof(drv_nolo));
+		mNOLO = calloc(1, sizeof(drv_nolo));
 		mNOLO->hmd_tracker = NULL;
 		mNOLO->controller0 = NULL;
 		mNOLO->controller1 = NULL;
@@ -323,4 +323,3 @@ ohmd_driver* ohmd_create_nolo_drv(ohmd_context* ctx)
 
 	return drv;
 }
-
