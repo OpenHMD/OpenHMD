@@ -42,6 +42,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_psvr_drv(ctx);
 #endif
 
+#if DRIVER_NOLO
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_nolo_drv(ctx);
+#endif
+
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
@@ -252,7 +256,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 			rot = tmp;
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
-			omat4x4f_init_translate(&world_shift, +(device->properties.ipd / 2.0f), 0, 0);
+			omat4x4f_init_translate(&world_shift, -device->position.x +(device->properties.ipd / 2.0f), -device->position.y, -device->position.z);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return OHMD_S_OK;
@@ -263,7 +267,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 			oquatf_mult_me(&rot, &device->rotation_correction);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
-			omat4x4f_init_translate(&world_shift, -(device->properties.ipd / 2.0f), 0, 0);
+			omat4x4f_init_translate(&world_shift, -device->position.x + -(device->properties.ipd / 2.0f), -device->position.y, -device->position.z);
 			omat4x4f_mult(&world_shift, &orient, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return OHMD_S_OK;
