@@ -5,12 +5,7 @@ This project aims to provide a Free and Open Source API and drivers for immersiv
 OpenHMD is released under the permissive Boost Software License (see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very appreciated.
 
 ## Supported Devices
-  * Oculus Rift DK1, DK2 and CV1 (rotation only)
-  * Deepoon E2
-  * HTC Vive (rotation only)
-  * PSVR
-  * Android based devices
-  * External Sensor (passthrough for external sensors)
+For a full list of supported devices please check https://github.com/OpenHMD/OpenHMD/wiki/Support-List
 
 ## Supported Platforms
   * Linux
@@ -59,12 +54,8 @@ These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake co
 ### Configuring udev on Linux
 To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).
 
-as root, run:
-
-    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2833", MODE="0666", GROUP="plugdev"' > /etc/udev/rules.d/83-hmd.rules
-    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="0bb4", MODE="0666", GROUP="plugdev"' >> /etc/udev/rules.d/83-hmd.rules
-    echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="28de", MODE="0666", GROUP="plugdev"' >> /etc/udev/rules.d/83-hmd.rules
-    udevadm control --reload-rules
+A full list of known usb devices and instructions on how to add them can be found on:
+https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list
 
 After this you have to unplug your device and plug it back in. You should now be able to access the HMD as a normal user.
 
@@ -99,9 +90,9 @@ If you're linking statically with OpenHMD using windows/mingw you have to make s
 Note that this is *only* if you're linking statically! If you're using the DLL then you *must not* define OHMD_STATIC. (If you're not sure then you're probably linking dynamically and won't have to worry about this).
 
 ## Pre-built packages
-Will be available soon.
+A list of pre-built backages can be found on http://www.openhmd.net/index.php/download/
 
 ## Using OpenHMD
-See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL, glew and OpenGL.
+See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL2, glew and OpenGL.
 
 An API reference can be generated using doxygen and is also available here: http://openhmd.net/doxygen/0.1.0/openhmd_8h.html

@@ -290,21 +290,23 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	struct hid_device_info* cur_dev = devs;
 
 	while (cur_dev) {
-		ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		// This is needed because DeePoon share USB IDs with the Nolo.
+		if (wcscmp(cur_dev->manufacturer_string, L"DeePoon VR, Inc.")==0 &&
+			wcscmp(cur_dev->product_string, L"DeePoon Tracker Device")==0) {
 
-		strcpy(desc->driver, "Deepoon Driver");
-		strcpy(desc->vendor, "Deepoon");
-		strcpy(desc->product, "Deepoon E2");
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-		desc->revision = 0;
+			strcpy(desc->driver, "Deepoon Driver");
+			strcpy(desc->vendor, "Deepoon");
+			strcpy(desc->product, "Deepoon E2");
 
-		strcpy(desc->path, cur_dev->path);
+			desc->device_class = OHMD_DEVICE_CLASS_HMD;
+			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 
-		desc->driver_ptr = driver;
-	
-		desc->device_class = OHMD_DEVICE_CLASS_HMD;
-		desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
-
+			desc->revision = 0;
+			strcpy(desc->path, cur_dev->path);
+			desc->driver_ptr = driver;
+		}
 		cur_dev = cur_dev->next;
 	}
 

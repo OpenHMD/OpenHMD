@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(openhmd C CXX)
 set(CMAKE_C_FLAGS "-std=c99")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
@@ -31,6 +32,7 @@ OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
 OPTION(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
 OPTION(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
+OPTION(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -86,6 +88,18 @@ if(OPENHMD_DRIVER_HTC_VIVE)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_HTC_VIVE)
+
+if(OPENHMD_DRIVER_NOLO)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_nolo/nolo.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_nolo/packet.c
+	)
+	add_definitions(-DDRIVER_NOLO)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_NOLO)
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files}

@@ -16,6 +16,7 @@ PKG_PROG_PKG_CONFIG([0.24])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 hidapi="hidapi"
+AC_SUBST(hidapi)
 
 AC_SUBST(PKG_CONFIG_EXTRA_PATH, "")
 AC_SUBST(EXTRA_LD_FLAGS, "")
@@ -70,6 +71,15 @@ AC_ARG_ENABLE([driver-psvr],
 
 AM_CONDITIONAL([BUILD_DRIVER_PSVR], [test "x$driver_psvr_enabled" != "xno"])
 
+# NOLO
+AC_ARG_ENABLE([driver-nolo],
+        [AS_HELP_STRING([--disable-driver-nolo],
+                [disable building of NOLO VR driver [default=yes]])],
+        [driver_nolo_enabled=$enableval],
+        [driver_nolo_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_NOLO], [test "x$driver_nolo_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -102,6 +112,10 @@ AS_IF([test "x$driver_deepoon_enabled" != "xno"],
 
 # Libs required by Sony PSVR Driver
 AS_IF([test "x$driver_psvr_enabled" != "xno"],
+	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by NOLO VR Driver
+AS_IF([test "x$driver_nolo_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?
@@ -145,5 +159,5 @@ AC_PROG_CC
 AC_PROG_CC_C99
 
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile tests/unittests/Makefile examples/Makefile examples/opengl/Makefile examples/simple/Makefile pkg-config/openhmd.pc])
 AC_OUTPUT 
