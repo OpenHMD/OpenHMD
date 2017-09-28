@@ -232,13 +232,13 @@ int encode_enable_components(unsigned char* buffer, bool display, bool audio, bo
 	WRITE16(0); // last command ID
 
 	if (display)
-		flags |= 1;
+		flags |= RIFT_COMPONENT_DISPLAY;
 	if (audio)
-		flags |= 2;
+		flags |= RIFT_COMPONENT_AUDIO;
 	if (leds)
-		flags |= 4;
+		flags |= RIFT_COMPONENT_LEDS;
 	WRITE8(flags);
-	return 4;
+	return 4; // component flags packet size
 }
 
 void dump_packet_sensor_range(const pkt_sensor_range* range)

@@ -39,6 +39,12 @@ typedef enum {
 	RIFT_DT_DISTORTION
 } rift_distortion_type;
 
+typedef enum {
+	RIFT_COMPONENT_DISPLAY = 1,
+	RIFT_COMPONENT_AUDIO = 2,
+	RIFT_COMPONENT_LEDS = 4
+} rift_component_type;
+
 // Sensor config flags
 #define RIFT_SCF_RAW_MODE           0x01
 #define RIFT_SCF_CALIBRATION_TEST   0x02
