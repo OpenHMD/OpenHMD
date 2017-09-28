@@ -273,6 +273,9 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			strcpy(desc->path, cur_dev->path);
 
+			desc->device_flags = OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			desc->device_class = OHMD_DEVICE_CLASS_HMD;
+
 			desc->driver_ptr = driver;
 			desc->id = id++;
 
@@ -285,6 +288,11 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			strcpy(desc->path, cur_dev->path);
 
+			desc->device_flags =
+				OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+				OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+				OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
+
 			desc->driver_ptr = driver;
 			desc->id = id++;
 
@@ -296,6 +304,11 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->product, "NOLO CV1: Controller 1");
 
 			strcpy(desc->path, cur_dev->path);
+
+			desc->device_flags =
+				OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+				OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+				OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
 
 			desc->driver_ptr = driver;
 			desc->id = id++;
