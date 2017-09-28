@@ -44,6 +44,8 @@ bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int
 	p->index = READ8;
 	SKIP8;
 	p->num = READ8;
+	SKIP8;
+	p->type = READ8;
 
 	return true;
 }

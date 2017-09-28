@@ -111,6 +111,7 @@ typedef struct {
 	int16_t dir_z;
 	uint8_t index;
 	uint8_t num;
+	uint8_t type;
 } pkt_position_info;
 
 typedef struct {
