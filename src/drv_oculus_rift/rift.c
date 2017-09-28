@@ -292,9 +292,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Turn the screens on
 	if (desc->revision == REV_CV1)
 	{
-		size = encode_enable_components(buf, true, true);
+		size = encode_enable_components(buf, true, true, true);
 		if (send_feature_report(priv, buf, size) == -1)
 			LOGE("error turning the screens on");
+
+		hid_write(priv->handle, rift_enable_leds_cv1, sizeof(rift_enable_leds_cv1));
 	}
 	else if (desc->revision == REV_DK2)
 	{

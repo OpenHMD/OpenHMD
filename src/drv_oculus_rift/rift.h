@@ -52,6 +52,10 @@ static const unsigned char rift_enable_leds_dk2[17] = {
 	0x0c, 0x00, 0x00, 0x00, 0x01, 0x00, 0x5E, 0x01, 0x1A, 0x41, 0x00, 0x00, 0x7F,
 };
 
+static const unsigned char rift_enable_leds_cv1[17] = {
+	0x0c, 0x00, 0x00, 0xFF, 0x05, 0x00, 0x8F, 0x01, 0x00, 0x4B, 0x00, 0x00, 0x7F,
+};
+
 typedef struct {
 	uint16_t command_id;
 	uint16_t accel_scale;
@@ -127,7 +131,7 @@ void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
 
 int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config);
 int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
-int encode_enable_components(unsigned char* buffer, bool display, bool audio);
+int encode_enable_components(unsigned char* buffer, bool display, bool audio, bool leds);
 
 void dump_packet_sensor_range(const pkt_sensor_range* range);
 void dump_packet_sensor_config(const pkt_sensor_config* config);

@@ -222,7 +222,7 @@ int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
 	return 5; // keep alive packet size
 }
 
-int encode_enable_components(unsigned char* buffer, bool display, bool audio)
+int encode_enable_components(unsigned char* buffer, bool display, bool audio, bool leds)
 {
 	uint8_t flags = 0;
 
@@ -233,7 +233,8 @@ int encode_enable_components(unsigned char* buffer, bool display, bool audio)
 		flags |= 1;
 	if (audio)
 		flags |= 2;
-//	flags |= 4; // I don't know what it is. Wireless?
+	if (leds)
+		flags |= 4;
 	WRITE8(flags);
 	return 4;
 }
