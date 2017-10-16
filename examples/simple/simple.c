@@ -137,14 +137,14 @@ int main(int argc, char** argv)
 		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
 		print_infof(hmd, "position vec: ", 3, OHMD_POSITION_VECTOR);
 
-		// read analog axes
-		float axes[256];
-		ohmd_device_getf(hmd, OHMD_CONTROLS_STATE, axes);
+		// read controls
+		float control_state[256];
+		ohmd_device_getf(hmd, OHMD_CONTROLS_STATE, control_state);
 
-		printf("%-25s", "controls:");
+		printf("%-25s", "controls state:");
 		for(int i = 0; i < control_count; i++)
 		{
-			printf("%f ", axes[i]);
+			printf("%f ", control_state[i]);
 		}
 		puts("");
 
