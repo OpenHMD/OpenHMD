@@ -53,9 +53,9 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		memset(out, 0, sizeof(float) * 6);
 		break;
 	
-	case OHMD_ANALOG_AXES_STATE:
+	case OHMD_CONTROLS_STATE:
 		out[0] = .1f;
-		out[1] = .2f;
+		out[1] = 1.0f;
 		break;
 
 	default:
@@ -96,7 +96,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	
 	// Some buttons and axes
 	priv->base.properties.digital_button_count = 4;
-	priv->base.properties.analog_axis_count = 2;
+	priv->base.properties.control_count = 2;
+	priv->base.properties.controls_functions[0] = OHMD_BUTTON_A;
+	priv->base.properties.controls_functions[1] = OHMD_MENU;
+	priv->base.properties.controls_types[0] = OHMD_ANALOG;
+	priv->base.properties.controls_types[1] = OHMD_DIGITAL;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);

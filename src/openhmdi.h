@@ -62,7 +62,9 @@ typedef struct {
 		int hres;
 		int vres;
 		int digital_button_count;
-		int analog_axis_count;
+		int control_count;
+		int controls_functions[64];
+		int controls_types[64];
 
 		float hsize;
 		float vsize;

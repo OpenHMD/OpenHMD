@@ -475,8 +475,16 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 				return OHMD_S_OK;
 			}
 		
-		case OHMD_ANALOG_AXIS_COUNT:
-			*out = device->properties.analog_axis_count;
+		case OHMD_CONTROL_COUNT:
+			*out = device->properties.control_count;
+			return OHMD_S_OK;
+
+		case OHMD_CONTROLS_TYPES:
+			memcpy(out, device->properties.controls_types, device->properties.control_count * sizeof(int));
+			return OHMD_S_OK;
+		
+		case OHMD_CONTROLS_FUNCTIONS:
+			memcpy(out, device->properties.controls_functions, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
 
 		default:
