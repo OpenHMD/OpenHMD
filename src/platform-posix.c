@@ -41,6 +41,53 @@ double ohmd_get_tick()
 }
 #endif
 
+#ifndef CLOCK_MONOTONIC
+
+static const uint64_t NUM_1_000_000 = 1000000;
+
+void ohmd_monotonic_init(ohmd_context* ctx)
+{
+	ctx->monotonic_ticks_per_sec = NUM_1_000_000;
+}
+
+uint64_t ohmd_monotonic_get(ohmd_context* ctx)
+{
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	return now.tv_sec * NUM_1_000_000 + now.tv_usec;
+}
+
+#else
+
+static const uint64_t NUM_1_000_000_000 = 1000000000;
+
+void ohmd_monotonic_init(ohmd_context* ctx)
+{
+		struct timespec ts;
+		if (clock_getres(CLOCK_MONOTONIC, &ts) !=  0) {
+			ctx->monotonic_ticks_per_sec = NUM_1_000_000_000;
+			return;
+		}
+
+		ctx->monotonic_ticks_per_sec =
+			ts.tv_nsec >= 1000 ?
+			NUM_1_000_000_000 :
+			NUM_1_000_000_000 / ts.tv_nsec;
+}
+
+uint64_t ohmd_monotonic_get(ohmd_context* ctx)
+{
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+
+	return ohmd_monotonic_conv(
+		now.tv_sec * NUM_1_000_000_000 + now.tv_nsec,
+		NUM_1_000_000_000,
+		ctx->monotonic_ticks_per_sec);
+}
+
+#endif
+
 void ohmd_sleep(double seconds)
 {
 	struct timespec sleepfor;

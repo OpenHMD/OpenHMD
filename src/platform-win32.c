@@ -30,6 +30,21 @@ double ohmd_get_tick()
 	return (high * 4294967296.0 + low) / 10000000;
 }
 
+static const uint64_t NUM_10_000_000 = 10000000;
+
+void ohmd_monotonic_init(ohmd_context* ctx)
+{
+	ctx->monotonic_ticks_per_sec = NUM_10_000_000;
+}
+
+uint64_t ohmd_monotonic_get(ohmd_context* ctx)
+{
+	FILETIME filetime;
+	GetSystemTimeAsFileTime(&filetime);
+
+	return ((uint64_t)filetime.dwHighDateTime << 32) | filetime.dwLowDateTime;
+}
+
 // TODO higher resolution
 void ohmd_sleep(double seconds)
 {
