@@ -128,10 +128,16 @@ struct ohmd_context {
 
 	bool update_request_quit;
 
+	uint64_t monotonic_ticks_per_sec;
+
 	char error_msg[OHMD_STR_SIZE];
 };
 
 // helper functions
+void ohmd_monotonic_init(ohmd_context* ctx);
+uint64_t ohmd_monotonic_get(ohmd_context* ctx);
+uint64_t ohmd_monotonic_per_sec(ohmd_context* ctx);
+uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_t dstTicksPerSecond);
 void ohmd_set_default_device_properties(ohmd_device_properties* props);
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d);
