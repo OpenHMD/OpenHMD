@@ -96,7 +96,7 @@ void ofusion_update(fusion* me, float dt, const vec3f* ang_vel, const vec3f* acc
 			}
 		}
 
-		// preform gravity tilt correction
+		// perform gravity tilt correction
 		if(me->grav_error_angle > min_tilt_error){
 			float use_angle;
 			// if less than 2000 iterations have passed, set the up axis to the correction value outright

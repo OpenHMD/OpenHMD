@@ -148,13 +148,13 @@ int main(int argc, char** argv)
 	//distortion coefficients
 	ohmd_device_getf(hmd, OHMD_UNIVERSAL_DISTORTION_K, &(distortion_coeffs[0]));
 	ohmd_device_getf(hmd, OHMD_UNIVERSAL_ABERRATION_K, &(aberr_scale[0]));
-	//calculate lens centers (assuming the eye separation is the distance betweenteh lense centers)
+	//calculate lens centers (assuming the eye separation is the distance between the lens centers)
 	ohmd_device_getf(hmd, OHMD_LENS_HORIZONTAL_SEPARATION, &sep);
 	ohmd_device_getf(hmd, OHMD_LENS_VERTICAL_POSITION, &(left_lens_center[1]));
 	ohmd_device_getf(hmd, OHMD_LENS_VERTICAL_POSITION, &(right_lens_center[1]));
 	left_lens_center[0] = viewport_scale[0] - sep/2.0f;
 	right_lens_center[0] = sep/2.0f;
-	//asume calibration was for lens view to which ever edge of screen is further away from lens center
+	//assume calibration was for lens view to which ever edge of screen is further away from lens center
 	float warp_scale = (left_lens_center[0] > right_lens_center[0]) ? left_lens_center[0] : right_lens_center[0];
 	float warp_adj = 1.0f;
 
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 						printf("lens separation: %04f\n", sep);
 						printf("IPD: %0.4f\n", ipd);
 						printf("warp_scale: %0.4f\r\n", warp_scale);
-						printf("distoriton coeffs: [%0.4f, %0.4f, %0.4f, %0.4f]\n", distortion_coeffs[0], distortion_coeffs[1], distortion_coeffs[2], distortion_coeffs[3]);
+						printf("distortion coeffs: [%0.4f, %0.4f, %0.4f, %0.4f]\n", distortion_coeffs[0], distortion_coeffs[1], distortion_coeffs[2], distortion_coeffs[3]);
 						printf("aberration coeffs: [%0.4f, %0.4f, %0.4f]\n", aberr_scale[0], aberr_scale[1], aberr_scale[2]);
 						printf("left_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
 						printf("right_lens_center: [%0.4f, %0.4f]\n", right_lens_center[0], right_lens_center[1]);
