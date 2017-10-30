@@ -87,7 +87,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	}
 
 	// read the state again, set the hw_coordinate_frame to match what
-	// the hardware actually is set to just incase it doesn't stick.
+	// the hardware actually is set to just in case it doesn't stick.
 	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
 	if(size <= 0){
 		LOGW("could not set coordinate frame");
@@ -249,7 +249,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv->handle) {
 		char* path = _hid_to_unix_path(desc->path);
 		ohmd_set_error(driver->ctx, "Could not open %s.\n"
-		                            "Check your rights: "
+		                            "Check your permissions: "
 		                            UDEV_WIKI_URL, path);
 		free(path);
 		goto cleanup;

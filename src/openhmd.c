@@ -5,7 +5,7 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/* Main Lib Implemenation */
+/* Main Lib Implementation */
 
 #include "openhmdi.h"
 #include "shaders.h"
@@ -554,7 +554,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 	// same projection matrix with the exception of the offset.
 	omat4x4f_init_perspective(&proj_base, props->fov, props->ratio, props->znear, props->zfar);
 
-	// Setup the two adjusted projection matricies. Each is setup to deal
+	// Setup the two adjusted projection matrices. Each is setup to deal
 	// with the fact that the lens is not in the center of the screen.
 	// These matrices only change of the hardware changes, so static.
 	mat4x4f translate;
@@ -587,7 +587,7 @@ uint64_t ohmd_monotonic_per_sec(ohmd_context* ctx)
 }
 
 /*
- * Grabbed from druntime, good thing its BOOST v1.0 as well.
+ * Grabbed from druntime, good thing it's BOOST v1.0 as well.
  */
 uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_t dstTicksPerSecond)
 {

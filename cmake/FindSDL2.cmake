@@ -4,12 +4,12 @@
 # SDL2_FOUND, if false, do not try to link to SDL2
 # SDL2_INCLUDE_DIR, where to find SDL.h
 #
-# This module responds to the the flag:
+# This module responds to the flag:
 # SDL2_BUILDING_LIBRARY
 # If this is defined, then no SDL2_main will be linked in because
 # only applications need main().
 # Otherwise, it is assumed you are building an application and this
-# module will attempt to locate and set the the proper link flags
+# module will attempt to locate and set the proper link flags
 # as part of the returned SDL2_LIBRARY variable.
 #
 # Don't forget to include SDL2main.h and SDL2main.m your project for the
@@ -130,7 +130,7 @@ IF(NOT APPLE)
 ENDIF(NOT APPLE)
 
 # MinGW needs an additional library, mwindows
-# It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
+# Its total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
 # (Actually on second look, I think it only needs one of the m* libraries.)
 IF(MINGW)
   SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
