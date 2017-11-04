@@ -120,6 +120,14 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		}
 		break;
 
+	case OHMD_CONTROLS_STATE:
+		if(priv->id > 0) {
+			for (int i = 0; i < 8; i++){
+				out[i] = priv->controller_values[i];
+			}
+		}
+		break;
+
 	default:
 		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
 		return -1;
@@ -230,11 +238,43 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 	else if (priv->id == 1) {
 		mNOLO->controller0 = priv;
-		priv->base.properties.digital_button_count = 6;
+		priv->base.properties.control_count = 8;
+		priv->base.properties.controls_hints[0] = OHMD_ANALOG_PRESS;
+		priv->base.properties.controls_hints[1] = OHMD_TRIGGER_CLICK;
+		priv->base.properties.controls_hints[2] = OHMD_MENU;
+		priv->base.properties.controls_hints[3] = OHMD_HOME;
+		priv->base.properties.controls_hints[4] = OHMD_SQUEEZE;
+		priv->base.properties.controls_hints[5] = OHMD_GENERIC; //touching the XY pad
+		priv->base.properties.controls_hints[6] = OHMD_ANALOG_X;
+		priv->base.properties.controls_hints[7] = OHMD_ANALOG_Y;
+		priv->base.properties.controls_types[0] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[1] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[2] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[3] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[4] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[5] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[6] = OHMD_ANALOG;
+		priv->base.properties.controls_types[7] = OHMD_ANALOG;
 	}
 	else if (priv->id == 2) {
 		mNOLO->controller1 = priv;
-		priv->base.properties.digital_button_count = 6;
+		priv->base.properties.control_count = 8;
+		priv->base.properties.controls_hints[0] = OHMD_ANALOG_PRESS;
+		priv->base.properties.controls_hints[1] = OHMD_TRIGGER_CLICK;
+		priv->base.properties.controls_hints[2] = OHMD_MENU;
+		priv->base.properties.controls_hints[3] = OHMD_HOME;
+		priv->base.properties.controls_hints[4] = OHMD_SQUEEZE;
+		priv->base.properties.controls_hints[5] = OHMD_GENERIC; //touching the XY pad
+		priv->base.properties.controls_hints[6] = OHMD_ANALOG_X;
+		priv->base.properties.controls_hints[7] = OHMD_ANALOG_Y;
+		priv->base.properties.controls_types[0] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[1] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[2] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[3] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[4] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[5] = OHMD_DIGITAL;
+		priv->base.properties.controls_types[6] = OHMD_ANALOG;
+		priv->base.properties.controls_types[7] = OHMD_ANALOG;
 	}
 
 	// Set default device properties

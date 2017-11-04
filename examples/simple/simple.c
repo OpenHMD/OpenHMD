@@ -99,7 +99,6 @@ int main(int argc, char** argv)
 	print_infof(hmd, "right eye aspect:", 1, OHMD_RIGHT_EYE_ASPECT_RATIO);
 	print_infof(hmd, "distortion k:",     6, OHMD_DISTORTION_K);
 	
-	print_infoi(hmd, "digital button count:", 1, OHMD_BUTTON_COUNT);
 	print_infoi(hmd, "control count:   ", 1, OHMD_CONTROL_COUNT);
 
 	int control_count;
@@ -113,7 +112,7 @@ int main(int argc, char** argv)
 	int controls_fn[64];
 	int controls_types[64];
 
-	ohmd_device_geti(hmd, OHMD_CONTROLS_FUNCTIONS, controls_fn);
+	ohmd_device_geti(hmd, OHMD_CONTROLS_HINTS, controls_fn);
 	ohmd_device_geti(hmd, OHMD_CONTROLS_TYPES, controls_types);
 	
 	printf("%-25s", "controls:");
@@ -147,19 +146,6 @@ int main(int argc, char** argv)
 			printf("%f ", control_state[i]);
 		}
 		puts("");
-
-		// handle digital button events
-		print_infoi(hmd, "button event count:", 1, OHMD_BUTTON_EVENT_COUNT);
-		
-		int event_count = 0;
-
-		ohmd_device_geti(hmd, OHMD_BUTTON_EVENT_COUNT, &event_count);
-
-		for(int i = 0; i < event_count; i++){
-			int event[2] = {0, 0};
-			ohmd_device_geti(hmd, OHMD_BUTTON_POP_EVENT, event);
-			printf("button %d: %s", event[0], event[1] == OHMD_BUTTON_DOWN ? "down" : "up");
-		}
 			
 		ohmd_sleep(.01);
 	}

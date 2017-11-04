@@ -98,7 +98,7 @@ void nolo_decode_orientation(const unsigned char* data, quatf* quat)
 
 void nolo_decode_controller(drv_priv* priv, unsigned char* data)
 {
-	uint8_t bit, newbuttonstate;
+	uint8_t bit, buttonstate;
 
 	if (data[0] != 2 || data[1] != 1) {
 	// Unknown version
@@ -117,19 +117,12 @@ void nolo_decode_controller(drv_priv* priv, unsigned char* data)
 	nolo_decode_orientation(data+3+3*2, &orientation);
 
 	//Change button state
-	newbuttonstate = data[3+3*2+4*2];
-	if (priv->button_state != newbuttonstate)
-	{
-		for (bit=0; bit<6; bit++)
-		{
-			if ((priv->button_state & 1<<bit) != (newbuttonstate & 1<<bit))
-			{
-				ohmd_digital_input_event event = { /* button index */ bit, /* button state */ (newbuttonstate & 1<<bit ? OHMD_BUTTON_DOWN : OHMD_BUTTON_UP) };
-				ohmdq_push(priv->base.digital_input_event_queue, &event);
-			}
-		}
-		priv->button_state = newbuttonstate;
-	}
+	buttonstate = data[3+3*2+4*2];
+	for (bit=0; bit<6; bit++)
+		priv->controller_values[bit] = (buttonstate & 1<<bit ? 1 : 0);
+
+	priv->controller_values[6] = data[3+3*2+4*2+2]; //X Pad
+	priv->controller_values[7] = data[3+3*2+4*2+2+1]; //Y Pad
 
 	priv->base.position = position;
 	priv->base.rotation = orientation;
