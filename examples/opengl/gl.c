@@ -52,7 +52,7 @@ void init_gl(gl_ctx* ctx, int w, int h)
 
 	SDL_GL_SetSwapInterval(1);
 
-	// Disable ctrl-c catching on linux (and OS X?) 
+	// Disable ctrl-c catching on Linux (and OS X?)
 #ifdef __unix
 	signal(SIGINT, SIG_DFL);
 #endif

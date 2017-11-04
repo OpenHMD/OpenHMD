@@ -5,7 +5,7 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/* Main Lib Implemenation */
+/* Main Lib Implementation */
 
 #include "openhmdi.h"
 #include "shaders.h"
@@ -25,6 +25,8 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 		LOGE("could not allocate RAM for context");
 		return NULL;
 	}
+
+	ohmd_monotonic_init(ctx);
 
 #if DRIVER_OCULUS_RIFT
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
@@ -582,7 +584,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 	// same projection matrix with the exception of the offset.
 	omat4x4f_init_perspective(&proj_base, props->fov, props->ratio, props->znear, props->zfar);
 
-	// Setup the two adjusted projection matricies. Each is setup to deal
+	// Setup the two adjusted projection matrices. Each is setup to deal
 	// with the fact that the lens is not in the center of the screen.
 	// These matrices only change of the hardware changes, so static.
 	mat4x4f translate;
@@ -607,4 +609,23 @@ void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, flo
 	props->universal_aberration_k[0] = r;
 	props->universal_aberration_k[1] = g;
 	props->universal_aberration_k[2] = b;
+}
+
+uint64_t ohmd_monotonic_per_sec(ohmd_context* ctx)
+{
+	return ctx->monotonic_ticks_per_sec;
+}
+
+/*
+ * Grabbed from druntime, good thing it's BOOST v1.0 as well.
+ */
+uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_t dstTicksPerSecond)
+{
+	// This would be more straightforward with floating point arithmetic,
+	// but we avoid it here in order to avoid the rounding errors that that
+	// introduces. Also, by splitting out the units in this way, we're able
+	// to deal with much larger values before running into problems with
+	// integer overflow.
+	return ticks / srcTicksPerSecond * dstTicksPerSecond +
+		ticks % srcTicksPerSecond * dstTicksPerSecond / srcTicksPerSecond;
 }

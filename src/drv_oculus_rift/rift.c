@@ -33,6 +33,12 @@ typedef struct {
 	double last_keep_alive;
 	fusion sensor_fusion;
 	vec3f raw_mag, raw_accel, raw_gyro;
+
+	struct {
+		vec3f pos;
+	} imu;
+
+	rift_led *leds;
 } rift_priv;
 
 typedef enum {
@@ -81,7 +87,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	}
 
 	// read the state again, set the hw_coordinate_frame to match what
-	// the hardware actually is set to just incase it doesn't stick.
+	// the hardware actually is set to just in case it doesn't stick.
 	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
 	if(size <= 0){
 		LOGW("could not set coordinate frame");
@@ -243,7 +249,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv->handle) {
 		char* path = _hid_to_unix_path(desc->path);
 		ohmd_set_error(driver->ctx, "Could not open %s.\n"
-		                            "Check your rights: "
+		                            "Check your permissions: "
 		                            UDEV_WIKI_URL, path);
 		free(path);
 		goto cleanup;
@@ -286,9 +292,47 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Turn the screens on
 	if (desc->revision == REV_CV1)
 	{
-		size = encode_enable_components(buf, true, true);
+		size = encode_enable_components(buf, true, true, true);
 		if (send_feature_report(priv, buf, size) == -1)
 			LOGE("error turning the screens on");
+
+		hid_write(priv->handle, rift_enable_leds_cv1, sizeof(rift_enable_leds_cv1));
+	}
+	else if (desc->revision == REV_DK2)
+	{
+		hid_write(priv->handle, rift_enable_leds_dk2, sizeof(rift_enable_leds_dk2));
+	}
+
+	pkt_position_info pos;
+	int first_index = -1;
+
+	//Get LED positions
+	while (true) {
+		size = get_feature_report(priv, RIFT_CMD_POSITION_INFO, buf);
+		if (size <= 0 || !decode_position_info(&pos, buf, size) ||
+		    first_index == pos.index) {
+			break;
+		}
+
+		if (first_index < 0) {
+			first_index = pos.index;
+			priv->leds = calloc(pos.num, sizeof(rift_led));
+		}
+
+		if (pos.flags == 1) { //reports 0's
+			priv->imu.pos.x = (float)pos.pos_x;
+			priv->imu.pos.y = (float)pos.pos_y;
+			priv->imu.pos.z = (float)pos.pos_z;
+		} else if (pos.flags == 2) {
+			rift_led *led = &priv->leds[pos.index];
+			led->pos.x = (float)pos.pos_x;
+			led->pos.y = (float)pos.pos_y;
+			led->pos.z = (float)pos.pos_z;
+			led->dir.x = (float)pos.dir_x;
+			led->dir.y = (float)pos.dir_y;
+			led->dir.z = (float)pos.dir_z;
+			ovec3f_normalize_me(&led->dir);
+		}
 	}
 
 	// set keep alive interval to n seconds
