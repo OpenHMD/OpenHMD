@@ -97,8 +97,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Some buttons and axes
 	priv->base.properties.digital_button_count = 4;
 	priv->base.properties.control_count = 2;
-	priv->base.properties.controls_functions[0] = OHMD_BUTTON_A;
-	priv->base.properties.controls_functions[1] = OHMD_MENU;
+	priv->base.properties.controls_hints[0] = OHMD_BUTTON_A;
+	priv->base.properties.controls_hints[1] = OHMD_MENU;
 	priv->base.properties.controls_types[0] = OHMD_ANALOG;
 	priv->base.properties.controls_types[1] = OHMD_DIGITAL;
 

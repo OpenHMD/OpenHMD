@@ -485,8 +485,8 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 			memcpy(out, device->properties.controls_types, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
 		
-		case OHMD_CONTROLS_FUNCTIONS:
-			memcpy(out, device->properties.controls_functions, device->properties.control_count * sizeof(int));
+		case OHMD_CONTROLS_HINTS:
+			memcpy(out, device->properties.controls_hints, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
 
 		default:

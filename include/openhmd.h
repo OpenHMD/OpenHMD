@@ -79,7 +79,7 @@ typedef enum {
 	OHMD_BUTTON_B       = 10,
 	OHMD_BUTTON_X       = 11,
 	OHMD_BUTTON_Y       = 12,
-} ohmd_control_function;
+} ohmd_control_hint;
 
 /** Control type. Indicates whether controls are digital or analog. */
 typedef enum {
@@ -183,7 +183,7 @@ typedef enum {
 	OHMD_CONTROL_COUNT                    =  8,
 
 	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get whether controls are digital or analog. */
-	OHMD_CONTROLS_FUNCTIONS               =  9,
+	OHMD_CONTROLS_HINTS   		          =  9,
 	
 	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get what function controls serve. */
 	OHMD_CONTROLS_TYPES                   =  10,
