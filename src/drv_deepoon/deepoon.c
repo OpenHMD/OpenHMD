@@ -300,10 +300,11 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->vendor, "Deepoon");
 			strcpy(desc->product, "Deepoon E2");
 
+			desc->device_class = OHMD_DEVICE_CLASS_HMD;
+			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+
 			desc->revision = 0;
-
 			strcpy(desc->path, cur_dev->path);
-
 			desc->driver_ptr = driver;
 		}
 		cur_dev = cur_dev->next;

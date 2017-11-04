@@ -403,6 +403,8 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		snprintf(desc->path, OHMD_STR_SIZE, "%d", idx);
 
 		desc->driver_ptr = driver;
+		desc->device_class = OHMD_DEVICE_CLASS_HMD;
+		desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 
 		cur_dev = cur_dev->next;
 		idx++;

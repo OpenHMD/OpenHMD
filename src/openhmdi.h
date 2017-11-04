@@ -36,6 +36,8 @@ typedef struct {
 	char path[OHMD_STR_SIZE];
 	int revision;
 	int id;
+	ohmd_device_flags device_flags;
+	ohmd_device_class device_class;
 	ohmd_driver* driver_ptr;
 } ohmd_device_desc;
 
@@ -60,6 +62,9 @@ typedef struct {
 		int hres;
 		int vres;
 		int digital_button_count;
+		int control_count;
+		int controls_functions[64];
+		int controls_types[64];
 
 		float hsize;
 		float vsize;

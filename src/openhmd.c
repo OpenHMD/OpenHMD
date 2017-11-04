@@ -143,6 +143,25 @@ const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 	}
 }
 
+int OHMD_APIENTRY ohmd_list_geti(ohmd_context* ctx, int index, ohmd_int_value type, int* out)
+{
+	if(index >= ctx->list.num_devices)
+		return OHMD_S_INVALID_PARAMETER;
+
+	switch(type){
+	case OHMD_DEVICE_CLASS:
+		*out = ctx->list.devices[index].device_class;
+		return OHMD_S_OK;
+
+	case OHMD_DEVICE_FLAGS:
+		*out = ctx->list.devices[index].device_flags;
+		return OHMD_S_OK;
+
+	default:
+		return OHMD_S_INVALID_PARAMETER;
+	}
+}
+
 static unsigned int ohmd_update_thread(void* arg)
 {
 	ohmd_context* ctx = (ohmd_context*)arg;
@@ -328,10 +347,9 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	case OHMD_POSITION_VECTOR:
 	{
 		*(vec3f*)out = device->position;
-
 		for(int i = 0; i < 3; i++)
 			out[i] += device->position_correction.arr[i];
-
+		
 		return OHMD_S_OK;
 	}
 	case OHMD_UNIVERSAL_DISTORTION_K: {
@@ -445,7 +463,7 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 		case OHMD_BUTTON_COUNT:
 			*out = device->properties.digital_button_count;
 			return OHMD_S_OK;
-
+		
 		case OHMD_BUTTON_POP_EVENT: {
 				ohmd_digital_input_event event;
 
@@ -458,6 +476,18 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 
 				return OHMD_S_OK;
 			}
+		
+		case OHMD_CONTROL_COUNT:
+			*out = device->properties.control_count;
+			return OHMD_S_OK;
+
+		case OHMD_CONTROLS_TYPES:
+			memcpy(out, device->properties.controls_types, device->properties.control_count * sizeof(int));
+			return OHMD_S_OK;
+		
+		case OHMD_CONTROLS_FUNCTIONS:
+			memcpy(out, device->properties.controls_functions, device->properties.control_count * sizeof(int));
+			return OHMD_S_OK;
 
 		default:
 				return OHMD_S_INVALID_PARAMETER;
