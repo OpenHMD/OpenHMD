@@ -19,7 +19,7 @@ typedef struct {
 
 	hid_device* handle;
 	int id;
-	uint8_t button_state;
+	float controller_values[8];
 } drv_priv;
 
 typedef struct{

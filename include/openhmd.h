@@ -79,7 +79,7 @@ typedef enum {
 	OHMD_BUTTON_B       = 10,
 	OHMD_BUTTON_X       = 11,
 	OHMD_BUTTON_Y       = 12,
-} ohmd_control_function;
+} ohmd_control_hint;
 
 /** Control type. Indicates whether controls are digital or analog. */
 typedef enum {
@@ -165,28 +165,19 @@ typedef enum {
 	/** int[1] (get, ohmd_geti()): Physical vertical resolution of the device screen. */
 	OHMD_SCREEN_VERTICAL_RESOLUTION       =  1,
 
-	/** int[1] (get, ohmd_geti()): Get number of events waiting in digital input event queue. */
-	OHMD_BUTTON_EVENT_COUNT               =  2,
-	/** int[1] (get, ohmd_geti()): Get if the there was an overflow in the event queue causing events to be dropped. */
-	OHMD_BUTTON_EVENT_OVERFLOW            =  3,
-	/** int[1] (get, ohmd_geti()): Get the number of physical digital input buttons on the device. */
-	OHMD_BUTTON_COUNT                     =  4,
-	/** int[2] (get, ohmd_geti()): Performs an event pop action. Format: [button_index, button_state], where button_state is either OHMD_BUTTON_DOWN or OHMD_BUTTON_UP */
-	OHMD_BUTTON_POP_EVENT                 =  5,
-
 	/** int[1] (get, ohmd_geti()/ohmd_list_geti()): Gets the class of the device. See: ohmd_device_class. */
-	OHMD_DEVICE_CLASS                     =  6,
+	OHMD_DEVICE_CLASS                     =  2,
 	/** int[1] (get, ohmd_geti()/ohmd_list_geti()): Gets the flags of the device. See: ohmd_device_flags. */
-	OHMD_DEVICE_FLAGS                     =  7,
+	OHMD_DEVICE_FLAGS                     =  3,
 
 	/** int[1] (get, ohmd_geti()): Get the number of analog and digital controls of the device. */
-	OHMD_CONTROL_COUNT                    =  8,
+	OHMD_CONTROL_COUNT                    =  4,
 
 	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get whether controls are digital or analog. */
-	OHMD_CONTROLS_FUNCTIONS               =  9,
+	OHMD_CONTROLS_HINTS   		          =  5,
 	
 	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get what function controls serve. */
-	OHMD_CONTROLS_TYPES                   =  10,
+	OHMD_CONTROLS_TYPES                   =  6,
 } ohmd_int_value;
 
 /** A collection of data information types used for setting information with ohmd_set_data(). */

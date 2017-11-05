@@ -18,7 +18,6 @@
 #include "openhmd.h"
 #include "omath.h"
 #include "platform.h"
-#include "queue.h"
 
 #define OHMD_MAX_DEVICES 16
 
@@ -46,11 +45,6 @@ typedef struct {
 	ohmd_device_desc devices[OHMD_MAX_DEVICES];
 } ohmd_device_list;
 
-typedef struct {
-	int idx;
-	ohmd_button_state state; 
-} ohmd_digital_input_event;
-
 struct ohmd_driver {
 	void (*get_device_list)(ohmd_driver* driver, ohmd_device_list* list);
 	ohmd_device* (*open_device)(ohmd_driver* driver, ohmd_device_desc* desc);
@@ -61,9 +55,8 @@ struct ohmd_driver {
 typedef struct {
 		int hres;
 		int vres;
-		int digital_button_count;
 		int control_count;
-		int controls_functions[64];
+		int controls_hints[64];
 		int controls_types[64];
 
 		float hsize;
@@ -114,8 +107,6 @@ struct ohmd_device {
 
 	quatf rotation;
 	vec3f position;
-	
-	ohmdq* digital_input_event_queue;
 };
 
 
