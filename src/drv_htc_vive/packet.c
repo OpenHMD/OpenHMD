@@ -63,7 +63,7 @@ void trim(const char* src, char* buff, const unsigned int sizeBuff)
     unsigned int i = 0;
     while(*current != '\0' && i < sizeBuff-1)
     {
-        if(*current != ' ' && *current != '\t')
+        if(*current != ' ' && *current != '\t' && *current != '\n')
             buff[i++] = *current;
         ++current;
     }
@@ -81,10 +81,10 @@ bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buf
 	pkt->length = size;
 
 	unsigned char output[32768];
-	int output_size = 32768;
+	mz_ulong output_size = 32768;
 
 	//int cmp_status = uncompress(pUncomp, &uncomp_len, pCmp, cmp_len);
-	int cmp_status = uncompress(output, (mz_ulong*)&output_size, buffer, (mz_ulong)pkt->length);
+	int cmp_status = uncompress(output, &output_size, buffer, (mz_ulong)pkt->length);
 	if (cmp_status != Z_OK){
 		LOGE("invalid vive config, could not uncompress");
 		return false;
