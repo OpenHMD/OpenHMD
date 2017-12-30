@@ -12,6 +12,9 @@
 #define DELTA 0x9e3779b9
 #define MX (((z>>5^y<<2) + (y>>3^z<<4)) ^ ((sum^y) + (key[(p&3)^e] ^ z)))
 
+#define CRYPT_WORDS (64-4)/4
+#define CRYPT_OFFSET 1
+
 void btea_decrypt(uint32_t *v, int n, int base_rounds, uint32_t const key[4])
 {
 	uint32_t y, z, sum;
@@ -37,26 +40,25 @@ void btea_decrypt(uint32_t *v, int n, int base_rounds, uint32_t const key[4])
 
 void nolo_decrypt_data(unsigned char* buf)
 {
-	const int cryptwords = (64-4)/4, cryptoffset = 1;
 	static const uint32_t key[4] = {0x875bcc51, 0xa7637a66, 0x50960967, 0xf8536c51};
-	uint32_t cryptpart[cryptwords];
+	uint32_t cryptpart[CRYPT_WORDS];
 
 	// Decrypt encrypted portion
-	for (int i = 0; i < cryptwords; i++) {
+	for (int i = 0; i < CRYPT_WORDS; i++) {
 	cryptpart[i] =
-		((uint32_t)buf[cryptoffset+4*i  ]) << 0  |
-		((uint32_t)buf[cryptoffset+4*i+1]) << 8  |
-		((uint32_t)buf[cryptoffset+4*i+2]) << 16 |
-		((uint32_t)buf[cryptoffset+4*i+3]) << 24;
+		((uint32_t)buf[CRYPT_OFFSET+4*i  ]) << 0  |
+		((uint32_t)buf[CRYPT_OFFSET+4*i+1]) << 8  |
+		((uint32_t)buf[CRYPT_OFFSET+4*i+2]) << 16 |
+		((uint32_t)buf[CRYPT_OFFSET+4*i+3]) << 24;
 	}
 
-	btea_decrypt(cryptpart, cryptwords, 1, key);
+	btea_decrypt(cryptpart, CRYPT_WORDS, 1, key);
 
-	for (int i = 0; i < cryptwords; i++) {
-		buf[cryptoffset+4*i  ] = cryptpart[i] >> 0;
-		buf[cryptoffset+4*i+1] = cryptpart[i] >> 8;
-		buf[cryptoffset+4*i+2] = cryptpart[i] >> 16;
-		buf[cryptoffset+4*i+3] = cryptpart[i] >> 24;
+	for (int i = 0; i < CRYPT_WORDS; i++) {
+		buf[CRYPT_OFFSET+4*i  ] = cryptpart[i] >> 0;
+		buf[CRYPT_OFFSET+4*i+1] = cryptpart[i] >> 8;
+		buf[CRYPT_OFFSET+4*i+2] = cryptpart[i] >> 16;
+		buf[CRYPT_OFFSET+4*i+3] = cryptpart[i] >> 24;
 	}
 }
 
