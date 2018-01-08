@@ -62,6 +62,15 @@ AC_ARG_ENABLE([driver-deepoon],
 
 AM_CONDITIONAL([BUILD_DRIVER_DEEPOON], [test "x$driver_deepoon_enabled" != "xno"])
 
+# Microsoft HoloLens Sensors Driver
+AC_ARG_ENABLE([driver-hololens],
+        [AS_HELP_STRING([--disable-driver-hololens],
+                [disable building of Microsoft HoloLens Sensors driver [default=yes]])],
+        [driver_hololens_enabled=$enableval],
+        [driver_hololens_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_HOLOLENS], [test "x$driver_hololens_enabled" != "xno"])
+
 # Sony PSVR Driver
 AC_ARG_ENABLE([driver-psvr],
         [AS_HELP_STRING([--disable-driver-psvr],

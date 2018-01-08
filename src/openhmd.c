@@ -38,6 +38,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_htc_vive_drv(ctx);
 #endif
 
+#if DRIVER_HOLOLENS
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_hololens_drv(ctx);
+#endif
+
 #if DRIVER_PSVR
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_psvr_drv(ctx);
 #endif
