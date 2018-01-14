@@ -198,9 +198,96 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	return ret;
 }
 
+static int config_command_sync(hid_device* hmd_imu, unsigned char type,
+			       unsigned char* buf, int len)
+{
+	unsigned char cmd[64] = { 0x02, type };
+
+	hid_write(hmd_imu, cmd, sizeof(cmd));
+	do {
+		int size = hid_read(hmd_imu, buf, len);
+		if (size == -1)
+			return -1;
+		if (buf[0] == 0x02)
+			return size;
+	} while (buf[0] == 0x01);
+
+	return -1;
+}
+
+int read_config_part(hololens_priv *priv, unsigned char type,
+		     unsigned char *data, int len)
+{
+	unsigned char buf[33];
+	int offset = 0;
+	int size;
+
+	size = config_command_sync(priv->hmd_imu, 0x0b, buf, sizeof(buf));
+	if (size != 33 || buf[0] != 0x02) {
+		printf("Failed to issue command 0b: %02x %02x %02x\n",
+		       buf[0], buf[1], buf[2]);
+		return -1;
+	}
+	size = config_command_sync(priv->hmd_imu, type, buf, sizeof(buf));
+	if (size != 33 || buf[0] != 0x02) {
+		printf("Failed to issue command %02x: %02x %02x %02x\n", type,
+		       buf[0], buf[1], buf[2]);
+		return -1;
+	}
+	for (;;) {
+		size = config_command_sync(priv->hmd_imu, 0x08, buf, sizeof(buf));
+		if (size != 33 || (buf[1] != 0x01 && buf[1] != 0x02)) {
+			printf("Failed to issue command 08: %02x %02x %02x\n",
+			       buf[0], buf[1], buf[2]);
+			return -1;
+		}
+		if (buf[1] != 0x01)
+			break;
+		if (buf[2] > len || offset + buf[2] > len) {
+			return -1;
+		}
+		memcpy(data + offset, buf + 3, buf[2]);
+		offset += buf[2];
+	}
+
+	return offset;
+}
+
+unsigned char *read_config(hololens_priv *priv)
+{
+	unsigned char meta[66];
+	unsigned char *data;
+	int size, data_size;
+
+	size = read_config_part(priv, 0x06, meta, sizeof(meta));
+	if (size == -1)
+		return NULL;
+
+	/*
+	 * No idea what the other 64 bytes of metadata are, but the first two
+	 * seem to be little endian size of the data store.
+	 */
+	data_size = meta[0] | (meta[1] << 8);
+	data = calloc(1, data_size);
+	if (!data)
+                return NULL;
+
+	size = read_config_part(priv, 0x04, data, data_size);
+	if (size == -1) {
+		free(data);
+		return NULL;
+	}
+
+	printf("Read %d-byte config data\n", data_size);
+
+	return data;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	hololens_priv* priv = ohmd_alloc(driver->ctx, sizeof(hololens_priv));
+	unsigned char *config;
+	bool samsung = false;
 
 	if(!priv)
 		return NULL;
@@ -213,6 +300,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv->hmd_imu)
 		goto cleanup;
 
+	config = read_config(priv);
+	if (config) {
+		printf("Model name: %.64s\n", config + 0x1c3);
+		if (strncmp(config + 0x1c3,
+			    "Samsung Windows Mixed Reality 800ZAA", 64) == 0) {
+			samsung = true;
+		}
+		free(config);
+	}
+
 	if(hid_set_nonblocking(priv->hmd_imu, 1) == -1){
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
@@ -224,16 +321,28 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
-//FIXME FIXME
-	// Set device properties TODO: Get from device
-	priv->base.properties.hsize = 0.126; //from calculated specs
-	priv->base.properties.vsize = 0.071; //from calculated specs
-	priv->base.properties.hres = 1920;
-	priv->base.properties.vres = 1080;
-	priv->base.properties.lens_sep = 0.063500;
-	priv->base.properties.lens_vpos = 0.049694;
-	priv->base.properties.fov = DEG_TO_RAD(105.0f); //TODO: Measure
-	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
+	// Set device properties
+	if (samsung) {
+		// Samsung Odyssey has two 3.5" 1440x1600 OLED displays.
+		priv->base.properties.hsize = 0.118942f;
+		priv->base.properties.vsize = 0.066079f;
+		priv->base.properties.hres = 2880;
+		priv->base.properties.vres = 1600;
+		priv->base.properties.lens_sep = 0.063f; /* FIXME */
+		priv->base.properties.lens_vpos = 0.03304f; /* FIXME */
+		priv->base.properties.fov = DEG_TO_RAD(110.0f);
+		priv->base.properties.ratio = 0.9f;
+	} else {
+		// Most Windows Mixed Reality Headsets have two 2.89" 1440x1440 LCDs
+		priv->base.properties.hsize = 0.103812f;
+		priv->base.properties.vsize = 0.051905f;
+		priv->base.properties.hres = 2880;
+		priv->base.properties.vres = 1440;
+		priv->base.properties.lens_sep = 0.063f; /* FIXME */
+		priv->base.properties.lens_vpos = 0.025953f; /* FIXME */
+		priv->base.properties.fov = DEG_TO_RAD(95.0f);
+		priv->base.properties.ratio = 1.0f;
+	}
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
