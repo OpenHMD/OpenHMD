@@ -1,0 +1,10 @@
+option('OPENHMD_EXAMPLE_SIMPLE', type : 'boolean', value : true)
+option('OPENHMD_EXAMPLE_SDL', type : 'boolean', value : false)
+
+option('OPENHMD_DRIVER_OCULUS_RIFT', type : 'boolean', value : true)
+option('OPENHMD_DRIVER_DEEPOON', type : 'boolean', value : true)
+option('OPENHMD_DRIVER_PSVR', type : 'boolean', value : true)
+option('OPENHMD_DRIVER_HTC_VIVE', type : 'boolean', value : true)
+option('OPENHMD_DRIVER_NOLO', type : 'boolean', value : true)
+option('OPENHMD_DRIVER_EXTERNAL', type : 'boolean', value : true)
+option('OPENHMD_DRIVER_ANDROID', type : 'boolean', value : false)
