@@ -20,7 +20,6 @@ typedef struct {
 
 	//Android specific
 	#ifdef __ANDROID__
-    android_app* state;
     ASensorManager* sensorManager;
     const ASensor* accelerometerSensor;
     const ASensor* gyroscopeSensor;
@@ -92,14 +91,13 @@ static void update_device(ohmd_device* device)
 {
     android_priv* priv = (android_priv*)device;
 
-    if(!priv->state)
-        return;
+    ALooper* looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
 
     //We need this since during init the android_app state is not set yet
     if (priv->firstRun == 1)
     {
         priv->sensorEventQueue = ASensorManager_createEventQueue(priv->sensorManager,
-                                priv->state->looper, LOOPER_ID_USER, android_sensor_callback, (void*)priv);
+                                    looper, ALOOPER_POLL_CALLBACK, android_sensor_callback, (void*)priv);
 
         // Start sensors in case this was not done already.
         if (priv->accelerometerSensor != NULL)
@@ -116,6 +114,8 @@ static void update_device(ohmd_device* device)
         }
         priv->firstRun = 0;
     }
+
+    ALooper_pollAll(0, NULL, NULL, NULL);
 }
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -151,10 +151,6 @@ static int set_data(ohmd_device* device, ohmd_data_value type, void* in)
 	android_priv* priv = (android_priv*)device;
 
 	switch(type){
-		case OHMD_DRIVER_DATA: {
-		    priv->state = (android_app*)in;
-            break;
-		}
 		case OHMD_DRIVER_PROPERTIES: {
             set_android_properties(device, (ohmd_device_properties*)in);
             break;
