@@ -49,6 +49,17 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_WMR
+
+libopenhmd_la_SOURCES += \
+	drv_wmr/wmr.c \
+	drv_wmr/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_WMR
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
 if BUILD_DRIVER_PSVR
 
 libopenhmd_la_SOURCES += \

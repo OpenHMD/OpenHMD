@@ -62,6 +62,15 @@ AC_ARG_ENABLE([driver-deepoon],
 
 AM_CONDITIONAL([BUILD_DRIVER_DEEPOON], [test "x$driver_deepoon_enabled" != "xno"])
 
+# Windows Mixed Reality Driver
+AC_ARG_ENABLE([driver-wmr],
+        [AS_HELP_STRING([--disable-driver-wmr],
+                [disable building of Windows Mixed Reality driver [default=yes]])],
+        [driver_wmr_enabled=$enableval],
+        [driver_wmr_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_WMR], [test "x$driver_wmr_enabled" != "xno"])
+
 # Sony PSVR Driver
 AC_ARG_ENABLE([driver-psvr],
         [AS_HELP_STRING([--disable-driver-psvr],
