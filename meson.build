@@ -3,8 +3,7 @@ project(
 	default_options : 'c_std=c99',
 	version : '0.2.0',
 )
-
-cc = meson.get_compiler('c')
+library_version = '0.0.0'
 
 sources = [
 	'src/openhmd.c',
@@ -17,7 +16,7 @@ sources = [
 ]
 
 deps = [
-	cc.find_library('m', required : false), #-lm
+	meson.get_compiler('c').find_library('m', required : false), #-lm
 	dependency('threads') #pthread
 ]
 c_args = []
@@ -83,7 +82,7 @@ if _drivers.contains('android')
 endif
 
 
-openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), dependencies : deps, install : true, version : meson.project_version())
+openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), dependencies : deps, install : true, version : library_version)
 
 # build examples and install pkg-config file + header only for shared library. shared is the default
 if get_option('default_library') == 'shared'
