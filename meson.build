@@ -1,7 +1,7 @@
 project(
 	'openhmd', 'c',
 	default_options : 'c_std=c99',
-	version : '0.2.0'
+	version : '0.2.0',
 )
 
 cc = meson.get_compiler('c')
@@ -82,30 +82,33 @@ if _drivers.contains('android')
 	c_args += '-DDRIVER_ANDROID'
 endif
 
-openhmd_lib = shared_library('openhmd', sources, include_directories : include_directories('./include'), dependencies : deps, install : true)
 
-_examples = get_option('examples')
-if _examples.contains('simple')
-	executable('openhmd_simple_example', 'examples/simple/simple.c', include_directories : include_directories('./include'), link_with: [openhmd_lib], install : true)
+openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), dependencies : deps, install : true, version : meson.project_version())
+
+# build examples and install pkg-config file + header only for shared library. shared is the default
+if get_option('default_library') == 'shared'
+	_examples = get_option('examples')
+	if _examples.contains('simple')
+		executable('openhmd_simple_example', 'examples/simple/simple.c', include_directories : include_directories('./include'), link_with: [openhmd_lib], install : true)
+	endif
+
+	if _examples.contains('opengl')
+		opengl_sources = [
+			'examples/opengl/main.c',
+			'examples/opengl/gl.c',
+		]
+		sdldep = dependency('sdl2')
+		glewdep = dependency('glew')
+		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, glewdep], install : true)
+	endif
+	pkg = import('pkgconfig')
+	pkg.generate(
+		name : 'openhmd',
+		description : 'API and drivers for immersive technology devices such as HMDs',
+		version : meson.project_version(),
+		requires : 'hidapi-libusb',
+		libraries : openhmd_lib,
+		url : 'http://www.openhmd.net/'
+	)
+	install_headers('include/openhmd.h', subdir : 'openhmd')
 endif
-
-if _examples.contains('opengl')
-	opengl_sources = [
-		'examples/opengl/main.c',
-		'examples/opengl/gl.c',
-	]
-	sdldep = dependency('sdl2')
-	glewdep = dependency('glew')
-	executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, glewdep], install : true)
-endif
-
-install_headers('include/openhmd.h', subdir : 'openhmd')
-pkg = import('pkgconfig')
-pkg.generate(
-	name : 'openhmd',
-	description : 'API and drivers for immersive technology devices such as HMDs',
-	version : meson.project_version(),
-	requires : 'hidapi-libusb',
-	libraries : openhmd_lib,
-	url : 'http://www.openhmd.net/'
-)

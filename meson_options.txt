@@ -1,2 +1,2 @@
-option('examples', type : 'array', choices : [ 'simple', 'opengl' ], value : [ 'simple' ])
-option('drivers', type : 'array', choices : [ 'oculus', 'deepoon', 'psvr', 'vive', 'nolo', 'external', 'android' ], value : [ 'oculus', 'deepoon', 'psvr', 'vive', 'nolo', 'external' ])
+option('examples', type : 'array', choices : ['simple', 'opengl', ''], value : ['simple'])
+option('drivers', type : 'array', choices : ['oculus', 'deepoon', 'psvr', 'vive', 'nolo', 'external', 'android'], value : ['oculus', 'deepoon', 'psvr', 'vive', 'nolo', 'external'])
