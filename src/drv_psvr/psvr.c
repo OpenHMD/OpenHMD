@@ -225,8 +225,12 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.071; //from calculated specs
 	priv->base.properties.hres = 1920;
 	priv->base.properties.vres = 1080;
-	priv->base.properties.lens_sep = 0.063500;
-	priv->base.properties.lens_vpos = 0.049694;
+
+	// Measurements taken from
+	// https://github.com/gusmanb/PSVRFramework/wiki/Optical-characteristics
+	priv->base.properties.lens_sep = 0.0630999878f;
+	priv->base.properties.lens_vpos = 0.0394899882f;
+
 	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
 
