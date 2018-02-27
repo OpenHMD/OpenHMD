@@ -23,7 +23,7 @@ deps = [
 c_args = []
 
 _drivers = get_option('drivers')
-if _drivers.contains('oculus')
+if _drivers.contains('rift')
 	sources += [
 		'src/drv_oculus_rift/rift.c',
 		'src/drv_oculus_rift/packet.c'
