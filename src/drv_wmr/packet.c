@@ -1,4 +1,4 @@
-#include "hololens.h"
+#include "wmr.h"
 
 #ifdef _MSC_VER
 #define inline __inline
@@ -39,7 +39,7 @@ inline static uint64_t read64(const unsigned char** buffer)
 	return ret;
 }
 
-bool hololens_decode_sensor_packet(hololens_sensor_packet* pkt, const unsigned char* buffer, int size)
+bool hololens_sensors_decode_packet(hololens_sensors_packet* pkt, const unsigned char* buffer, int size)
 {
 	if(size != 497){
 		LOGE("invalid hololens sensor packet size (expected 497 but got %d)", size);

@@ -4,7 +4,7 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/* Microsoft HoloLens Sensors Driver */
+/* Windows Mixed Reality Driver */
 
 #define FEATURE_BUFFER_SIZE 497
 
@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "hololens.h"
+#include "wmr.h"
 
 typedef struct {
 	ohmd_device base;
@@ -31,9 +31,9 @@ typedef struct {
 	vec3f raw_accel, raw_gyro;
 	uint32_t last_ticks;
 	uint8_t last_seq;
-	hololens_sensor_packet sensor;
+	hololens_sensors_packet sensor;
 
-} hololens_priv;
+} wmr_priv;
 
 static void vec3f_from_hololens_gyro(const int16_t smp[3][32], int i, vec3f* out_vec)
 {
@@ -70,15 +70,15 @@ static void vec3f_from_hololens_accel(const int32_t smp[3][4], int i, vec3f* out
 	out_vec->z = (float)smp[2][i] * 0.001f * -1.0f;
 }
 
-static void handle_tracker_sensor_msg(hololens_priv* priv, unsigned char* buffer, int size)
+static void handle_tracker_sensor_msg(wmr_priv* priv, unsigned char* buffer, int size)
 {
 	uint64_t last_sample_tick = priv->sensor.gyro_timestamp[3];
 
-	if(!hololens_decode_sensor_packet(&priv->sensor, buffer, size)){
+	if(!hololens_sensors_decode_packet(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
 
-	hololens_sensor_packet* s = &priv->sensor;
+	hololens_sensors_packet* s = &priv->sensor;
 
 
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
@@ -101,7 +101,7 @@ static void handle_tracker_sensor_msg(hololens_priv* priv, unsigned char* buffer
 
 static void update_device(ohmd_device* device)
 {
-	hololens_priv* priv = (hololens_priv*)device;
+	wmr_priv* priv = (wmr_priv*)device;
 
 	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
@@ -130,7 +130,7 @@ static void update_device(ohmd_device* device)
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
-	hololens_priv* priv = (hololens_priv*)device;
+	wmr_priv* priv = (wmr_priv*)device;
 
 	switch(type){
 	case OHMD_ROTATION_QUAT:
@@ -157,7 +157,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
 static void close_device(ohmd_device* device)
 {
-	hololens_priv* priv = (hololens_priv*)device;
+	wmr_priv* priv = (wmr_priv*)device;
 
 	LOGD("closing Microsoft HoloLens Sensors device");
 
@@ -215,7 +215,7 @@ static int config_command_sync(hid_device* hmd_imu, unsigned char type,
 	return -1;
 }
 
-int read_config_part(hololens_priv *priv, unsigned char type,
+int read_config_part(wmr_priv *priv, unsigned char type,
 		     unsigned char *data, int len)
 {
 	unsigned char buf[33];
@@ -253,7 +253,7 @@ int read_config_part(hololens_priv *priv, unsigned char type,
 	return offset;
 }
 
-unsigned char *read_config(hololens_priv *priv)
+unsigned char *read_config(wmr_priv *priv)
 {
 	unsigned char meta[66];
 	unsigned char *data;
@@ -285,7 +285,7 @@ unsigned char *read_config(hololens_priv *priv)
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
-	hololens_priv* priv = ohmd_alloc(driver->ctx, sizeof(hololens_priv));
+	wmr_priv* priv = ohmd_alloc(driver->ctx, sizeof(wmr_priv));
 	unsigned char *config;
 	bool samsung = false;
 
@@ -316,7 +316,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 
 	// turn the IMU on
-	hid_write(priv->hmd_imu, hololens_imu_on, sizeof(hololens_imu_on));
+	hid_write(priv->hmd_imu, hololens_sensors_imu_on, sizeof(hololens_sensors_imu_on));
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
@@ -372,9 +372,9 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	while (cur_dev) {
 		ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-		strcpy(desc->driver, "OpenHMD Microsoft HoloLens Sensors Driver");
+		strcpy(desc->driver, "OpenHMD Windows Mixed Reality Driver");
 		strcpy(desc->vendor, "Microsoft");
-		strcpy(desc->product, "HoloLens");
+		strcpy(desc->product, "HoloLens Sensors");
 
 		desc->revision = 0;
 
@@ -394,11 +394,11 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 static void destroy_driver(ohmd_driver* drv)
 {
-	LOGD("shutting down Microsoft HoloLens Sensors driver");
+	LOGD("shutting down Windows Mixed Reality driver");
 	free(drv);
 }
 
-ohmd_driver* ohmd_create_hololens_drv(ohmd_context* ctx)
+ohmd_driver* ohmd_create_wmr_drv(ohmd_context* ctx)
 {
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 

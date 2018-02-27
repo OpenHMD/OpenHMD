@@ -29,7 +29,7 @@ set(openhmd_source_files
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
-OPTION(OPENHMD_DRIVER_HOLOLENS "Microsoft HoloLens Sensors" ON)
+OPTION(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
 OPTION(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
 OPTION(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
 OPTION(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
@@ -63,17 +63,17 @@ if(OPENHMD_DRIVER_DEEPOON)
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_DEEPOON)
 
-if(OPENHMD_DRIVER_HOLOLENS)
+if(OPENHMD_DRIVER_WMR)
 	set(openhmd_source_files ${openhmd_source_files}
-	${CMAKE_CURRENT_LIST_DIR}/src/drv_hololens/hololens.c
-	${CMAKE_CURRENT_LIST_DIR}/src/drv_hololens/packet.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/wmr.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/packet.c
 	)
 	add_definitions(-DDRIVER_HOLOLENS)
 
 	find_package(HIDAPI REQUIRED)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
-endif(OPENHMD_DRIVER_HOLOLENS)
+endif(OPENHMD_DRIVER_WMR)
 
 if(OPENHMD_DRIVER_PSVR)
 	set(openhmd_source_files ${openhmd_source_files}

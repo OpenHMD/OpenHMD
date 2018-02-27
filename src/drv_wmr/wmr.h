@@ -1,5 +1,5 @@
-#ifndef HOLOLENS_H
-#define HOLOLENS_H
+#ifndef WMR_H
+#define WMR_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,7 +10,7 @@ typedef enum
 {
 	HOLOLENS_IRQ_SENSORS = 1,
 	HOLOLENS_IRQ_CONTROL = 2
-} hololens_irq_cmd;
+} hololens_sensors_irq_cmd;
 
 typedef struct
 {
@@ -21,12 +21,12 @@ typedef struct
         uint64_t accel_timestamp[4];
         int32_t accel[3][4];
         uint64_t video_timestamp[4];
-} hololens_sensor_packet;
+} hololens_sensors_packet;
 
-static const unsigned char hololens_imu_on[64] = {
+static const unsigned char hololens_sensors_imu_on[64] = {
 	0x02, 0x07
 };
 
-bool hololens_decode_sensor_packet(hololens_sensor_packet* pkt, const unsigned char* buffer, int size);
+bool hololens_sensors_decode_packet(hololens_sensors_packet* pkt, const unsigned char* buffer, int size);
 
 #endif
