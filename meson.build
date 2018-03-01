@@ -2,6 +2,7 @@ project(
 	'openhmd', 'c',
 	default_options : 'c_std=c99',
 	version : '0.2.0',
+	meson_version : '>= 0.44'
 )
 library_version = '0.0.0'
 
@@ -64,6 +65,15 @@ if _drivers.contains('nolo')
 		'src/drv_nolo/packet.c'
 	]
 	c_args += '-DDRIVER_NOLO'
+	deps += dependency('hidapi-libusb')
+endif
+
+if _drivers.contains('wmr')
+	sources += [
+		'src/drv_wmr/wmr.c',
+		'src/drv_wmr/packet.c'
+	]
+	c_args += '-DDRIVER_WMR'
 	deps += dependency('hidapi-libusb')
 endif
 
