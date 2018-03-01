@@ -1,9 +1,9 @@
 name='openhmd'
-version='0.0.1'
+version='0.3.0'
 email='noname@nurd.se'
 
 AC_PREREQ([2.13])
-AC_INIT([openhmd], [0.0.1], [noname@nurd.se])
+AC_INIT([openhmd], [0.3.0], [noname@nurd.de])
 AM_INIT_AUTOMAKE([foreign -Wall])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_INIT
