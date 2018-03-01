@@ -15,8 +15,11 @@ For a full list of supported devices please check https://github.com/OpenHMD/Ope
   * FreeBSD
 
 ## Requirements
-  * Option 1: GNU Autotools (if you're building from the git repository)
-  * Option 2: CMake
+  * Option 1: Meson + Ninja
+    * http://mesonbuild.com
+    * https://ninja-build.org
+  * Option 2: GNU Autotools (if you're building from the git repository)
+  * Option 3: CMake
   * HIDAPI
     * http://www.signal11.us/oss/hidapi/
     * https://github.com/signal11/hidapi/
@@ -37,6 +40,17 @@ For a full list of supported devices please check https://github.com/OpenHMD/Ope
   * libvr - http://hg.sitedethib.com/libvr
 
 ## Compiling and Installing
+Using Meson:
+
+With Meson, you can enable and disable drivers to compile OpenHMD with.
+Current available drivers are: rift, deepon, psvr, vive, nolo, wmr, external, and android.
+These can be enabled or disabled by adding -Ddrivers=... with a comma separated list after the meson command (or using meson configure ./build -Ddrivers=...).
+By default all drivers except android are enabled.
+
+    meson ./build [-Dexamples=simple,opengl]
+    ninja -C ./build
+    sudo ninja -C ./build install
+
 Using make:
 
     ./autogen.sh # (if you're building from the git repository)
