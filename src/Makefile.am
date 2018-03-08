@@ -12,7 +12,7 @@ libopenhmd_la_SOURCES = \
 	fusion.c \
 	shaders.c
 
-libopenhmd_la_LDFLAGS = -no-undefined -version-info 0:0:0
+libopenhmd_la_LDFLAGS = -no-undefined -version-info $(LT_VERSION)
 libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall
 
 if BUILD_DRIVER_OCULUS_RIFT

@@ -1,14 +1,18 @@
 name='openhmd'
-version='0.0.1'
-library_interface_version='0:0:0'
+version='0.3.0'
 email='noname@nurd.se'
 
 AC_PREREQ([2.13])
-AC_INIT([openhmd], [0.0.1], [noname@nurd.se])
+AC_INIT([openhmd], [0.3.0], [noname@nurd.de])
 AM_INIT_AUTOMAKE([foreign -Wall])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_INIT
 AC_CANONICAL_HOST
+
+# Just before release, the LT_VERSION string should be modified. See
+# https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+# for details how to increment the current:revision:age fields.
+AC_SUBST([LT_VERSION], [1:0:1])
 
 # 0.24 automatically calls AC_SUBST() in PKG_CHECK_MODULES()
 PKG_PROG_PKG_CONFIG([0.24])

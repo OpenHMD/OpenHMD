@@ -1,10 +1,10 @@
 project(
 	'openhmd', 'c',
 	default_options : 'c_std=c99',
-	version : '0.2.0',
+	version : '0.3.0',
 	meson_version : '>= 0.44'
 )
-library_version = '0.0.0'
+library_version = '0.1.0'
 
 sources = [
 	'src/openhmd.c',
