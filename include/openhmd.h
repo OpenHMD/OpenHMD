@@ -201,14 +201,6 @@ typedef enum {
 	OHMD_IDS_AUTOMATIC_UPDATE = 0,
 } ohmd_int_settings;
 
-/** Button states for digital input events. */
-typedef enum {
-	/** Button was pressed. */
-	OHMD_BUTTON_DOWN = 0,
-	/** Button was released. */
-	OHMD_BUTTON_UP   = 1
-} ohmd_button_state;
-
 /** Device classes. */
 typedef enum 
 {
