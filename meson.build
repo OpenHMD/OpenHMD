@@ -92,7 +92,7 @@ if _drivers.contains('android')
 endif
 
 
-openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), dependencies : deps, install : true, version : library_version)
+openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), c_args : c_args, dependencies : deps, install : true, version : library_version)
 
 # build examples and install pkg-config file + header only for shared library. shared is the default
 if get_option('default_library') == 'shared'
