@@ -123,10 +123,17 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	android_priv* priv = (android_priv*)device;
 
 	switch(type){
-		case OHMD_ROTATION_QUAT: {
-				*(quatf*)out = priv->sensor_fusion.orient;
-				break;
-			}
+                case OHMD_ROTATION_QUAT: {
+                    if (!priv->gyroscopeSensor)
+                        *(quatf*)out = priv->sensor_fusion.orient;
+                    else {
+                        // 90° rotation to restore the standard frame
+                        quatf rotated = {-M_SQRT2 / 2, 0, 0, M_SQRT2 / 2};
+                        oquatf_mult_me(&rotated, &priv->sensor_fusion.orient);
+                        *(quatf*)out = rotated;
+                    }
+                    break;
+                }
 
 		case OHMD_POSITION_VECTOR:
 			out[0] = out[1] = out[2] = 0;
@@ -213,8 +220,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
     //Check if accelerometer only fallback is required
     if (!priv->gyroscopeSensor)
         nofusion_init(&priv->sensor_fusion);
-    else
+    else {
         ofusion_init(&priv->sensor_fusion); //Default when all sensors are available
+        priv->sensor_fusion.flags = 0; // Disable the gravity
+    }
 
 	return (ohmd_device*)priv;
 }
