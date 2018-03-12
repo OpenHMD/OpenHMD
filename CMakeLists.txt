@@ -73,7 +73,7 @@ if(OPENHMD_DRIVER_WMR)
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/wmr.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/packet.c
 	)
-	add_definitions(-DDRIVER_HOLOLENS)
+	add_definitions(-DDRIVER_WMR)
 
 	find_package(HIDAPI REQUIRED)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
