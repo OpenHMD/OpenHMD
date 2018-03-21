@@ -29,11 +29,6 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
-static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t length)
-{
-	return hid_send_feature_report(priv->handle, data, length);
-}
-
 static void update_device(ohmd_device* device)
 {
 	drv_priv* priv = drv_priv_get(device);
