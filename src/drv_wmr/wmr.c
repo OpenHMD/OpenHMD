@@ -303,7 +303,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	config = read_config(priv);
 	if (config) {
 		printf("Model name: %.64s\n", config + 0x1c3);
-		if (strncmp(config + 0x1c3,
+		if (strncmp((char *)(config + 0x1c3),
 			    "Samsung Windows Mixed Reality 800ZAA", 64) == 0) {
 			samsung = true;
 		}
