@@ -35,7 +35,7 @@ typedef struct {
 
 } wmr_priv;
 
-static void vec3f_from_hololens_gyro(const int16_t smp[3][32], int i, vec3f* out_vec)
+static void vec3f_from_hololens_gyro(int16_t smp[3][32], int i, vec3f* out_vec)
 {
 	out_vec->x = (float)(smp[1][8*i+0] +
 			     smp[1][8*i+1] +
@@ -63,7 +63,7 @@ static void vec3f_from_hololens_gyro(const int16_t smp[3][32], int i, vec3f* out
 			     smp[2][8*i+7]) * 0.001f * -0.125f;
 }
 
-static void vec3f_from_hololens_accel(const int32_t smp[3][4], int i, vec3f* out_vec)
+static void vec3f_from_hololens_accel(int32_t smp[3][4], int i, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[1][i] * 0.001f * -1.0f;
 	out_vec->y = (float)smp[0][i] * 0.001f * -1.0f;
