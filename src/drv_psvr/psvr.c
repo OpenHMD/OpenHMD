@@ -187,8 +187,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	priv->base.ctx = driver->ctx;
 
-	int idx = atoi(desc->path);
-
 	// Open the HMD device
 	priv->hmd_handle = open_device_idx(SONY_ID, PSVR_HMD, 0, 0, 4);
 
