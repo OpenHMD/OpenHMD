@@ -16,6 +16,7 @@
 #include <assert.h>
 
 #include "nolo.h"
+#include "../hid.h"
 
 #define NOLO_ID					0x0483 //ST microcontroller
 #define NOLO_HMD				0x5750
@@ -26,11 +27,6 @@ static devices_t* nolo_devices;
 static drv_priv* drv_priv_get(ohmd_device* device)
 {
 	return (drv_priv*)device;
-}
-
-static int send_feature_report(drv_priv* priv, const unsigned char *data, size_t length)
-{
-	return hid_send_feature_report(priv->handle, data, length);
 }
 
 static void update_device(ohmd_device* device)
@@ -144,23 +140,6 @@ static void close_device(ohmd_device* device)
 	hid_close(priv->handle);
 	free(priv);
 }
-
-static char* _hid_to_unix_path(char* path)
-{
-	const int len = 16;
-	char bus [16];
-	char dev [16];
-	char *result = malloc( sizeof(char) * ( 20 + 1 ) );
-
-	sprintf (bus, "%.*s\n", len, path);
-	sprintf (dev, "%.*s\n", len, path + 5);
-
-	sprintf (result, "/dev/bus/usb/%03d/%03d",
-		(int)strtol(bus, NULL, 16),
-		(int)strtol(dev, NULL, 16));
-	return result;
-}
-
 
 void push_device(devices_t * head, drv_nolo* val) {
 	devices_t* current = head;
