@@ -12,8 +12,11 @@
 
 #include <SDL.h>
 
-#include <GL/glew.h>
+#ifndef __APPLE__
 #include <GL/gl.h>
+#else
+#include <OpenGL/gl.h>
+#endif
 
 typedef struct {
 	int w, h;
