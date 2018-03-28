@@ -120,7 +120,7 @@ void ohmd_unlock_mutex(ohmd_mutex* mutex)
 		ReleaseMutex(mutex->handle);
 }
 
-int findEndPoint(char* path, int endpoint)
+int ohmd_find_usb_endpoint(char* path, int endpoint)
 {
 	char comp[8];
 	sprintf(comp,"mi_0%d",endpoint);

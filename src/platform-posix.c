@@ -178,7 +178,8 @@ void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
 	//Empty implementation
 }
 
-int findEndPoint(char* path, int endpoint)
+#ifdef __APPLE__
+int ohmd_find_usb_endpoint(char* path, int endpoint)
 {
 	char comp[6];
 	sprintf(comp,":0%d",endpoint);
@@ -187,4 +188,17 @@ int findEndPoint(char* path, int endpoint)
 	}
 	return 0;
 }
+#else
+int ohmd_find_usb_endpoint(char* path, int endpoint)
+{
+	char comp[6];
+	sprintf(comp,"%d",endpoint);
+	if (strstr(path, comp) != NULL) {
+		return 1;
+	}
+	return 0;
+}
+#endif
+
+
 #endif

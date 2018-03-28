@@ -30,6 +30,6 @@ void ohmd_destroy_thread(ohmd_thread* thread);
 
 /* String functions */
 
-int findEndPoint(char* path, int endpoint);
+int ohmd_find_usb_endpoint(char* path, int endpoint);
 
 #endif

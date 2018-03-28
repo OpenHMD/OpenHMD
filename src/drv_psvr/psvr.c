@@ -158,7 +158,7 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	while (cur_dev) {
 		printf("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
 
-		if(findEndPoint(cur_dev->path, device_index) > 0 && iface == iface_cur){
+		if(ohmd_find_usb_endpoint(cur_dev->path, device_index) > 0 && iface == iface_cur){
 			ret = hid_open_path(cur_dev->path);
 			printf("opening\n");
 		}
