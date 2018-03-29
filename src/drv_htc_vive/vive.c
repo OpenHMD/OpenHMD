@@ -331,7 +331,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 	printf("got %i bytes\n", bytes);
 	for (int i = 0; i < bytes; i++) {
-		printf("%02hx ", buffer[i]);
+		printf("%02x ", buffer[i]);
 	}
 	printf("\n\n");
 
