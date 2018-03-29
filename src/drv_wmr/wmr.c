@@ -178,7 +178,7 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	while (cur_dev) {
 		printf("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
 
-		if(findEndPoint(cur_dev->path, device_index) > 0 && iface == iface_cur){
+		if(idx == device_index && iface == iface_cur){
 			ret = hid_open_path(cur_dev->path);
 			printf("opening\n");
 		}
@@ -294,8 +294,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	priv->base.ctx = driver->ctx;
 
+	int idx = atoi(desc->path);
+
 	// Open the HMD device
-	priv->hmd_imu = open_device_idx(MICROSOFT_VID, HOLOLENS_SENSORS_PID, 0, 0, 2);
+	priv->hmd_imu = open_device_idx(MICROSOFT_VID, HOLOLENS_SENSORS_PID, 0, 1, idx);
 
 	if(!priv->hmd_imu)
 		goto cleanup;
