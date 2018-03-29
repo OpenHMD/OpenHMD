@@ -1,7 +1,10 @@
 # This is the project file for the automated build system travis (travis-ci.com).
-sudo: false
-
-dist: trusty
+matrix:
+  include:
+    - os: linux
+      sudo: false
+      dist: trusty
+    - os: osx
 
 language: c
 
@@ -13,6 +16,7 @@ addons:
       - libhidapi-dev
 
 before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install hidapi; fi
   - ./autogen.sh
 
 install: true # skip install step
