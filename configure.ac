@@ -37,7 +37,9 @@ AS_CASE(["$host"],
 		[AC_SUBST(PKG_CONFIG_EXTRA_PATH, "libdata/")
 		AC_SUBST(EXTRA_LD_FLAGS, "-lthr")],
 	[*-kfreebsd*],
-		[AC_SUBST(EXTRA_LD_FLAGS, "-lpthread")])
+		[AC_SUBST(EXTRA_LD_FLAGS, "-lpthread")]
+	[*-darwin*],
+		[AC_MSG_RESULT([$host (Mac OS X)])])
 
 # Oculus Rift Driver
 AC_ARG_ENABLE([driver-oculus-rift],
@@ -151,7 +153,9 @@ AS_IF([test "x$openglexample_enabled" != "xno"], [
 
 				# if that fails, try -lopengl32 (win32)
 				[AC_CHECK_LIB(opengl32, main, [GL_LIBS=-lopengl32],
-					AC_MSG_ERROR([GL not found])
+					[AC_CHECK_HEADERS([OpenGL/gl.h], [GL_LIBS="-framework OpenGL"],
+						AC_MSG_ERROR([GL not found])
+					)]
 				)]
 			)]
 	)
