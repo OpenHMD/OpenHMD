@@ -12,8 +12,13 @@
 
 #include <SDL.h>
 
+#ifndef __APPLE__
 #include <GL/glew.h>
 #include <GL/gl.h>
+#else
+#include <OpenGL/gl.h>
+static inline void glewInit(void) {}
+#endif
 
 typedef struct {
 	int w, h;
