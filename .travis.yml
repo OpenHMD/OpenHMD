@@ -17,9 +17,13 @@ addons:
       - libglew-dev
       - libhidapi-dev
       - libsdl2-dev
+  homebrew:
+    packages:
+      - glew
+      - hidapi
+      - sdl2
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2; fi
   - ./autogen.sh
 
 install: true # skip install step
