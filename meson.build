@@ -112,8 +112,9 @@ if get_option('default_library') == 'shared'
 			'examples/opengl/gl.c',
 		]
 		sdldep = dependency('sdl2')
+		gldep = dependency('gl')
 		glewdep = dependency('glew')
-		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, glewdep], install : true)
+		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, gldep, glewdep], install : true)
 	endif
 	pkg = import('pkgconfig')
 	pkg.generate(
