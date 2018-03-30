@@ -1,5 +1,5 @@
 # This is the project file for the automated build system travis (travis-ci.com).
-sudo: required
+sudo: false
 
 dist: trusty
 
@@ -7,9 +7,12 @@ language: c
 
 compiler: gcc
 
+addons:
+  apt:
+    packages:
+      - libhidapi-dev
+
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libhidapi-dev
   - ./autogen.sh
 
 install: true # skip install step
