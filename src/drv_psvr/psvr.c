@@ -146,31 +146,28 @@ static void close_device(ohmd_device* device)
 	free(device);
 }
 
-static hid_device* open_device_idx(int manufacturer, int product, int iface, int iface_tot, int device_index)
+static hid_device* open_device_idx(int manufacturer, int product, int iface, int device_index)
 {
 	struct hid_device_info* devs = hid_enumerate(manufacturer, product);
 	struct hid_device_info* cur_dev = devs;
 
 	int idx = 0;
-	int iface_cur = 0;
 	hid_device* ret = NULL;
 
 	while (cur_dev) {
 		LOGI("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
 
-		if(findEndPoint(cur_dev->path, device_index) > 0 && iface == iface_cur){
-			ret = hid_open_path(cur_dev->path);
-			LOGI("opening\n");
+		if (cur_dev->interface_number == iface) {
+			if(idx == device_index){
+				ret = hid_open_path(cur_dev->path);
+				LOGI("opening\n");
+				break;
+			}
+
+			idx++;
 		}
 
 		cur_dev = cur_dev->next;
-
-		iface_cur++;
-
-		if(iface_cur >= iface_tot){
-			idx++;
-			iface_cur = 0;
-		}
 	}
 
 	hid_free_enumeration(devs);
@@ -187,8 +184,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	priv->base.ctx = driver->ctx;
 
+	int idx = atoi(desc->path);
+
 	// Open the HMD device
-	priv->hmd_handle = open_device_idx(SONY_ID, PSVR_HMD, 0, 0, 4);
+	priv->hmd_handle = open_device_idx(SONY_ID, PSVR_HMD, 4, idx);
 
 	if(!priv->hmd_handle)
 		goto cleanup;
@@ -199,7 +198,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 
 	// Open the HMD Control device
-	priv->hmd_control = open_device_idx(SONY_ID, PSVR_HMD, 0, 0, 5);
+	priv->hmd_control = open_device_idx(SONY_ID, PSVR_HMD, 5, idx);
 
 	if(!priv->hmd_control)
 		goto cleanup;
@@ -258,23 +257,38 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 	int idx = 0;
 	while (cur_dev) {
-		ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		ohmd_device_desc* desc;
 
-		strcpy(desc->driver, "OpenHMD Sony PSVR Driver");
-		strcpy(desc->vendor, "Sony");
-		strcpy(desc->product, "PSVR");
+		// Warn if hidapi does not provide interface numbers
+		if (cur_dev->interface_number == -1) {
+			LOGE("hidapi does not provide PSVR interface numbers\n");
+#ifdef __APPLE__
+			LOGE("see https://github.com/signal11/hidapi/pull/380\n");
+#endif
+			break;
+		}
 
-		desc->revision = 0;
+		// Register one device for each IMU sensor interface
+		if (cur_dev->interface_number == 4) {
+			desc = &list->devices[list->num_devices++];
 
-		snprintf(desc->path, OHMD_STR_SIZE, "%d", idx);
+			strcpy(desc->driver, "OpenHMD Sony PSVR Driver");
+			strcpy(desc->vendor, "Sony");
+			strcpy(desc->product, "PSVR");
 
-		desc->driver_ptr = driver;
-		
-		desc->device_class = OHMD_DEVICE_CLASS_HMD;
-		desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			desc->revision = 0;
+
+			snprintf(desc->path, OHMD_STR_SIZE, "%d", idx);
+
+			desc->driver_ptr = driver;
+
+			desc->device_class = OHMD_DEVICE_CLASS_HMD;
+			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+
+			idx++;
+		}
 
 		cur_dev = cur_dev->next;
-		idx++;
 	}
 
 	hid_free_enumeration(devs);
