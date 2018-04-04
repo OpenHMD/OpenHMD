@@ -176,11 +176,11 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	hid_device* ret = NULL;
 
 	while (cur_dev) {
-		printf("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
+		LOGI("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
 
 		if(idx == device_index && iface == iface_cur){
 			ret = hid_open_path(cur_dev->path);
-			printf("opening\n");
+			LOGI("opening\n");
 		}
 
 		cur_dev = cur_dev->next;
@@ -224,20 +224,20 @@ int read_config_part(wmr_priv *priv, unsigned char type,
 
 	size = config_command_sync(priv->hmd_imu, 0x0b, buf, sizeof(buf));
 	if (size != 33 || buf[0] != 0x02) {
-		printf("Failed to issue command 0b: %02x %02x %02x\n",
+		LOGE("Failed to issue command 0b: %02x %02x %02x\n",
 		       buf[0], buf[1], buf[2]);
 		return -1;
 	}
 	size = config_command_sync(priv->hmd_imu, type, buf, sizeof(buf));
 	if (size != 33 || buf[0] != 0x02) {
-		printf("Failed to issue command %02x: %02x %02x %02x\n", type,
+		LOGE("Failed to issue command %02x: %02x %02x %02x\n", type,
 		       buf[0], buf[1], buf[2]);
 		return -1;
 	}
 	for (;;) {
 		size = config_command_sync(priv->hmd_imu, 0x08, buf, sizeof(buf));
 		if (size != 33 || (buf[1] != 0x01 && buf[1] != 0x02)) {
-			printf("Failed to issue command 08: %02x %02x %02x\n",
+			LOGE("Failed to issue command 08: %02x %02x %02x\n",
 			       buf[0], buf[1], buf[2]);
 			return -1;
 		}
@@ -278,7 +278,7 @@ unsigned char *read_config(wmr_priv *priv)
 		return NULL;
 	}
 
-	printf("Read %d-byte config data\n", data_size);
+	LOGI("Read %d-byte config data\n", data_size);
 
 	return data;
 }
@@ -304,7 +304,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	config = read_config(priv);
 	if (config) {
-		printf("Model name: %.64s\n", config + 0x1c3);
+		LOGI("Model name: %.64s\n", config + 0x1c3);
 		if (strncmp((char *)(config + 0x1c3),
 			    "Samsung Windows Mixed Reality 800ZAA", 64) == 0) {
 			samsung = true;

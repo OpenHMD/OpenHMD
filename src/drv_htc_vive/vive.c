@@ -70,7 +70,7 @@ static bool process_error(vive_priv* priv)
 
 	if(priv->gyro_q.at >= priv->gyro_q.size - 1){
 		ofq_get_mean(&priv->gyro_q, &priv->gyro_error);
-		printf("gyro error: %f, %f, %f\n", priv->gyro_error.x, priv->gyro_error.y, priv->gyro_error.z);
+		LOGE("gyro error: %f, %f, %f\n", priv->gyro_error.x, priv->gyro_error.y, priv->gyro_error.z);
 	}
 
 	return false;
@@ -192,10 +192,10 @@ static void close_device(ohmd_device* device)
 
 	// turn the display off
 	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off1, sizeof(vive_magic_power_off1));
-	printf("power off magic 1: %d\n", hret);
+	LOGI("power off magic 1: %d\n", hret);
 
 	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_off2, sizeof(vive_magic_power_off2));
-	printf("power off magic 2: %d\n", hret);
+	LOGI("power off magic 2: %d\n", hret);
 
 	hid_close(priv->hmd_handle);
 	hid_close(priv->imu_handle);
@@ -213,7 +213,7 @@ static void dump_indexed_string(hid_device* device, int index)
 
 	if(hret == 0){
 		wcstombs(buffer, wbuffer, sizeof(buffer));
-		printf("indexed string 0x%02x: '%s'\n", index, buffer);
+		LOGD("indexed string 0x%02x: '%s'\n", index, buffer);
 	}
 }
 #endif
@@ -227,7 +227,7 @@ static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t), const ch
 
 	if(hret == 0){
 		wcstombs(buffer, wbuffer, sizeof(buffer));
-		printf("%s: '%s'\n", what, buffer);
+		LOGI("%s: '%s'\n", what, buffer);
 	}
 }
 
@@ -254,11 +254,11 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	hid_device* ret = NULL;
 
 	while (cur_dev) {
-		printf("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
+		LOGI("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
 
 		if(idx == device_index && iface == iface_cur){
 			ret = hid_open_path(cur_dev->path);
-			printf("opening\n");
+			LOGI("opening\n");
 		}
 
 		cur_dev = cur_dev->next;
@@ -317,16 +317,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// turn the display on
 	hret = hid_send_feature_report(priv->hmd_handle, vive_magic_power_on, sizeof(vive_magic_power_on));
-	printf("power on magic: %d\n", hret);
+	LOGI("power on magic: %d\n", hret);
 
 	// enable lighthouse
 	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
-	//printf("enable lighthouse magic: %d\n", hret);
+	//LOGD("enable lighthouse magic: %d\n", hret);
 
 	unsigned char buffer[128];
 	int bytes;
 
-	printf("Getting feature report 16 to 39\n");
+	LOGI("Getting feature report 16 to 39\n");
 	buffer[0] = 16;
 	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 	printf("got %i bytes\n", bytes);
@@ -346,7 +346,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
  		offset += buffer[1];
 	}
 	packet_buffer[offset] = '\0';
-	//printf("Result: %s\n", packet_buffer);
+	//LOGD("Result: %s\n", packet_buffer);
 	vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
 
 	free(packet_buffer);
