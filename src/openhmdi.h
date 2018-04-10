@@ -83,6 +83,7 @@ typedef struct {
 struct ohmd_device_settings
 {
 	bool automatic_update;
+	bool keep_on_at_close;
 };
 
 struct ohmd_device {
