@@ -16,6 +16,11 @@ sources = [
 	'src/shaders.c'
 ]
 
+hidapi = 'hidapi'
+if host_machine.system() == 'linux'
+	hidapi = 'hidapi-libusb'
+endif
+dep_hidapi = dependency(hidapi)
 deps = [
 	meson.get_compiler('c').find_library('m', required : false), #-lm
 	dependency('threads') #pthread
@@ -29,7 +34,7 @@ if _drivers.contains('rift')
 		'src/drv_oculus_rift/packet.c'
 	]
 	c_args += '-DDRIVER_OCULUS_RIFT'
-	deps += dependency('hidapi-libusb')
+	deps += dep_hidapi
 endif
 
 if _drivers.contains('deepoon')
@@ -46,7 +51,7 @@ if _drivers.contains('psvr')
 		'src/drv_psvr/packet.c'
 	]
 	c_args += '-DDRIVER_PSVR'
-	deps += dependency('hidapi-libusb')
+	deps += dep_hidapi
 endif
 
 if _drivers.contains('vive')
@@ -56,7 +61,7 @@ if _drivers.contains('vive')
 		'src/ext_deps/mjson.c'
 	]
 	c_args += '-DDRIVER_HTC_VIVE'
-	deps += dependency('hidapi-libusb')
+	deps += dep_hidapi
 endif
 
 if _drivers.contains('nolo')
@@ -65,7 +70,7 @@ if _drivers.contains('nolo')
 		'src/drv_nolo/packet.c'
 	]
 	c_args += '-DDRIVER_NOLO'
-	deps += dependency('hidapi-libusb')
+	deps += dep_hidapi
 endif
 
 if _drivers.contains('wmr')
@@ -74,7 +79,7 @@ if _drivers.contains('wmr')
 		'src/drv_wmr/packet.c'
 	]
 	c_args += '-DDRIVER_WMR'
-	deps += dependency('hidapi-libusb')
+	deps += dep_hidapi
 endif
 
 if _drivers.contains('external')
@@ -107,15 +112,16 @@ if get_option('default_library') == 'shared'
 			'examples/opengl/gl.c',
 		]
 		sdldep = dependency('sdl2')
+		gldep = dependency('gl')
 		glewdep = dependency('glew')
-		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, glewdep], install : true)
+		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, gldep, glewdep], install : true)
 	endif
 	pkg = import('pkgconfig')
 	pkg.generate(
 		name : 'openhmd',
 		description : 'API and drivers for immersive technology devices such as HMDs',
 		version : meson.project_version(),
-		requires : 'hidapi-libusb',
+		requires : hidapi,
 		libraries : openhmd_lib,
 		url : 'http://www.openhmd.net/'
 	)
