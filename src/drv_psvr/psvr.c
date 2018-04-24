@@ -156,11 +156,11 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	hid_device* ret = NULL;
 
 	while (cur_dev) {
-		printf("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
+		LOGI("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
 
 		if(findEndPoint(cur_dev->path, device_index) > 0 && iface == iface_cur){
 			ret = hid_open_path(cur_dev->path);
-			printf("opening\n");
+			LOGI("opening\n");
 		}
 
 		cur_dev = cur_dev->next;

@@ -92,22 +92,22 @@ bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buf
 
 	LOGE("Decompressed from %u to %u bytes\n", (mz_uint32)pkt->length, (mz_uint32)output_size);
 
-	//printf("Debug print all the RAW JSON things!\n%s", output);
+	//LOGD("Debug print all the RAW JSON things!\n%s", output);
 	//pUncomp should now be the uncompressed data, lets get the json from it
 	/** DEBUG JSON PARSER CODE **/
 	trim((char*)output,(char*)output,output_size);
-	//printf("%s\n",output);
+	//LOGD("%s\n",output);
 	/*
 	FILE* dfp;
 	dfp = fopen("jsondebug.json","w");
 	json_enable_debug(3, dfp);*/
 	int status = json_read_object((char*)output, sensor_offsets, NULL);
-	printf("\n--- Converted Vive JSON Data ---\n\n");
-	printf("acc_bias = %f %f %f\n", acc_bias[0], acc_bias[1], acc_bias[2]);
-	printf("acc_scale = %f %f %f\n", acc_scale[0], acc_scale[1], acc_scale[2]);
-	printf("gyro_bias = %f %f %f\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
-	printf("gyro_scale = %f %f %f\n", gyro_scale[0], gyro_scale[1], gyro_scale[2]);
-	printf("\n--- End of Vive JSON Data ---\n\n");
+	LOGI("\n--- Converted Vive JSON Data ---\n\n");
+	LOGI("acc_bias = %f %f %f\n", acc_bias[0], acc_bias[1], acc_bias[2]);
+	LOGI("acc_scale = %f %f %f\n", acc_scale[0], acc_scale[1], acc_scale[2]);
+	LOGI("gyro_bias = %f %f %f\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
+	LOGI("gyro_scale = %f %f %f\n", gyro_scale[0], gyro_scale[1], gyro_scale[2]);
+	LOGI("\n--- End of Vive JSON Data ---\n\n");
 
 	if (status != 0)
 		puts(json_error_string(status));
