@@ -40,6 +40,11 @@ sources = [
 	'src/shaders.c',
 ]
 c_args = []
+if get_option('default_library') == 'shared'
+	if host_machine.system() == 'windows'
+		c_args += '-DDLL_EXPORT'
+	endif
+endif
 
 _drivers = get_option('drivers')
 if _drivers.contains('rift')
