@@ -11,7 +11,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define WIN32_EXTRA_LEAN
+#include <windows.h>
+static void ohmd_sleep(double seconds)
+{
+	Sleep((DWORD)(seconds * 1000));
+}
+#else
 void ohmd_sleep(double);
+#endif
 
 // gets float values from the device and prints them
 void print_infof(ohmd_device* hmd, const char* name, int len, ohmd_float_value val)
