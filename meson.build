@@ -121,6 +121,7 @@ if get_option('default_library') == 'shared'
 		name : 'openhmd',
 		description : 'API and drivers for immersive technology devices such as HMDs',
 		version : meson.project_version(),
+		subdirs : 'openhmd',
 		requires : hidapi,
 		libraries : openhmd_lib,
 		url : 'http://www.openhmd.net/'
