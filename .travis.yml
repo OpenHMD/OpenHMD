@@ -13,12 +13,15 @@ compiler: gcc
 addons:
   apt:
     packages:
+      - libgl1-mesa-dev
+      - libglew-dev
       - libhidapi-dev
+      - libsdl2-dev
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install hidapi; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2; fi
   - ./autogen.sh
 
 install: true # skip install step
 
-script: ./configure && make
+script: ./configure --enable-openglexample && make
