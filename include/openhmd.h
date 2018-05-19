@@ -175,10 +175,10 @@ typedef enum {
 	/** int[1] (get, ohmd_geti()): Get the number of analog and digital controls of the device. */
 	OHMD_CONTROL_COUNT                    =  4,
 
-	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get whether controls are digital or analog. */
+	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get what function controls serve. */
 	OHMD_CONTROLS_HINTS   		          =  5,
 	
-	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get what function controls serve. */
+	/** int[OHMD_CONTROL_COUNT] (get, ohmd_geti()): Get whether controls are digital or analog. */
 	OHMD_CONTROLS_TYPES                   =  6,
 } ohmd_int_value;
 
