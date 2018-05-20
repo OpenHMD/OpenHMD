@@ -16,7 +16,7 @@
 #define VIVE_WATCHMAN_DONGLE     0x2101
 #define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
 
-#define VIVE_TIME_DIV 48000000.0f
+#define VIVE_CLOCK_FREQ 48000000.0f // Hz = 48 MHz
 
 #include <string.h>
 #include <wchar.h>
@@ -131,7 +131,7 @@ static void update_device(ohmd_device* device)
 				t1 = smp->time_ticks;
 				t2 = priv->last_ticks;
 
-				float dt = (t1 - t2) / VIVE_TIME_DIV;
+				float dt = (t1 - t2) / VIVE_CLOCK_FREQ;
 
 				priv->last_ticks = smp->time_ticks;
 
