@@ -276,6 +276,37 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	return ret;
 }
 
+void read_config(vive_priv* priv)
+{
+	unsigned char buffer[128];
+	int bytes;
+
+	LOGI("Getting feature report 16 to 39\n");
+	buffer[0] = VIVE_CONFIG_START_PACKET_ID;
+	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	printf("got %i bytes\n", bytes);
+	for (int i = 0; i < bytes; i++) {
+		printf("%02x ", buffer[i]);
+	}
+	printf("\n\n");
+
+	unsigned char* packet_buffer = malloc(4096);
+
+	int offset = 0;
+	while (buffer[1] != 0) {
+		buffer[0] = VIVE_CONFIG_READ_PACKET_ID;
+		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+
+    memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
+    offset += buffer[1];
+  }
+  packet_buffer[offset] = '\0';
+  //LOGD("Result: %s\n", packet_buffer);
+  vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
+
+  free(packet_buffer);
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	vive_priv* priv = ohmd_alloc(driver->ctx, sizeof(vive_priv));
@@ -323,33 +354,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
 	//LOGD("enable lighthouse magic: %d\n", hret);
 
-	unsigned char buffer[128];
-	int bytes;
-
-	LOGI("Getting feature report 16 to 39\n");
-	buffer[0] = VIVE_CONFIG_START_PACKET_ID;
-	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-	printf("got %i bytes\n", bytes);
-	for (int i = 0; i < bytes; i++) {
-		printf("%02x ", buffer[i]);
-	}
-	printf("\n\n");
-
-	unsigned char* packet_buffer = malloc(4096);
-
-	int offset = 0;
-	while (buffer[1] != 0) {
-		buffer[0] = VIVE_CONFIG_READ_PACKET_ID;
-		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-
- 		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
- 		offset += buffer[1];
-	}
-	packet_buffer[offset] = '\0';
-	//LOGD("Result: %s\n", packet_buffer);
-	vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
-
-	free(packet_buffer);
+	read_config(priv);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
