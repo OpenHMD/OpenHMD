@@ -14,7 +14,7 @@ void test_olist_insert()
 	ohmd_context* ctx = ohmd_ctx_create();
   olist* list = olist_create(ctx, sizeof(int));
 
-	int ints[] = { 0, 1, 2, 3, 4, 666, 5, 6, 7, 8, 9 };
+	int ints[] = { 0, 1, 2, 3, 4, 666, 5, 6, 7, 8, 9, 777, 888};
 
   int* last = NULL;
   int* mid = NULL;
@@ -27,7 +27,14 @@ void test_olist_insert()
   }
 
   int i = 666;
+  int j = 777;
+  int k = 888;
+
   last = olist_insert(list, &i, mid);
+  
+  olist_append(list, &j);
+  olist_append(list, &k);
+  
 	int* correct = ints;
 
   for(int* curr = olist_get_first(list); curr != NULL; curr = olist_get_next(list, curr)){

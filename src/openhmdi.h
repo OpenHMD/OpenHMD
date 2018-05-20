@@ -128,6 +128,8 @@ struct ohmd_context {
 	uint64_t monotonic_ticks_per_sec;
 
 	char error_msg[OHMD_STR_SIZE];
+
+	olist* modules;
 };
 
 // helper functions
@@ -139,6 +141,9 @@ void ohmd_set_default_device_properties(ohmd_device_properties* props);
 void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d);
 void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b);
+
+// modules
+void ohmd_ctx_add_module(ohmd_context* ctx, omodule* module);
 
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
