@@ -20,10 +20,12 @@ void imu_filter_module_on_input(omodule* source, ooutput_data* value, void* user
 	imu_filter_test* me = user_data;
 	ovec3f_data* q = (ovec3f_data*)value;
 
-	printf("%f %f %f\n", q->value.x, q->value.y, q->value.z);
-
 	vec3f filtered = q->value;
+	
 	filtered.x *= -1.f;
+	filtered.y *= 2.f;
+	filtered.z *= 3.f;
+
 	me->result = filtered;
 }
 
@@ -52,5 +54,7 @@ void test_module_connect()
 	
 	ooutput_send(imu.base.gyro, (ooutput_data*)&v);
 
-	printf("%f %f %f\n", filter.result.x, filter.result.y, filter.result.z);
+	TAssert(filter.result.x == -1.f);
+	TAssert(filter.result.y == 2.f);
+	TAssert(filter.result.z == 3.f);
 }
