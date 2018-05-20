@@ -76,7 +76,7 @@ static bool process_error(vive_priv* priv)
 	return false;
 }
 
-vive_sensor_sample* get_next_sample(vive_sensor_packet* pkt, int last_seq)
+vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt, int last_seq)
 {
 	int diff[3];
 
@@ -115,10 +115,10 @@ static void update_device(ohmd_device* device)
 
 	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
 		if(buffer[0] == VIVE_IRQ_SENSORS){
-			vive_sensor_packet pkt;
+			vive_headset_imu_packet pkt;
 			vive_decode_sensor_packet(&pkt, buffer, size);
 
-			vive_sensor_sample* smp = NULL;
+			vive_headset_imu_sample* smp = NULL;
 
 			while((smp = get_next_sample(&pkt, priv->last_seq)) != NULL)
 			{

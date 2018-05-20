@@ -19,13 +19,13 @@ typedef struct
 	int16_t rot[3];
 	uint32_t time_ticks;
 	uint8_t seq;
-} vive_sensor_sample;
+} vive_headset_imu_sample;
 
 typedef struct
 {
 	uint8_t report_id;
-	vive_sensor_sample samples[3];
-} vive_sensor_packet;
+	vive_headset_imu_sample samples[3];
+} vive_headset_imu_packet;
 
 typedef struct
 {
@@ -35,7 +35,7 @@ typedef struct
 } vive_config_packet;
 
 void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec);
-bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size);
+bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt, const unsigned char* buffer, int size);
 bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, uint16_t size);
 
 #endif

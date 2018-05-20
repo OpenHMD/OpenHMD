@@ -26,7 +26,7 @@ inline static uint32_t read32(const unsigned char** buffer)
 	return ret;
 }
 
-bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size)
+bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt, const unsigned char* buffer, int size)
 {
 	if(size != 52){
 		LOGE("invalid vive sensor packet size (expected 52 but got %d)", size);
