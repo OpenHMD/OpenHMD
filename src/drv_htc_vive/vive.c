@@ -359,13 +359,50 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.068234f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
-	priv->base.properties.lens_sep = 0.063500;
-	priv->base.properties.lens_vpos = 0.049694;
-	priv->base.properties.fov = DEG_TO_RAD(111.435f); //TODO: Confirm exact mesurements
+    /*
+    // calculated from here: https://www.gamedev.net/topic/683698-projection-matrix-model-of-the-htc-vive/
+	priv->base.properties.lens_sep = 0.057863;
+	priv->base.properties.lens_vpos = 0.033896;
+    */
+    // estimated 'by eye' on jsarret's vive
+	priv->base.properties.lens_sep = 0.056;
+	priv->base.properties.lens_vpos = 0.032;
+    float eye_to_screen_distance = 0.023226876441867737;
+	//priv->base.properties.fov = DEG_TO_RAD(111.435f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (2160.0f / 1200.0f) / 2.0f;
 
+	/*
+    ohmd_set_universal_distortion_k(&(priv->base.properties), 0.394119, -0.508383, 0.323322, 0.790942);
+    */
+	ohmd_set_universal_distortion_k(&(priv->base.properties), 1.318397, -1.490242, 0.663824, 0.508021);
+	ohmd_set_universal_aberration_k(&(priv->base.properties), 1.00010147892f, 1.000f, 1.00019614479f);
+
+
 	// calculate projection eye projection matrices from the device properties
-	ohmd_calc_default_proj_matrices(&priv->base.properties);
+	//ohmd_calc_default_proj_matrices(&priv->base.properties);
+	float l,r,t,b,n,f;
+	// left eye screen bounds
+	l = -1.0f * (priv->base.properties.hsize/2 - priv->base.properties.lens_sep/2);
+	r = priv->base.properties.lens_sep/2;
+	t = priv->base.properties.vsize - priv->base.properties.lens_vpos;
+	b = -1.0f * priv->base.properties.lens_vpos;
+	n = eye_to_screen_distance;
+	f = n*10e6;
+	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
+	/* eye separation is handled by IPD in the Modelview matrix */
+	omat4x4f_init_frustum(&priv->base.properties.proj_left, l, r, b, t, n, f);
+	//right eye screen bounds
+	l = -1.0f * priv->base.properties.lens_sep/2;
+	r = priv->base.properties.hsize/2 - priv->base.properties.lens_sep/2;
+	n = eye_to_screen_distance;
+	f = n*10e6;
+	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
+	/* eye separation is handled by IPD in the Modelview matrix */
+	omat4x4f_init_frustum(&priv->base.properties.proj_right, l, r, b, t, n, f);
+
+	priv->base.properties.fov = 2 * atan2f(
+			priv->base.properties.hsize/2 - priv->base.properties.lens_sep/2,
+			eye_to_screen_distance);
 
 	// set up device callbacks
 	priv->base.update = update_device;
