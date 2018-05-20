@@ -38,6 +38,9 @@ int main()
 	Test(test_olist_insert);
 	printf("\n");
 
+	printf("module tests\n");
+	Test(test_module_connect);
+
 	printf("high level tests\n");
 	Test(test_highlevel_open_close_device);
 	Test(test_highlevel_open_close_many_devices);

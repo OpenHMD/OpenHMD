@@ -42,6 +42,9 @@ void test_oquatf_get_mat4x4();
 // olist tests
 void test_olist_insert();
 
+// module tests
+void test_module_connect();
+
 // high-level tests
 void test_highlevel_open_close_device();
 void test_highlevel_open_close_many_devices();

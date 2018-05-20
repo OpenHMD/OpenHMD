@@ -64,7 +64,7 @@ void* olist_append(olist* me, void* elem)
 	void* link = ohmd_alloc(me->ctx, me->elem_size + sizeof(void*));
 	memcpy(link, elem, me->elem_size);
 
-	if(!me->first){
+	if(me->first == NULL){
 		me->first = link;
 		me->last = link;
 	}else{
