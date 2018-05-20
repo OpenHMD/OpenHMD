@@ -70,8 +70,11 @@ void trim(const char* src, char* buff, const unsigned int sizeBuff)
     buff[i] = '\0';
 }
 
-bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, uint16_t size)
-{/*
+bool vive_decode_config_packet(vive_config_packet* pkt,
+                               const unsigned char* buffer,
+                               uint16_t size)
+{
+	/*
 	if(size != 4069){
 		LOGE("invalid vive sensor packet size (expected 4069 but got %d)", size);
 		return false;
@@ -84,13 +87,15 @@ bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buf
 	mz_ulong output_size = 32768;
 
 	//int cmp_status = uncompress(pUncomp, &uncomp_len, pCmp, cmp_len);
-	int cmp_status = uncompress(output, &output_size, buffer, (mz_ulong)pkt->length);
+	int cmp_status = uncompress(output, &output_size,
+	                            buffer, (mz_ulong)pkt->length);
 	if (cmp_status != Z_OK){
 		LOGE("invalid vive config, could not uncompress");
 		return false;
 	}
 
-	LOGE("Decompressed from %u to %u bytes\n", (mz_uint32)pkt->length, (mz_uint32)output_size);
+	LOGE("Decompressed from %u to %u bytes\n",
+	     (mz_uint32)pkt->length, (mz_uint32)output_size);
 
 	//LOGD("Debug print all the RAW JSON things!\n%s", output);
 	//pUncomp should now be the uncompressed data, lets get the json from it
