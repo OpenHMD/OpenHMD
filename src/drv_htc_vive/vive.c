@@ -16,7 +16,7 @@
 #define VIVE_WATCHMAN_DONGLE     0x2101
 #define VIVE_LIGHTHOUSE_FPGA_RX  0x2000
 
-#define VIVE_TIME_DIV 48000000.0f
+#define VIVE_CLOCK_FREQ 48000000.0f // Hz = 48 MHz
 
 #include <string.h>
 #include <wchar.h>
@@ -38,27 +38,37 @@ typedef struct {
 	uint32_t last_ticks;
 	uint8_t last_seq;
 
-	vive_config_packet vive_config;
 	vec3f gyro_error;
 	filter_queue gyro_q;
+
+	vive_imu_config imu_config;
+
 } vive_priv;
 
-void vec3f_from_vive_vec_accel(const int16_t* smp, vec3f* out_vec)
+void vec3f_from_vive_vec_accel(const vive_imu_config* config,
+                               const int16_t* smp,
+                               vec3f* out)
 {
-	float gravity = 9.81f;
-	float scaler = 4.0f * gravity / 32768.0f;
+	float range = config->acc_range / 32768.0f;
+	out->x = range * config->acc_scale.x * (float) smp[0] - config->acc_bias.x;
+	out->y = range * config->acc_scale.y * (float) smp[1] - config->acc_bias.y;
+	out->z = range * config->acc_scale.z * (float) smp[2] - config->acc_bias.z;
 
-	out_vec->x = (float)smp[0] * scaler;
-	out_vec->y = (float)smp[1] * scaler * -1;
-	out_vec->z = (float)smp[2] * scaler * -1;
+	out->y *= -1;
+	out->z *= -1;
 }
 
-void vec3f_from_vive_vec_gyro(const int16_t* smp, vec3f* out_vec)
+void vec3f_from_vive_vec_gyro(const vive_imu_config* config,
+                              const int16_t* smp,
+                              vec3f* out)
 {
-	float scaler = 8.7f / 32768.0f;
-	out_vec->x = (float)smp[0] * scaler;
-	out_vec->y = (float)smp[1] * scaler * -1;
-	out_vec->z = (float)smp[2] * scaler * -1;
+	float range = config->gyro_range / 32768.0f;
+	out->x = range * config->gyro_scale.x * (float)smp[0] - config->gyro_bias.x;
+	out->y = range * config->gyro_scale.y * (float)smp[1] - config->gyro_bias.x;
+	out->z = range * config->gyro_scale.z * (float)smp[2] - config->gyro_bias.x;
+
+	out->y *= -1;
+	out->z *= -1;
 }
 
 static bool process_error(vive_priv* priv)
@@ -76,7 +86,7 @@ static bool process_error(vive_priv* priv)
 	return false;
 }
 
-vive_sensor_sample* get_next_sample(vive_sensor_packet* pkt, int last_seq)
+vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt, int last_seq)
 {
 	int diff[3];
 
@@ -115,10 +125,10 @@ static void update_device(ohmd_device* device)
 
 	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
 		if(buffer[0] == VIVE_IRQ_SENSORS){
-			vive_sensor_packet pkt;
+			vive_headset_imu_packet pkt;
 			vive_decode_sensor_packet(&pkt, buffer, size);
 
-			vive_sensor_sample* smp = NULL;
+			vive_headset_imu_sample* smp = NULL;
 
 			while((smp = get_next_sample(&pkt, priv->last_seq)) != NULL)
 			{
@@ -129,12 +139,12 @@ static void update_device(ohmd_device* device)
 				t1 = smp->time_ticks;
 				t2 = priv->last_ticks;
 
-				float dt = (t1 - t2) / VIVE_TIME_DIV;
+				float dt = (t1 - t2) / VIVE_CLOCK_FREQ;
 
 				priv->last_ticks = smp->time_ticks;
 
-				vec3f_from_vive_vec_accel(smp->acc, &priv->raw_accel);
-				vec3f_from_vive_vec_gyro(smp->rot, &priv->raw_gyro);
+				vec3f_from_vive_vec_accel(&priv->imu_config, smp->acc, &priv->raw_accel);
+				vec3f_from_vive_vec_gyro(&priv->imu_config, smp->rot, &priv->raw_gyro);
 
 				if(process_error(priv)){
 					vec3f mag = {{0.0f, 0.0f, 0.0f}};
@@ -276,6 +286,85 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	return ret;
 }
 
+void vive_read_config(vive_priv* priv)
+{
+	unsigned char buffer[128];
+	int bytes;
+
+	LOGI("Getting feature report 16 to 39\n");
+	buffer[0] = VIVE_CONFIG_START_PACKET_ID;
+	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	printf("got %i bytes\n", bytes);
+	for (int i = 0; i < bytes; i++) {
+		printf("%02x ", buffer[i]);
+	}
+	printf("\n\n");
+
+	unsigned char* packet_buffer = malloc(4096);
+
+	int offset = 0;
+	while (buffer[1] != 0) {
+		buffer[0] = VIVE_CONFIG_READ_PACKET_ID;
+		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+
+    memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
+    offset += buffer[1];
+  }
+  packet_buffer[offset] = '\0';
+  //LOGD("Result: %s\n", packet_buffer);
+  vive_decode_config_packet(&priv->imu_config, packet_buffer, offset);
+
+  free(packet_buffer);
+}
+
+#define OHMD_GRAVITY_EARTH 9.80665 // m/s²
+
+int vive_get_range_packet(vive_priv* priv)
+{
+  unsigned char buffer[64];
+
+  int ret;
+  int i;
+
+  buffer[0] = VIVE_IMU_RANGE_MODES_PACKET_ID;
+
+  ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+  if (ret < 0)
+    return ret;
+
+  if (!buffer[1] || !buffer[2]) {
+    ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+    if (ret < 0)
+      return ret;
+
+    if (!buffer[1] || !buffer[2]) {
+      LOGE("unexpected range mode report: %02x %02x %02x",
+        buffer[0], buffer[1], buffer[2]);
+      for (i = 0; i < 61; i++)
+        LOGE(" %02x", buffer[3+i]);
+      LOGE("\n");
+    }
+  }
+
+  if (buffer[1] > 4 || buffer[2] > 4)
+    return -1;
+
+  /*
+   * Convert MPU-6500 gyro full scale range (+/-250°/s, +/-500°/s,
+   * +/-1000°/s, or +/-2000°/s) into rad/s, accel full scale range
+   * (+/-2g, +/-4g, +/-8g, or +/-16g) into m/s².
+   */
+  double gyro_range = M_PI / 180.0 * (250 << buffer[0]);
+  priv->imu_config.gyro_range = (float) gyro_range;
+  LOGI("gyro_range %f\n", gyro_range);
+
+  double acc_range = OHMD_GRAVITY_EARTH * (2 << buffer[1]);
+  priv->imu_config.acc_range = (float) acc_range;
+  LOGI("acc_range %f\n", acc_range);
+
+  return 0;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	vive_priv* priv = ohmd_alloc(driver->ctx, sizeof(vive_priv));
@@ -323,33 +412,12 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
 	//LOGD("enable lighthouse magic: %d\n", hret);
 
-	unsigned char buffer[128];
-	int bytes;
+	vive_read_config(priv);
 
-	LOGI("Getting feature report 16 to 39\n");
-	buffer[0] = 16;
-	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-	printf("got %i bytes\n", bytes);
-	for (int i = 0; i < bytes; i++) {
-		printf("%02x ", buffer[i]);
+	if (vive_get_range_packet(priv) != 0)
+	{
+		LOGE("Could not get range packet.\n");
 	}
-	printf("\n\n");
-
-	unsigned char* packet_buffer = malloc(4096);
-
-	int offset = 0;
-	while (buffer[1] != 0) {
-		buffer[0] = 17;
-		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-
- 		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
- 		offset += buffer[1];
-	}
-	packet_buffer[offset] = '\0';
-	//LOGD("Result: %s\n", packet_buffer);
-	vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
-
-	free(packet_buffer);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
@@ -359,8 +427,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.068234f;
 	priv->base.properties.hres = 2160;
 	priv->base.properties.vres = 1200;
-	priv->base.properties.lens_sep = 0.063500;
-	priv->base.properties.lens_vpos = 0.049694;
+	priv->base.properties.lens_sep = 0.063500f;
+	priv->base.properties.lens_vpos = 0.049694f;
 	priv->base.properties.fov = DEG_TO_RAD(111.435f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (2160.0f / 1200.0f) / 2.0f;
 

@@ -1,5 +1,7 @@
 #include "vive.h"
-#include "vive_config.h"
+
+#include "../ext_deps/miniz.h"
+#include "../ext_deps/nxjson.h"
 
 #ifdef _MSC_VER
 #define inline __inline
@@ -26,7 +28,7 @@ inline static uint32_t read32(const unsigned char** buffer)
 	return ret;
 }
 
-bool vive_decode_sensor_packet(vive_sensor_packet* pkt, const unsigned char* buffer, int size)
+bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt, const unsigned char* buffer, int size)
 {
 	if(size != 52){
 		LOGE("invalid vive sensor packet size (expected 52 but got %d)", size);
@@ -70,47 +72,80 @@ void trim(const char* src, char* buff, const unsigned int sizeBuff)
     buff[i] = '\0';
 }
 
-bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, uint16_t size)
-{/*
+void get_vec3f_from_json(const nx_json* json, const char* name, vec3f* result)
+{
+	const nx_json* acc_bias_arr = nx_json_get(json, name);
+
+	for (int i = 0; i < acc_bias_arr->length; i++) {
+		const nx_json* item = nx_json_item(acc_bias_arr, i);
+		result->arr[i] = (float) item->dbl_value;
+	}
+}
+
+void print_vec3f(const char* title, vec3f *vec)
+{
+  LOGI("%s = %f %f %f\n", title, vec->x, vec->y, vec->z);
+}
+
+bool vive_decode_config_packet(vive_imu_config* result,
+                               const unsigned char* buffer,
+                               uint16_t size)
+{
+	/*
 	if(size != 4069){
 		LOGE("invalid vive sensor packet size (expected 4069 but got %d)", size);
 		return false;
 	}*/
 
-	pkt->report_id = 17;
-	pkt->length = size;
+	vive_config_packet pkt;
+
+	pkt.report_id = VIVE_CONFIG_READ_PACKET_ID;
+	pkt.length = size;
 
 	unsigned char output[32768];
 	mz_ulong output_size = 32768;
 
 	//int cmp_status = uncompress(pUncomp, &uncomp_len, pCmp, cmp_len);
-	int cmp_status = uncompress(output, &output_size, buffer, (mz_ulong)pkt->length);
+	int cmp_status = uncompress(output, &output_size,
+	                            buffer, (mz_ulong)pkt.length);
 	if (cmp_status != Z_OK){
 		LOGE("invalid vive config, could not uncompress");
 		return false;
 	}
 
-	LOGE("Decompressed from %u to %u bytes\n", (mz_uint32)pkt->length, (mz_uint32)output_size);
+	LOGD("Decompressed from %u to %u bytes\n",
+	     (mz_uint32)pkt.length, (mz_uint32)output_size);
 
 	//LOGD("Debug print all the RAW JSON things!\n%s", output);
 	//pUncomp should now be the uncompressed data, lets get the json from it
 	/** DEBUG JSON PARSER CODE **/
-	trim((char*)output,(char*)output,output_size);
+	trim((char*)output, (char*)output, (unsigned int)output_size);
 	//LOGD("%s\n",output);
 	/*
 	FILE* dfp;
 	dfp = fopen("jsondebug.json","w");
 	json_enable_debug(3, dfp);*/
-	int status = json_read_object((char*)output, sensor_offsets, NULL);
-	LOGI("\n--- Converted Vive JSON Data ---\n\n");
-	LOGI("acc_bias = %f %f %f\n", acc_bias[0], acc_bias[1], acc_bias[2]);
-	LOGI("acc_scale = %f %f %f\n", acc_scale[0], acc_scale[1], acc_scale[2]);
-	LOGI("gyro_bias = %f %f %f\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
-	LOGI("gyro_scale = %f %f %f\n", gyro_scale[0], gyro_scale[1], gyro_scale[2]);
-	LOGI("\n--- End of Vive JSON Data ---\n\n");
+	const nx_json* json = nx_json_parse((char*)output, 0);
 
-	if (status != 0)
-		puts(json_error_string(status));
+	if (json) {
+		get_vec3f_from_json(json, "acc_bias", &result->acc_bias);
+		get_vec3f_from_json(json, "acc_scale", &result->acc_scale);
+		get_vec3f_from_json(json, "gyro_bias", &result->gyro_bias);
+		get_vec3f_from_json(json, "gyro_scale", &result->gyro_scale);
+
+		nx_json_free(json);
+
+		LOGI("\n--- Converted Vive JSON Data ---\n\n");
+		print_vec3f("acc_bias", &result->acc_bias);
+		print_vec3f("acc_scale", &result->acc_scale);
+		print_vec3f("gyro_bias", &result->gyro_bias);
+		print_vec3f("gyro_scale", &result->gyro_scale);
+		LOGI("\n--- End of Vive JSON Data ---\n\n");
+	} else {
+		LOGE("Could not parse JSON data.\n");
+		return false;
+	}
+
 	/** END OF DEBUG JSON PARSER CODE **/
 
 //	free(pCmp);
