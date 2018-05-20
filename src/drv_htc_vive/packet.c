@@ -1,5 +1,7 @@
 #include "vive.h"
+
 #include "vive_config.h"
+#include "../ext_deps/nxjson.h"
 
 #ifdef _MSC_VER
 #define inline __inline
@@ -70,6 +72,16 @@ void trim(const char* src, char* buff, const unsigned int sizeBuff)
     buff[i] = '\0';
 }
 
+void get_vec3f_from_json(const nx_json* json, const char* name, vec3f* result)
+{
+	const nx_json* acc_bias_arr = nx_json_get(json, name);
+
+	for (int i = 0; i < acc_bias_arr->length; i++) {
+		const nx_json* item = nx_json_item(acc_bias_arr, i);
+		result->arr[i] = (float) item->dbl_value;
+	}
+}
+
 bool vive_decode_config_packet(vive_config_packet* pkt,
                                const unsigned char* buffer,
                                uint16_t size)
@@ -106,16 +118,32 @@ bool vive_decode_config_packet(vive_config_packet* pkt,
 	FILE* dfp;
 	dfp = fopen("jsondebug.json","w");
 	json_enable_debug(3, dfp);*/
-	int status = json_read_object((char*)output, sensor_offsets, NULL);
-	LOGI("\n--- Converted Vive JSON Data ---\n\n");
-	LOGI("acc_bias = %f %f %f\n", acc_bias[0], acc_bias[1], acc_bias[2]);
-	LOGI("acc_scale = %f %f %f\n", acc_scale[0], acc_scale[1], acc_scale[2]);
-	LOGI("gyro_bias = %f %f %f\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
-	LOGI("gyro_scale = %f %f %f\n", gyro_scale[0], gyro_scale[1], gyro_scale[2]);
-	LOGI("\n--- End of Vive JSON Data ---\n\n");
+	const nx_json* json = nx_json_parse((char*)output, 0);
 
-	if (status != 0)
-		puts(json_error_string(status));
+	vec3f acc_bias;
+	vec3f acc_scale;
+	vec3f gyro_bias;
+	vec3f gyro_scale;
+
+	if (json) {
+		get_vec3f_from_json(json, "acc_bias", &acc_bias);
+		get_vec3f_from_json(json, "acc_scale", &acc_scale);
+		get_vec3f_from_json(json, "gyro_bias", &gyro_bias);
+		get_vec3f_from_json(json, "gyro_scale", &gyro_scale);
+
+		nx_json_free(json);
+
+		LOGI("\n--- Converted Vive JSON Data ---\n\n");
+		LOGI("acc_bias = %f %f %f\n", acc_bias.x, acc_bias.y, acc_bias.z);
+		LOGI("acc_scale = %f %f %f\n", acc_scale.x, acc_scale.y, acc_scale.z);
+		LOGI("gyro_bias = %f %f %f\n", gyro_bias.x, gyro_bias.y, gyro_bias.z);
+		LOGI("gyro_scale = %f %f %f\n", gyro_scale.x, gyro_scale.y, gyro_scale.z);
+		LOGI("\n--- End of Vive JSON Data ---\n\n");
+	} else {
+		LOGE("Could not parse JSON data.\n");
+		return false;
+	}
+
 	/** END OF DEBUG JSON PARSER CODE **/
 
 //	free(pCmp);

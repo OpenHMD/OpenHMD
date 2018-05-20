@@ -58,7 +58,7 @@ if _drivers.contains('vive')
 	sources += [
 		'src/drv_htc_vive/vive.c',
 		'src/drv_htc_vive/packet.c',
-		'src/ext_deps/mjson.c'
+		'src/ext_deps/nxjson.c'
 	]
 	c_args += '-DDRIVER_HTC_VIVE'
 	deps += dep_hidapi
