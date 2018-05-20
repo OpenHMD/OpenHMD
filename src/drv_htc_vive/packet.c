@@ -80,7 +80,7 @@ bool vive_decode_config_packet(vive_config_packet* pkt,
 		return false;
 	}*/
 
-	pkt->report_id = 17;
+	pkt->report_id = VIVE_CONFIG_READ_PACKET_ID;
 	pkt->length = size;
 
 	unsigned char output[32768];

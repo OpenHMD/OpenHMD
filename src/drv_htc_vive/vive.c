@@ -327,7 +327,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	int bytes;
 
 	LOGI("Getting feature report 16 to 39\n");
-	buffer[0] = 16;
+	buffer[0] = VIVE_CONFIG_START_PACKET_ID;
 	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 	printf("got %i bytes\n", bytes);
 	for (int i = 0; i < bytes; i++) {
@@ -339,7 +339,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	int offset = 0;
 	while (buffer[1] != 0) {
-		buffer[0] = 17;
+		buffer[0] = VIVE_CONFIG_READ_PACKET_ID;
 		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 
  		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);

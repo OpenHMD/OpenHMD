@@ -9,7 +9,8 @@
 
 typedef enum
 {
-	VIVE_CONFIG_DATA = 17,
+	VIVE_CONFIG_START_PACKET_ID = 16,
+	VIVE_CONFIG_READ_PACKET_ID = 17,
 	VIVE_IRQ_SENSORS = 32,
 } vive_irq_cmd;
 
