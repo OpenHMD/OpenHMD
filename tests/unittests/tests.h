@@ -37,8 +37,10 @@ void test_oquatf_get_length();
 void test_oquatf_get_dot();
 void test_oquatf_inverse();
 void test_oquatf_diff();
-
 void test_oquatf_get_mat4x4();
+
+// olist tests
+void test_olist_insert();
 
 // high-level tests
 void test_highlevel_open_close_device();

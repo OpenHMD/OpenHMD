@@ -10,7 +10,8 @@ libopenhmd_la_SOURCES = \
 	omath.c \
 	platform-posix.c \
 	fusion.c \
-	shaders.c
+	shaders.c \
+	olist.c
 
 libopenhmd_la_LDFLAGS = -no-undefined -version-info $(LT_VERSION)
 libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall

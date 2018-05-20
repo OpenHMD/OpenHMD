@@ -33,6 +33,10 @@ int main()
 	Test(test_oquatf_inverse);
 	Test(test_oquatf_diff);
 	printf("\n");
+	
+	printf("olist tests\n");
+	Test(test_olist_insert);
+	printf("\n");
 
 	printf("high level tests\n");
 	Test(test_highlevel_open_close_device);

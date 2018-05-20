@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #include "openhmd.h"
+#include "openhmd-dev.h"
 #include "omath.h"
 #include "platform.h"
 
