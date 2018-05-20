@@ -9,6 +9,7 @@
 
 typedef enum
 {
+	VIVE_IMU_RANGE_MODES_PACKET_ID = 1,
 	VIVE_CONFIG_START_PACKET_ID = 16,
 	VIVE_CONFIG_READ_PACKET_ID = 17,
 	VIVE_IRQ_SENSORS = 32,
@@ -37,8 +38,18 @@ typedef struct
 
 typedef struct
 {
+	uint8_t id;
+	uint8_t gyro_range;
+	uint8_t accel_range;
+	uint8_t unknown[61];
+} vive_imu_range_modes_packet;
+
+typedef struct
+{
 	vec3f acc_bias, acc_scale;
+	float acc_range;
 	vec3f gyro_bias, gyro_scale;
+	float gyro_range;
 } vive_imu_config;
 
 void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec);

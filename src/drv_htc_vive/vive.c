@@ -309,6 +309,54 @@ void vive_read_config(vive_priv* priv)
   free(packet_buffer);
 }
 
+#define OHMD_GRAVITY_EARTH 9.80665 // m/s²
+
+int vive_get_range_packet(vive_priv* priv)
+{
+  unsigned char buffer[64];
+
+  int ret;
+  int i;
+
+  buffer[0] = VIVE_IMU_RANGE_MODES_PACKET_ID;
+
+  ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+  if (ret < 0)
+    return ret;
+
+  if (!buffer[1] || !buffer[2]) {
+    ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+    if (ret < 0)
+      return ret;
+
+    if (!buffer[1] || !buffer[2]) {
+      LOGE("unexpected range mode report: %02x %02x %02x",
+        buffer[0], buffer[1], buffer[2]);
+      for (i = 0; i < 61; i++)
+        LOGE(" %02x", buffer[3+i]);
+      LOGE("\n");
+    }
+  }
+
+  if (buffer[1] > 4 || buffer[2] > 4)
+    return -1;
+
+  /*
+   * Convert MPU-6500 gyro full scale range (+/-250°/s, +/-500°/s,
+   * +/-1000°/s, or +/-2000°/s) into rad/s, accel full scale range
+   * (+/-2g, +/-4g, +/-8g, or +/-16g) into m/s².
+   */
+  double gyro_range = M_PI / 180.0 * (250 << buffer[0]);
+  priv->imu_config.gyro_range = (float) gyro_range;
+  LOGI("gyro_range %f\n", gyro_range);
+
+  double acc_range = OHMD_GRAVITY_EARTH * (2 << buffer[1]);
+  priv->imu_config.acc_range = (float) acc_range;
+  LOGI("acc_range %f\n", acc_range);
+
+  return 0;
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	vive_priv* priv = ohmd_alloc(driver->ctx, sizeof(vive_priv));
@@ -357,6 +405,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//LOGD("enable lighthouse magic: %d\n", hret);
 
 	vive_read_config(priv);
+
+	if (vive_get_range_packet(priv) != 0)
+	{
+		LOGE("Could not get range packet.\n");
+	}
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
