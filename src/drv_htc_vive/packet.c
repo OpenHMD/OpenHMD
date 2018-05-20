@@ -1,6 +1,6 @@
 #include "vive.h"
 
-#include "vive_config.h"
+#include "../ext_deps/miniz.h"
 #include "../ext_deps/nxjson.h"
 
 #ifdef _MSC_VER
