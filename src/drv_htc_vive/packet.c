@@ -100,7 +100,7 @@ bool vive_decode_config_packet(vive_config_packet* pkt,
 	//LOGD("Debug print all the RAW JSON things!\n%s", output);
 	//pUncomp should now be the uncompressed data, lets get the json from it
 	/** DEBUG JSON PARSER CODE **/
-	trim((char*)output,(char*)output,output_size);
+	trim((char*)output, (char*)output, (unsigned int)output_size);
 	//LOGD("%s\n",output);
 	/*
 	FILE* dfp;
