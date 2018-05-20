@@ -2,6 +2,7 @@
 #include <string.h>
 #include <openhmd-dev.h>
 #include "openhmdi.h"
+#include "tests.h"
 
 typedef struct
 {
@@ -37,7 +38,8 @@ void test_module_connect()
 	memset(&filter, 0, sizeof(imu_filter_test));
 	oimu_filter_module_init((oimu_filter_module*)&filter, ctx, "test imu filter", 0x13131, imu_filter_module_on_input, &filter);
 
-	omodule_connect(imu.base.gyro, &filter.base.gyro);
+	ohmd_status s = omodule_connect(imu.base.gyro, &filter.base.gyro);
+	TAssert(s == OHMD_S_OK);
 
 	ovec3f_data v;
 

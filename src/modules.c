@@ -52,7 +52,7 @@ void oimu_filter_module_init(oimu_filter_module* me, ohmd_context* ctx,
 {
 	memset(me, 0, sizeof(oimu_filter_module));
 	omodule_init((omodule*)me, ctx, omt_imu_filter, name, id);
-	oinput_init(&me->gyro, (omodule*)me, oct_quatf, rotation_callback, rotation_user_data);
+	oinput_init(&me->gyro, (omodule*)me, oct_vec3f, rotation_callback, rotation_user_data);
 }
 
 ohmd_status omodule_connect(ooutput* output, oinput* input)
