@@ -45,22 +45,30 @@ typedef struct {
 
 } vive_priv;
 
-void vec3f_from_vive_vec_accel(const int16_t* smp, vec3f* out_vec)
+void vec3f_from_vive_vec_accel(const vive_imu_config* config,
+                               const int16_t* smp,
+                               vec3f* out)
 {
-	float gravity = 9.81f;
-	float scaler = 4.0f * gravity / 32768.0f;
+	float range = config->acc_range / 32768.0f;
+	out->x = range * config->acc_scale.x * (float) smp[0] - config->acc_bias.x;
+	out->y = range * config->acc_scale.y * (float) smp[1] - config->acc_bias.y;
+	out->z = range * config->acc_scale.z * (float) smp[2] - config->acc_bias.z;
 
-	out_vec->x = (float)smp[0] * scaler;
-	out_vec->y = (float)smp[1] * scaler * -1;
-	out_vec->z = (float)smp[2] * scaler * -1;
+	out->y *= -1;
+	out->z *= -1;
 }
 
-void vec3f_from_vive_vec_gyro(const int16_t* smp, vec3f* out_vec)
+void vec3f_from_vive_vec_gyro(const vive_imu_config* config,
+                              const int16_t* smp,
+                              vec3f* out)
 {
-	float scaler = 8.7f / 32768.0f;
-	out_vec->x = (float)smp[0] * scaler;
-	out_vec->y = (float)smp[1] * scaler * -1;
-	out_vec->z = (float)smp[2] * scaler * -1;
+	float range = config->gyro_range / 32768.0f;
+	out->x = range * config->gyro_scale.x * (float)smp[0] - config->gyro_bias.x;
+	out->y = range * config->gyro_scale.y * (float)smp[1] - config->gyro_bias.x;
+	out->z = range * config->gyro_scale.z * (float)smp[2] - config->gyro_bias.x;
+
+	out->y *= -1;
+	out->z *= -1;
 }
 
 static bool process_error(vive_priv* priv)
@@ -135,8 +143,8 @@ static void update_device(ohmd_device* device)
 
 				priv->last_ticks = smp->time_ticks;
 
-				vec3f_from_vive_vec_accel(smp->acc, &priv->raw_accel);
-				vec3f_from_vive_vec_gyro(smp->rot, &priv->raw_gyro);
+				vec3f_from_vive_vec_accel(&priv->imu_config, smp->acc, &priv->raw_accel);
+				vec3f_from_vive_vec_gyro(&priv->imu_config, smp->rot, &priv->raw_gyro);
 
 				if(process_error(priv)){
 					vec3f mag = {{0.0f, 0.0f, 0.0f}};

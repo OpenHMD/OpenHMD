@@ -87,7 +87,7 @@ void print_vec3f(const char* title, vec3f *vec)
   LOGI("%s = %f %f %f\n", title, vec->x, vec->y, vec->z);
 }
 
-bool vive_decode_config_packet(vive_config_data* result,
+bool vive_decode_config_packet(vive_imu_config* result,
                                const unsigned char* buffer,
                                uint16_t size)
 {
