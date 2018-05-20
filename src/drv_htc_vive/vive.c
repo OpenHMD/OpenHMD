@@ -38,9 +38,11 @@ typedef struct {
 	uint32_t last_ticks;
 	uint8_t last_seq;
 
-	vive_config_packet vive_config;
 	vec3f gyro_error;
 	filter_queue gyro_q;
+
+	vive_imu_config imu_config;
+
 } vive_priv;
 
 void vec3f_from_vive_vec_accel(const int16_t* smp, vec3f* out_vec)
@@ -276,7 +278,7 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	return ret;
 }
 
-void read_config(vive_priv* priv)
+void vive_read_config(vive_priv* priv)
 {
 	unsigned char buffer[128];
 	int bytes;
@@ -302,7 +304,7 @@ void read_config(vive_priv* priv)
   }
   packet_buffer[offset] = '\0';
   //LOGD("Result: %s\n", packet_buffer);
-  vive_decode_config_packet(&priv->vive_config, packet_buffer, offset);
+  vive_decode_config_packet(&priv->imu_config, packet_buffer, offset);
 
   free(packet_buffer);
 }
@@ -354,7 +356,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
 	//LOGD("enable lighthouse magic: %d\n", hret);
 
-	read_config(priv);
+	vive_read_config(priv);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);

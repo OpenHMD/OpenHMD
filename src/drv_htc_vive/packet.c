@@ -82,7 +82,12 @@ void get_vec3f_from_json(const nx_json* json, const char* name, vec3f* result)
 	}
 }
 
-bool vive_decode_config_packet(vive_config_packet* pkt,
+void print_vec3f(const char* title, vec3f *vec)
+{
+  LOGI("%s = %f %f %f\n", title, vec->x, vec->y, vec->z);
+}
+
+bool vive_decode_config_packet(vive_config_data* result,
                                const unsigned char* buffer,
                                uint16_t size)
 {
@@ -92,22 +97,24 @@ bool vive_decode_config_packet(vive_config_packet* pkt,
 		return false;
 	}*/
 
-	pkt->report_id = VIVE_CONFIG_READ_PACKET_ID;
-	pkt->length = size;
+	vive_config_packet pkt;
+
+	pkt.report_id = VIVE_CONFIG_READ_PACKET_ID;
+	pkt.length = size;
 
 	unsigned char output[32768];
 	mz_ulong output_size = 32768;
 
 	//int cmp_status = uncompress(pUncomp, &uncomp_len, pCmp, cmp_len);
 	int cmp_status = uncompress(output, &output_size,
-	                            buffer, (mz_ulong)pkt->length);
+	                            buffer, (mz_ulong)pkt.length);
 	if (cmp_status != Z_OK){
 		LOGE("invalid vive config, could not uncompress");
 		return false;
 	}
 
-	LOGE("Decompressed from %u to %u bytes\n",
-	     (mz_uint32)pkt->length, (mz_uint32)output_size);
+	LOGD("Decompressed from %u to %u bytes\n",
+	     (mz_uint32)pkt.length, (mz_uint32)output_size);
 
 	//LOGD("Debug print all the RAW JSON things!\n%s", output);
 	//pUncomp should now be the uncompressed data, lets get the json from it
@@ -120,24 +127,19 @@ bool vive_decode_config_packet(vive_config_packet* pkt,
 	json_enable_debug(3, dfp);*/
 	const nx_json* json = nx_json_parse((char*)output, 0);
 
-	vec3f acc_bias;
-	vec3f acc_scale;
-	vec3f gyro_bias;
-	vec3f gyro_scale;
-
 	if (json) {
-		get_vec3f_from_json(json, "acc_bias", &acc_bias);
-		get_vec3f_from_json(json, "acc_scale", &acc_scale);
-		get_vec3f_from_json(json, "gyro_bias", &gyro_bias);
-		get_vec3f_from_json(json, "gyro_scale", &gyro_scale);
+		get_vec3f_from_json(json, "acc_bias", &result->acc_bias);
+		get_vec3f_from_json(json, "acc_scale", &result->acc_scale);
+		get_vec3f_from_json(json, "gyro_bias", &result->gyro_bias);
+		get_vec3f_from_json(json, "gyro_scale", &result->gyro_scale);
 
 		nx_json_free(json);
 
 		LOGI("\n--- Converted Vive JSON Data ---\n\n");
-		LOGI("acc_bias = %f %f %f\n", acc_bias.x, acc_bias.y, acc_bias.z);
-		LOGI("acc_scale = %f %f %f\n", acc_scale.x, acc_scale.y, acc_scale.z);
-		LOGI("gyro_bias = %f %f %f\n", gyro_bias.x, gyro_bias.y, gyro_bias.z);
-		LOGI("gyro_scale = %f %f %f\n", gyro_scale.x, gyro_scale.y, gyro_scale.z);
+		print_vec3f("acc_bias", &result->acc_bias);
+		print_vec3f("acc_scale", &result->acc_scale);
+		print_vec3f("gyro_bias", &result->gyro_bias);
+		print_vec3f("gyro_scale", &result->gyro_scale);
 		LOGI("\n--- End of Vive JSON Data ---\n\n");
 	} else {
 		LOGE("Could not parse JSON data.\n");

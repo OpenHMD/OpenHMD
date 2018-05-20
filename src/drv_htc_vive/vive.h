@@ -35,8 +35,18 @@ typedef struct
 	unsigned char config_data[99999];
 } vive_config_packet;
 
+typedef struct
+{
+	vec3f acc_bias, acc_scale;
+	vec3f gyro_bias, gyro_scale;
+} vive_imu_config;
+
 void vec3f_from_vive_vec(const int16_t* smp, vec3f* out_vec);
-bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt, const unsigned char* buffer, int size);
-bool vive_decode_config_packet(vive_config_packet* pkt, const unsigned char* buffer, uint16_t size);
+bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt,
+                               const unsigned char* buffer,
+                               int size);
+bool vive_decode_config_packet(vive_imu_config* result,
+                               const unsigned char* buffer,
+                               uint16_t size);
 
 #endif
