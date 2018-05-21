@@ -22,124 +22,50 @@ extern "C" {
 
 #include "omath.h"
 
-// olist - linked list
-typedef struct olist olist;
-
-olist* olist_create(ohmd_context* ctx, size_t elem_size);
-void* olist_insert(olist* list, void* elem, void* after);
-void* olist_get_next(olist* list, void* elem);
-void* olist_get_first(olist* list);
-void* olist_append(olist* list, void* elem);
-
 // modules and connections
 typedef struct omodule omodule;
-typedef struct ooutput ooutput;
-typedef struct oinput oinput;
-typedef struct ooutput_data ooutput_data;
-
-typedef void (*oconnection_callback)(omodule* source, ooutput_data* value, void* user_data);
+typedef struct omessage omessage;
 
 typedef enum
 {
-	oct_quatf,
-	oct_vec3f
-} oconnection_type;
+	omd_error = -1,
+	omd_float = 0,
+	omd_int = 1,
+	omd_bin = 2,
+	omd_string = 3,
+} omessage_data_type;
 
 typedef enum 
 {
-	omt_imu,
-	omt_imu_filter,
+	omt_imu = 0,
+	omt_imu_filter = 1,
 } omodule_type;
 
-struct omodule
-{
-	omodule_type type;
-	ohmd_context* ctx;
-	char name[32];
-	uint64_t id;
-};
+typedef void (*omessage_callback)(omodule* source, omessage* msg, void* user_data);
 
-typedef enum 
-{
-	oimf_has_accelerator = 1,
-	oimf_has_gyro = 2,
-	oimf_has_rotation = 4,
-} oimu_module_flags;
+ohmd_status omodule_connect(omodule* from, const char* output_name, omodule* to, const char* input_name);
 
-typedef struct
-{
-	omodule base;
+omodule* omodule_create(ohmd_context* ctx, const char* name, uint64_t id);
+int omodule_get_input_count(omodule* me);
+int omodule_get_output_count(omodule* me);
+const char* omodule_get_input_name(omodule* me, int idx);
+const char* omodule_get_output_name(omodule* me, int idx);
+void omodule_add_output(omodule* me, const char* name);
+void omodule_add_input(omodule* me, const char* name,  omessage_callback callback, void* user_data);
+ohmd_status omodule_send_message(omodule* me, const char* output_name, omessage* msg);
 
-	ooutput* accelerator;
-	ooutput* gyro;
-	ooutput* rotation;
-} oimu_module;
-
-struct oinput
-{
-	oconnection_type type;
-	omodule* module;
-	oconnection_callback callback;
-	void* user_data;
-};
-
-typedef struct
-{
-	omodule base;
-	
-	oinput accelerator;
-	oinput gyro;
-	
-	ooutput* rotation;
-} oimu_filter_module;
-
-struct ooutput_data 
-{
-	uint64_t ts;
-  	void* source;
-};
-
-typedef struct
-{
-	ooutput_data base;
-	quatf value;
-} oquatf_data;
-
-typedef struct
-{
-	ooutput_data base;
-	vec3f value;
-} ovec3f_data;
-
-struct ooutput
-{
-	oconnection_type type;
-	omodule* module;
-	olist* output_list;
-};
-
-typedef struct 
-{
-	oconnection_callback callback;
-	void* user_data;
-
-	omodule* from;
-	omodule* to;
-} oconnection;
-
-void oinput_init(oinput* me, omodule* module, oconnection_type type, 
-	oconnection_callback callback, void* user_data);
-
-ohmd_status omodule_connect(ooutput* output, oinput* input);
-
-ooutput* ooutput_create(omodule* module, oconnection_type type);
-void ooutput_send(ooutput* output, ooutput_data* data);
-
-void omodule_imu_init(oimu_module* me, ohmd_context* ctx, const char* name, 
-	uint64_t id, oimu_module_flags flags);
-
-void oimu_filter_module_init(oimu_filter_module* me, ohmd_context* ctx, 
-	const char* name, uint64_t id, oconnection_callback rotation_callback, void* rotation_user_data);
+omessage* omessage_create(ohmd_context* ctx, const char* type_name);
+void omessage_add_float_data(omessage* me, const char* name, const float* data, int count);
+void omessage_add_int_data(omessage* me, const char* name, const int* data, int count);
+void omessage_add_bin_data(omessage* me, const char* name, const uint8_t* data, int count);
+void omessage_add_string_data(omessage* me, const char* name, const char* data, int length);
+int omessage_get_field_count(omessage* me);
+const char* omessage_get_field_name(omessage* me, int idx);
+omessage_data_type omessage_get_field_type(omessage* me, const char* name);
+const float* omessage_get_float_data(omessage* me, const char* name, int* out_count);
+const int* omessage_get_int_data(omessage* me, const char* name, int* out_count);
+const uint8_t* omessage_get_bin_data(omessage* me, const char* name, int* out_count);
+const char* omessage_get_string_data(omessage* me, const char* name, int* out_length);
 
 #ifdef __cplusplus
 }

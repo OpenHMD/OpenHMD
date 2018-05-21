@@ -2,84 +2,258 @@
 #include <string.h>
 #include "openhmdi.h"
 
-void oinput_init(oinput* me, omodule* module, oconnection_type type, 
-	oconnection_callback callback, void* user_data)
-{
-	me->callback = callback;
-	me->user_data = user_data;
-	me->type = type;
-	me->module = module;
-}
+#define MAX_INPUTS 32
+#define MAX_OUTPUTS 32
+#define MAX_CONNECTIONS 32
+#define MAX_NAME_LENGTH 32
+#define MAX_MESSAGE_DATA 32
 
-void omodule_init(omodule* me, ohmd_context* ctx, omodule_type type, 
-	const char* name, uint64_t id)
+typedef struct 
 {
-	me->ctx = ctx;
-	me->type = type;
-	me->id = id;
+	char name[MAX_NAME_LENGTH];
+	omodule* module;
+	omessage_callback callback;
+	void* user_data;
+} oinput;
+
+typedef struct 
+{
+	char name[MAX_NAME_LENGTH];
+	oinput* conn[MAX_CONNECTIONS];
+	int conn_count;
+} ooutput;
+
+struct omodule
+{
+	omodule_type type;
+	ohmd_context* ctx;
+	char name[MAX_NAME_LENGTH];
+	uint64_t id;
+
+	ooutput outputs[MAX_OUTPUTS];
+	oinput inputs[MAX_INPUTS];
+
+	int input_count;
+	int output_count;
+};
+
+typedef struct
+{
+	omessage_data_type type;
+	const void* data;
+	int count;
+	const char* name;
+} omessage_data;
+
+struct omessage
+{
+	const char* type_name;
+	omessage_data data[MAX_MESSAGE_DATA];
+	int data_count;
+};
+
+omodule* omodule_create(ohmd_context* ctx, const char* name, uint64_t id)
+{
+	omodule* me = ohmd_alloc(ctx, sizeof(omodule));
+
 	strncpy(me->name, name, sizeof(me->name) - 1);
+	me->id = id;
+
+	return me;
 }
 
-ooutput* ooutput_create(omodule* module, oconnection_type type)
+int omodule_get_input_count(omodule* me)
 {
-	ooutput* ret = ohmd_alloc(module->ctx, sizeof(ooutput));
-
-	ret->module = module;
-	ret->type = type;
-	ret->output_list = olist_create(module->ctx, sizeof(oconnection));
-
-	return ret;
+	return me->input_count;
 }
 
-void omodule_imu_init(oimu_module* me, ohmd_context* ctx, const char* name, 
-	uint64_t id, oimu_module_flags flags)
+int omodule_get_output_count(omodule* me)
 {
-	memset(me, 0, sizeof(oimu_module));
-	omodule_init((omodule*)me, ctx, omt_imu, name, id);
-
-	if(flags | oimf_has_accelerator)
-		me->accelerator = ooutput_create((omodule*)me, oct_vec3f);
-
-	if(flags | oimf_has_gyro)
-		me->gyro = ooutput_create((omodule*)me, oct_vec3f);
-
-	if(flags | oimf_has_rotation)
-		me->rotation = ooutput_create((omodule*)me, oct_quatf);
+	return me->output_count;
 }
 
-void oimu_filter_module_init(oimu_filter_module* me, ohmd_context* ctx, 
-	const char* name, uint64_t id, oconnection_callback rotation_callback, void* rotation_user_data)
+const char* omodule_get_input_name(omodule* me, int idx)
 {
-	memset(me, 0, sizeof(oimu_filter_module));
-	omodule_init((omodule*)me, ctx, omt_imu_filter, name, id);
-	oinput_init(&me->gyro, (omodule*)me, oct_vec3f, rotation_callback, rotation_user_data);
+	if(idx >= me->input_count)
+		return NULL;
+	
+	return me->inputs[idx].name;
 }
 
-ohmd_status omodule_connect(ooutput* output, oinput* input)
+const char* omodule_get_output_name(omodule* me, int idx)
 {
-	if(output == NULL || input->callback == NULL)
+	if(idx >= me->output_count)
+		return NULL;
+	
+	return me->outputs[idx].name;
+}
+
+void omodule_add_output(omodule* me, const char* name)
+{
+	int idx = me->output_count;
+	strncpy(me->outputs[idx].name, name, sizeof(me->outputs[idx].name) - 1);
+	me->output_count++;
+}
+
+void omodule_add_input(omodule* me, const char* name,  omessage_callback callback, void* user_data)
+{
+	int idx = me->input_count;
+	strncpy(me->inputs[idx].name, name, sizeof(me->inputs[idx].name) - 1);
+	me->inputs[idx].callback = callback;
+	me->inputs[idx].user_data = user_data;
+	me->input_count++;
+}
+
+omessage* omessage_create(ohmd_context* ctx, const char* type_name)
+{
+	omessage* msg = ohmd_alloc(ctx, sizeof(omessage));
+	msg->type_name = type_name;
+	return msg;
+}
+
+ooutput* omodule_lookup_output(omodule* me, const char* name)
+{
+	for(int i = 0; i < me->output_count; i++)
+	{
+		if(strcmp(me->outputs[i].name, name) == 0){
+			return me->outputs + i;
+		}
+	}
+
+	return NULL;
+}
+
+oinput* omodule_lookup_input(omodule* me, const char* name)
+{
+	for(int i = 0; i < me->input_count; i++)
+	{
+		if(strcmp(me->inputs[i].name, name) == 0){
+			return me->inputs + i;
+		}
+	}
+
+	return NULL;
+}
+
+ohmd_status omodule_connect(omodule* from, const char* output_name, omodule* to, const char* input_name)
+{
+	oinput* input = omodule_lookup_input(to, input_name);
+	ooutput* output = omodule_lookup_output(from, output_name);
+
+	if(input == NULL || output == NULL)
 		return OHMD_S_INVALID_OPERATION;
 	
-	if(input->type != output->type)
-		return OHMD_S_INVALID_OPERATION;
-	
-	oconnection conn;
-	
-	conn.callback = input->callback;
-	conn.from = output->module;
-	conn.to = input->module;
-	conn.user_data = input->user_data;
-
-	olist_append(output->output_list, &conn);
+	output->conn[output->conn_count++] = input;
 
 	return OHMD_S_OK;
 }
 
-void ooutput_send(ooutput* output, ooutput_data* data)
+ohmd_status omodule_send_message(omodule* me, const char* output_name, omessage* msg)
 {
-	olist* list = output->output_list;
+	ooutput* output = omodule_lookup_output(me, output_name);
 
-	for(oconnection* curr = olist_get_first(list); curr != NULL; curr = olist_get_next(list, curr)){
-		curr->callback(output->module, data, curr->user_data);
+	if(output == NULL)
+		return OHMD_S_INVALID_OPERATION;
+
+	for(int i = 0; i < output->conn_count; i++)
+	{
+		output->conn[i]->callback(me, msg, output->conn[i]->user_data);
 	}
+
+	return OHMD_S_OK; 
+}
+
+void omessage_add_data(omessage* me, const char* name, omessage_data_type type, int count, const void* data)
+{
+	int i = me->data_count;
+	
+	me->data[i].type = type;
+	me->data[i].data = data;
+	me->data[i].count = count;
+	me->data[i].name = name;
+
+	me->data_count++;
+}
+
+void omessage_add_float_data(omessage* me, const char* name, const float* data, int count)
+{
+	omessage_add_data(me, name, omd_float, count, data);
+}
+
+void omessage_add_int_data(omessage* me, const char* name, const int* data, int count)
+{
+	omessage_add_data(me, name, omd_bin, count, data);
+}
+
+void omessage_add_bin_data(omessage* me, const char* name, const uint8_t* data, int count)
+{
+	omessage_add_data(me, name, omd_bin, count, data);
+}
+
+void omessage_add_string_data(omessage* me, const char* name, const char* data, int length)
+{
+	omessage_add_data(me, name, omd_bin, length, data);
+}
+
+int omessage_get_field_count(omessage* me)
+{
+	return me->data_count;
+}
+
+const char* omessage_get_field_name(omessage* me, int idx)
+{
+	if(idx >= me->data_count)
+		return NULL;
+
+	return me->data[idx].name; 
+}
+
+omessage_data* omessage_lookup_field(omessage* me, const char* name)
+{
+	for(int i = 0; i < me->data_count; i++)
+	{
+		if(strcmp(me->data[i].name, name) == 0){
+			return &me->data[i];
+		}
+	}
+
+	return NULL;
+}
+
+omessage_data_type omessage_get_field_type(omessage* me, const char* name)
+{
+	omessage_data* field = omessage_lookup_field(me, name);
+
+	if(field == NULL)
+		return omd_error;
+	
+	return field->type;
+}
+
+const float* omessage_get_float_data(omessage* me, const char* name, int* out_count)
+{
+	return (const float*)omessage_get_bin_data(me, name, out_count);
+}
+
+const int* omessage_get_int_data(omessage* me, const char* name, int* out_count)
+{
+	return (const int*)omessage_get_bin_data(me, name, out_count);
+}
+
+const char* omessage_get_string_data(omessage* me, const char* name, int* out_length)
+{
+	return (const char*)omessage_get_bin_data(me, name, out_length);
+}
+
+const uint8_t* omessage_get_bin_data(omessage* me, const char* name, int* out_count)
+{
+	omessage_data* field = omessage_lookup_field(me, name);
+
+	if(field == NULL)
+		return NULL;
+	
+	if(out_count != NULL)
+		*out_count = field->count;
+
+	return field->data;
 }

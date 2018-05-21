@@ -128,8 +128,6 @@ struct ohmd_context {
 	uint64_t monotonic_ticks_per_sec;
 
 	char error_msg[OHMD_STR_SIZE];
-
-	olist* modules;
 };
 
 // helper functions

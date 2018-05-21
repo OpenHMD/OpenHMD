@@ -34,10 +34,6 @@ int main()
 	Test(test_oquatf_diff);
 	printf("\n");
 	
-	printf("olist tests\n");
-	Test(test_olist_insert);
-	printf("\n");
-
 	printf("module tests\n");
 	Test(test_module_connect);
 

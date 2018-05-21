@@ -1,60 +1,60 @@
 #include <stdbool.h>
 #include <string.h>
-#include <openhmd-dev.h>
 #include "openhmdi.h"
 #include "tests.h"
 
-typedef struct
+#include <openhmd-dev.h>
+
+void imu_filter_msg_handler(omodule* source, omessage* msg, void* user_data)
 {
-	oimu_module base;
-} imu_test;
+	float* d = user_data;
+	const float* gyro = omessage_get_float_data(msg, "gyro", NULL);
+	const float* accel = omessage_get_float_data(msg, "accel", NULL);
 
-typedef struct
-{
-	oimu_filter_module base;
-	vec3f result;
-} imu_filter_test;
-
-void imu_filter_module_on_input(omodule* source, ooutput_data* value, void* user_data)
-{
-	imu_filter_test* me = user_data;
-	ovec3f_data* q = (ovec3f_data*)value;
-
-	vec3f filtered = q->value;
-	
-	filtered.x *= -1.f;
-	filtered.y *= 2.f;
-	filtered.z *= 3.f;
-
-	me->result = filtered;
+	for(int i = 0; i < 3; i++)
+	{
+		d[i] = gyro[i] * 2.f;
+		d[i+3] = accel[i] * 2.f;
+	}
 }
 
 void test_module_connect()
 {
 	ohmd_context* ctx = ohmd_ctx_create();
-	imu_test imu;
-
-	omodule_imu_init((oimu_module*)&imu, ctx, "test imu", 0x1231, oimf_has_gyro);
 	
-	imu_filter_test filter;
-	memset(&filter, 0, sizeof(imu_filter_test));
-	oimu_filter_module_init((oimu_filter_module*)&filter, ctx, "test imu filter", 0x13131, imu_filter_module_on_input, &filter);
+	omodule* imu = omodule_create(ctx, "test imu", 0x123);
+	omodule_add_output(imu, "accel+gyro");
 
-	ohmd_status s = omodule_connect(imu.base.gyro, &filter.base.gyro);
+	omodule* imu_filter = omodule_create(ctx, "test imu filter", 0x234);
+
+	float output[3+3] = {};
+
+	omodule_add_input(imu_filter, "accel+gyro", imu_filter_msg_handler, output);
+	
+	ohmd_status s = omodule_connect(imu, "accel+gyro", imu_filter, "accel+gyro");
 	TAssert(s == OHMD_S_OK);
 
-	ovec3f_data v;
-
-	v.base.source = (omodule*)&imu;
-	v.base.ts = 1;
-
-	v.value.x = 1.0f;
-	v.value.y = 1.0f;
-	v.value.z = 1.0f;
+	vec3f gyro;
+	gyro.x = 1.f;
+	gyro.y = 2.f;
+	gyro.z = 3.f;
 	
-	ooutput_send(imu.base.gyro, (ooutput_data*)&v);
+	vec3f accel;
+	accel.x = 4.f;
+	accel.y = 5.f;
+	accel.z = 6.f;
 
-	TAssert(filter.result.x == -1.f);
-	TAssert(filter.result.y == 2.f);
-	TAssert(filter.result.z == 3.f);
+	omessage* msg = omessage_create(ctx, "imu data");
+	omessage_add_float_data(msg, "gyro", gyro.arr, 3);
+	omessage_add_float_data(msg, "accel", accel.arr, 3);
+
+	s = omodule_send_message(imu, "accel+gyro", msg);
+	TAssert(s == OHMD_S_OK);
+
+	TAssert(output[0] == 2.f);
+	TAssert(output[1] == 4.f);
+	TAssert(output[2] == 6.f);
+	TAssert(output[3] == 8.f);
+	TAssert(output[4] == 10.f);
+	TAssert(output[5] == 12.f);
 }

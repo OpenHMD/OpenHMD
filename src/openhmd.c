@@ -603,8 +603,3 @@ uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_
 	return ticks / srcTicksPerSecond * dstTicksPerSecond +
 		ticks % srcTicksPerSecond * dstTicksPerSecond / srcTicksPerSecond;
 }
-
-void ohmd_ctx_add_module(ohmd_context* ctx, omodule* module)
-{
-	olist_append(ctx->modules, module);
-}

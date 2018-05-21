@@ -39,9 +39,6 @@ void test_oquatf_inverse();
 void test_oquatf_diff();
 void test_oquatf_get_mat4x4();
 
-// olist tests
-void test_olist_insert();
-
 // module tests
 void test_module_connect();
 
