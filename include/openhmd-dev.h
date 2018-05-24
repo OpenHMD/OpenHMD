@@ -20,8 +20,6 @@ extern "C" {
 #include <stddef.h>
 #include <openhmd.h>
 
-#include "omath.h"
-
 // modules and connections
 typedef struct omodule omodule;
 typedef struct omessage omessage;
@@ -55,10 +53,10 @@ void omodule_add_input(omodule* me, const char* name,  omessage_callback callbac
 ohmd_status omodule_send_message(omodule* me, const char* output_name, omessage* msg);
 
 omessage* omessage_create(ohmd_context* ctx, const char* type_name);
-void omessage_add_float_data(omessage* me, const char* name, const float* data, int count);
-void omessage_add_int_data(omessage* me, const char* name, const int* data, int count);
-void omessage_add_bin_data(omessage* me, const char* name, const uint8_t* data, int count);
-void omessage_add_string_data(omessage* me, const char* name, const char* data, int length);
+void omessage_add_float_data(omessage* me, const char* name, const float* data, int count, uint64_t timestamp);
+void omessage_add_int_data(omessage* me, const char* name, const int* data, int count, uint64_t timestamp);
+void omessage_add_bin_data(omessage* me, const char* name, const uint8_t* data, int count, uint64_t timestamp);
+void omessage_add_string_data(omessage* me, const char* name, const char* data, int length, uint64_t timestamp);
 int omessage_get_field_count(omessage* me);
 const char* omessage_get_field_name(omessage* me, int idx);
 omessage_data_type omessage_get_field_type(omessage* me, const char* name);
@@ -66,6 +64,7 @@ const float* omessage_get_float_data(omessage* me, const char* name, int* out_co
 const int* omessage_get_int_data(omessage* me, const char* name, int* out_count);
 const uint8_t* omessage_get_bin_data(omessage* me, const char* name, int* out_count);
 const char* omessage_get_string_data(omessage* me, const char* name, int* out_length);
+ohmd_status omessage_get_timestamp(omessage* me, const char* name, uint64_t* out_timestamp);
 
 #ifdef __cplusplus
 }

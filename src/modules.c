@@ -43,6 +43,7 @@ typedef struct
 	const void* data;
 	int count;
 	const char* name;
+	uint64_t timestamp;
 } omessage_data;
 
 struct omessage
@@ -163,7 +164,7 @@ ohmd_status omodule_send_message(omodule* me, const char* output_name, omessage*
 	return OHMD_S_OK; 
 }
 
-void omessage_add_data(omessage* me, const char* name, omessage_data_type type, int count, const void* data)
+void omessage_add_data(omessage* me, const char* name, omessage_data_type type, int count, const void* data, uint64_t timestamp)
 {
 	int i = me->data_count;
 	
@@ -171,28 +172,29 @@ void omessage_add_data(omessage* me, const char* name, omessage_data_type type, 
 	me->data[i].data = data;
 	me->data[i].count = count;
 	me->data[i].name = name;
+	me->data[i].timestamp = timestamp;
 
 	me->data_count++;
 }
 
-void omessage_add_float_data(omessage* me, const char* name, const float* data, int count)
+void omessage_add_float_data(omessage* me, const char* name, const float* data, int count, uint64_t timestamp)
 {
-	omessage_add_data(me, name, omd_float, count, data);
+	omessage_add_data(me, name, omd_float, count, data, timestamp);
 }
 
-void omessage_add_int_data(omessage* me, const char* name, const int* data, int count)
+void omessage_add_int_data(omessage* me, const char* name, const int* data, int count, uint64_t timestamp)
 {
-	omessage_add_data(me, name, omd_bin, count, data);
+	omessage_add_data(me, name, omd_bin, count, data, timestamp);
 }
 
-void omessage_add_bin_data(omessage* me, const char* name, const uint8_t* data, int count)
+void omessage_add_bin_data(omessage* me, const char* name, const uint8_t* data, int count, uint64_t timestamp)
 {
-	omessage_add_data(me, name, omd_bin, count, data);
+	omessage_add_data(me, name, omd_bin, count, data, timestamp);
 }
 
-void omessage_add_string_data(omessage* me, const char* name, const char* data, int length)
+void omessage_add_string_data(omessage* me, const char* name, const char* data, int length, uint64_t timestamp)
 {
-	omessage_add_data(me, name, omd_bin, length, data);
+	omessage_add_data(me, name, omd_bin, length, data, timestamp);
 }
 
 int omessage_get_field_count(omessage* me)
@@ -256,4 +258,16 @@ const uint8_t* omessage_get_bin_data(omessage* me, const char* name, int* out_co
 		*out_count = field->count;
 
 	return field->data;
+}
+
+ohmd_status omessage_get_timestamp(omessage* me, const char* name, uint64_t* out_timestamp)
+{
+	omessage_data* field = omessage_lookup_field(me, name);
+
+	if(field == NULL)
+		return OHMD_S_INVALID_PARAMETER;
+
+	*out_timestamp = field->timestamp;
+	
+	return OHMD_S_OK;	
 }

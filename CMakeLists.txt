@@ -30,6 +30,7 @@ set(openhmd_source_files
 	${CMAKE_CURRENT_LIST_DIR}/src/platform-posix.c
 	${CMAKE_CURRENT_LIST_DIR}/src/fusion.c
 	${CMAKE_CURRENT_LIST_DIR}/src/shaders.c
+	${CMAKE_CURRENT_LIST_DIR}/src/modules.c
 )
 
 OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
@@ -157,3 +158,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
 #install properties
 install (TARGETS openhmd-shared openhmd-static DESTINATION lib)
 install (FILES include/openhmd.h DESTINATION include)
+install (FILES include/openhmd-dev.h DESTINATION include)

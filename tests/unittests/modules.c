@@ -5,16 +5,32 @@
 
 #include <openhmd-dev.h>
 
+typedef struct
+{
+	float gyro[3];
+	float accel[3];
+	uint64_t gyro_ts;
+	uint64_t accel_ts;
+} test_data;
+
 void imu_filter_msg_handler(omodule* source, omessage* msg, void* user_data)
 {
-	float* d = user_data;
+	test_data* td = user_data;
 	const float* gyro = omessage_get_float_data(msg, "gyro", NULL);
 	const float* accel = omessage_get_float_data(msg, "accel", NULL);
 
+	ohmd_status s;
+	
+	s = omessage_get_timestamp(msg, "gyro", &td->gyro_ts);
+	TAssert(s == OHMD_S_OK);
+
+	s = omessage_get_timestamp(msg, "accel", &td->accel_ts);
+	TAssert(s == OHMD_S_OK);
+
 	for(int i = 0; i < 3; i++)
 	{
-		d[i] = gyro[i] * 2.f;
-		d[i+3] = accel[i] * 2.f;
+		td->gyro[i] = gyro[i] * 2.f;
+		td->accel[i] = accel[i] * 2.f;
 	}
 }
 
@@ -27,9 +43,10 @@ void test_module_connect()
 
 	omodule* imu_filter = omodule_create(ctx, "test imu filter", 0x234);
 
-	float output[3+3] = {};
+	test_data td;
+	memset(&td, 0, sizeof(test_data));
 
-	omodule_add_input(imu_filter, "accel+gyro", imu_filter_msg_handler, output);
+	omodule_add_input(imu_filter, "accel+gyro", imu_filter_msg_handler, &td);
 	
 	ohmd_status s = omodule_connect(imu, "accel+gyro", imu_filter, "accel+gyro");
 	TAssert(s == OHMD_S_OK);
@@ -45,16 +62,20 @@ void test_module_connect()
 	accel.z = 6.f;
 
 	omessage* msg = omessage_create(ctx, "imu data");
-	omessage_add_float_data(msg, "gyro", gyro.arr, 3);
-	omessage_add_float_data(msg, "accel", accel.arr, 3);
+	omessage_add_float_data(msg, "gyro", gyro.arr, 3, 0x123);
+	omessage_add_float_data(msg, "accel", accel.arr, 3, 0x124);
 
 	s = omodule_send_message(imu, "accel+gyro", msg);
 	TAssert(s == OHMD_S_OK);
 
-	TAssert(output[0] == 2.f);
-	TAssert(output[1] == 4.f);
-	TAssert(output[2] == 6.f);
-	TAssert(output[3] == 8.f);
-	TAssert(output[4] == 10.f);
-	TAssert(output[5] == 12.f);
+	TAssert(td.gyro[0] == 2.f);
+	TAssert(td.gyro[1] == 4.f);
+	TAssert(td.gyro[2] == 6.f);
+
+	TAssert(td.accel[0] == 8.f);
+	TAssert(td.accel[1] == 10.f);
+	TAssert(td.accel[2] == 12.f);
+
+	TAssert(td.gyro_ts == 0x123);
+	TAssert(td.accel_ts == 0x124);
 }

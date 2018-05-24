@@ -1,2 +1,3 @@
 #!/bin/sh
-autoreconf --install --force
+#autoreconf --install --force
+autoreconf -fvi
