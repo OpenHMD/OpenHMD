@@ -217,7 +217,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
-	// Set device properties TODO: Get from device
+        // Set distortion parameters (manually estimated by @beVR_nz)
+        priv->base.properties.universal_distortion_k[0]= 0.200000;
+        priv->base.properties.universal_distortion_k[1]= 0.090000;
+        priv->base.properties.universal_distortion_k[2]=-0.060000;
+        priv->base.properties.universal_distortion_k[3]= 0.770000;
+
+        // Set device properties TODO: Get from device
 	priv->base.properties.hsize = 0.126; //from calculated specs
 	priv->base.properties.vsize = 0.071; //from calculated specs
 	priv->base.properties.hres = 1920;
