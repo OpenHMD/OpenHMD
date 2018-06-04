@@ -273,9 +273,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
 			quatf rot = device->rotation;
-			quatf tmp = device->rotation_correction;
-			oquatf_mult_me(&tmp, &rot);
-			rot = tmp;
+                        oquatf_mult_me(&rot, &device->rotation_correction);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
 			omat4x4f_init_translate(&world_shift, -device->position.x +(device->properties.ipd / 2.0f), -device->position.y, -device->position.z);
@@ -340,9 +338,6 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 		*(quatf*)out = device->rotation;
 
 		oquatf_mult_me((quatf*)out, &device->rotation_correction);
-		quatf tmp = device->rotation_correction;
-		oquatf_mult_me(&tmp, (quatf*)out);
-		*(quatf*)out = tmp;
 		return OHMD_S_OK;
 	}
 	case OHMD_POSITION_VECTOR:
