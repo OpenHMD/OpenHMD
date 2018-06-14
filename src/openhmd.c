@@ -210,6 +210,7 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 		ohmd_device* device = driver->open_device(driver, desc);
 
 		if (device == NULL) {
+			ohmd_set_error(ctx, "Could not open device with index: %d, check device permissions?", index);
 			ohmd_unlock_mutex(ctx->update_mutex);
 			return NULL;
 		}
