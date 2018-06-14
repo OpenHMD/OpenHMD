@@ -82,6 +82,17 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_XGVR
+
+libopenhmd_la_SOURCES += \
+	drv_3glasses/xgvr.c \
+	drv_3glasses/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_XGVR
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
 if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \

@@ -82,6 +82,15 @@ if _drivers.contains('wmr')
 	deps += dep_hidapi
 endif
 
+if _drivers.contains('xgvr')
+	sources += [
+		'src/drv_3glasses/xgvr.c',
+		'src/drv_3glasses/packet.c',
+	]
+	c_args += '-DDRIVER_XGVR'
+	deps += dep_hidapi
+endif
+
 if _drivers.contains('external')
 	sources += [
 		'src/drv_external/external.c'
@@ -95,7 +104,6 @@ if _drivers.contains('android')
 	]
 	c_args += '-DDRIVER_ANDROID'
 endif
-
 
 openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), c_args : c_args, dependencies : deps, install : true, version : library_version)
 

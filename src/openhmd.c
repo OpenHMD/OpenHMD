@@ -50,6 +50,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_nolo_drv(ctx);
 #endif
 
+#if DRIVER_XGVR
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_xgvr_drv(ctx);
+#endif
+
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif

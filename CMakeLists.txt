@@ -38,6 +38,7 @@ OPTION(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
 OPTION(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
 OPTION(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
 OPTION(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
+OPTION(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
 OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -117,6 +118,18 @@ if(OPENHMD_DRIVER_NOLO)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_NOLO)
+
+if(OPENHMD_DRIVER_XGVR)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_3glasses/xgvr.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_3glasses/packet.c
+	)
+	add_definitions(-DDRIVER_XGVR)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_XGVR)
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files}
