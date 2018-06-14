@@ -131,6 +131,10 @@ int main(int argc, char** argv)
 	ohmd_device_settings_seti(settings, OHMD_IDS_AUTOMATIC_UPDATE, &auto_update);
 
 	ohmd_device* hmd = ohmd_list_open_device_s(ctx, 0, settings);
+	if(!hmd){
+		printf("failed to open device: %s\n", ohmd_ctx_get_error(ctx));
+		return 1;
+	}
 	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, &hmd_w);
 	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, &hmd_h);
 	float ipd;
@@ -159,11 +163,6 @@ int main(int argc, char** argv)
 	float warp_adj = 1.0f;
 
 	ohmd_device_settings_destroy(settings);
-
-	if(!hmd){
-		printf("failed to open device: %s\n", ohmd_ctx_get_error(ctx));
-		return 1;
-	}
 
 	gl_ctx gl;
 	init_gl(&gl, hmd_w, hmd_h);
