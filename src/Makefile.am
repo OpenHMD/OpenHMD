@@ -92,6 +92,9 @@ if BUILD_DRIVER_ANDROID
 
 libopenhmd_la_SOURCES += \
 	drv_android/android.c
+
+libopenhmd_la_CPPFLAGS += -DDRIVER_ANDROID
+libopenhmd_la_LDFLAGS += -landroid
 endif
 
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)

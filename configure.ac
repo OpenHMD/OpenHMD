@@ -20,16 +20,23 @@ PKG_PROG_PKG_CONFIG([0.24])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 hidapi="hidapi"
+deps_ld_flags="-lhidapi"
 AC_SUBST(hidapi)
+AC_SUBST(deps_ld_flags)
 
 AC_SUBST(PKG_CONFIG_EXTRA_PATH, "")
 AC_SUBST(EXTRA_LD_FLAGS, "")
 
 AC_MSG_CHECKING([operating system])
 AS_CASE(["$host"],
+	[*-androideabi],
+		[hidapi=""
+		deps_ld_flags="-landroid"
+		AC_SUBST(EXTRA_LD_FLAGS, "-lm")],
 	[*-linux*],
 		[AC_MSG_RESULT([$host (Linux)])
 		hidapi="hidapi-libusb"
+		deps_ld_flags="-lhidapi-libusb"
 
 		#link with realtime lib on linux for clock_gettime, and libm for math functions such as sincosf
 		AC_SUBST(EXTRA_LD_FLAGS, "-lrt -lpthread -lm")],
