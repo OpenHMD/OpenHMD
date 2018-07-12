@@ -131,7 +131,7 @@ static void _priv_update_properties(xgvr_priv* priv)
     priv->device.properties.controls_types[2] = OHMD_DIGITAL;
 
     //setup generic distortion coeffs, from hand-calibration
-    ohmd_set_universal_distortion_k(&(priv->device.properties), 0, 0, 0, 1);
+    ohmd_set_universal_distortion_k(&(priv->device.properties), 0.75239515, -0.84751135, 0.42455423, 0.66200626);
     ohmd_set_universal_aberration_k(&(priv->device.properties), 1.0, 1.0, 1.0);
 }
 
