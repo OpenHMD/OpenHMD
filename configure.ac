@@ -102,6 +102,15 @@ AC_ARG_ENABLE([driver-nolo],
 
 AM_CONDITIONAL([BUILD_DRIVER_NOLO], [test "x$driver_nolo_enabled" != "xno"])
 
+# 3Glasses HMD driver
+AC_ARG_ENABLE([driver-xgvr],
+        [AS_HELP_STRING([--disable-driver-xgvr],
+                [disable building of 3glasses driver [default=yes]])],
+        [driver_xgvr_enabled=$enableval],
+        [driver_xgvr_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_XGVR], [test "x$driver_xgvr_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -139,6 +148,10 @@ AS_IF([test "x$driver_psvr_enabled" != "xno"],
 # Libs required by NOLO VR Driver
 AS_IF([test "x$driver_nolo_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by 3Glasses HMD Driver
+AS_IF([test "x$driver_xgvr_enabled" != "xno"],
+        [PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?
 AC_ARG_ENABLE([openglexample],
