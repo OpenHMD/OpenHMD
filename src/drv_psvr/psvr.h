@@ -18,7 +18,6 @@ typedef struct
 	int16_t accel[3];
 	int16_t gyro[3];
 	uint32_t tick;
-	uint8_t seq;
 } psvr_sensor_sample;
 
 typedef struct
@@ -27,6 +26,7 @@ typedef struct
 	uint16_t volume;
 	psvr_sensor_sample samples[1];
 	uint16_t proximity;
+	uint8_t seq;
 } psvr_sensor_packet;
 
 static const unsigned char psvr_vrmode_on[8]  = {
