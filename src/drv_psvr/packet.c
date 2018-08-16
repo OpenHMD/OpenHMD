@@ -32,7 +32,8 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 		return false;
 	}
 
-	buffer += 2; //skip 2
+	pkt->buttons = read8(&buffer);
+	buffer += 1; //skip 1
 	pkt->samples[0].volume = read16(&buffer); //volume
 	buffer += 12; //unknown, skip 12
 	pkt->samples[0].tick = read32(&buffer); //TICK

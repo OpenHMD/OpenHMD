@@ -8,11 +8,10 @@
 
 typedef enum
 {
-	PSVR_IRQ_SENSORS = 0,
-	PSVR_IRQ_VOLUME_PLUS = 2,
-	PSVR_IRQ_VOLUME_MINUS = 4,
-	PSVR_IRQ_MIC_MUTE = 8
-} psvr_irq_cmd;
+	PSVR_BUTTON_VOLUME_PLUS = 2,
+	PSVR_BUTTON_VOLUME_MINUS = 4,
+	PSVR_BUTTON_MIC_MUTE = 8
+} psvr_button;
 
 typedef struct
 {
@@ -27,7 +26,7 @@ typedef struct
 
 typedef struct
 {
-	uint8_t report_id;
+	uint8_t buttons;
 	uint32_t tick;
 	psvr_sensor_sample samples[1];
 } psvr_sensor_packet;

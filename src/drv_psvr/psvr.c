@@ -33,6 +33,7 @@ typedef struct {
 	vec3f raw_accel, raw_gyro;
 	uint32_t last_ticks;
 	uint8_t last_seq;
+	uint8_t buttons;
 	psvr_sensor_packet sensor;
 
 } psvr_priv;
@@ -70,6 +71,8 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 		// reset dt to tick_len for the last samples if there were more than one sample
 		dt = TICK_LEN;
 	}
+
+	priv->buttons = s->buttons;
 }
 
 static void update_device(ohmd_device* device)
@@ -88,18 +91,7 @@ static void update_device(ohmd_device* device)
 			return; // No more messages, return.
 		}
 
-		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == PSVR_IRQ_SENSORS){
-			handle_tracker_sensor_msg(priv, buffer, size);
-		}else if (buffer[0] == PSVR_IRQ_VOLUME_PLUS){
-			//TODO implement
-		}else if (buffer[0] == PSVR_IRQ_VOLUME_MINUS){
-			//TODO implement
-		}else if (buffer[0] == PSVR_IRQ_MIC_MUTE){
-			//TODO implement
-		}else{
-			LOGE("unknown message type: %u", buffer[0]);
-		}
+		handle_tracker_sensor_msg(priv, buffer, size);
 	}
 
 	if(size < 0){
@@ -123,6 +115,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	case OHMD_DISTORTION_K:
 		// TODO this should be set to the equivalent of no distortion
 		memset(out, 0, sizeof(float) * 6);
+		break;
+
+	case OHMD_CONTROLS_STATE:
+		out[0] = (priv->buttons & PSVR_BUTTON_VOLUME_PLUS) != 0;
+		out[1] = (priv->buttons & PSVR_BUTTON_VOLUME_MINUS) != 0;
+		out[2] = (priv->buttons & PSVR_BUTTON_MIC_MUTE) != 0;
 		break;
 
 	default:
@@ -230,6 +228,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
+
+	priv->base.properties.control_count = 3;
+	priv->base.properties.controls_hints[0] = OHMD_VOLUME_PLUS;
+	priv->base.properties.controls_hints[1] = OHMD_VOLUME_MINUS;
+	priv->base.properties.controls_hints[2] = OHMD_MIC_MUTE;
+	priv->base.properties.controls_types[0] = OHMD_DIGITAL;
+	priv->base.properties.controls_types[1] = OHMD_DIGITAL;
+	priv->base.properties.controls_types[2] = OHMD_DIGITAL;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
