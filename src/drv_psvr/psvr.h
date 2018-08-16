@@ -23,6 +23,7 @@ typedef struct
 typedef struct
 {
 	uint8_t buttons;
+	uint8_t state;
 	uint16_t volume;
 	psvr_sensor_sample samples[2];
 	uint16_t proximity;

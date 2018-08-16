@@ -35,7 +35,9 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 	pkt->buttons = read8(&buffer);
 	buffer += 1; //skip 1
 	pkt->volume = read16(&buffer); //volume
-	buffer += 12; //unknown, skip 12
+	buffer += 1; //unknown, skip 1
+	pkt->state = read8(&buffer);
+	buffer += 10; //unknown, skip 10
 	pkt->samples[0].tick = read32(&buffer); //TICK
 	// acceleration
 	for(int i = 0; i < 3; i++){
