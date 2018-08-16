@@ -46,7 +46,7 @@ void vec3f_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 
 static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, int size)
 {
-	uint32_t last_sample_tick = priv->sensor.samples[0].tick;
+	uint32_t last_sample_tick = priv->sensor.samples[1].tick;
 
 	if(!psvr_decode_sensor_packet(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
@@ -54,28 +54,32 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 
 	psvr_sensor_packet* s = &priv->sensor;
 
-	uint32_t tick_delta = 1000;
+	uint32_t tick_delta = 500;
 	if(last_sample_tick > 0){ //startup correction
 		tick_delta = s->samples[0].tick - last_sample_tick;
 		if (tick_delta > 0xffffff)
 			tick_delta += 0x1000000;
-		if (tick_delta < 950 || tick_delta > 1050) {
+		if (tick_delta < 475 || tick_delta > 525){
 			LOGD("tick_delta = %u\n", tick_delta)
-			tick_delta = 1000;
+			tick_delta = 500;
 		}
 	}
 
 	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for 	 frame
+	for(int i = 0; i < 2; i++){
 		vec3f_from_psvr_vec(s->samples[i].accel, &priv->raw_accel);
 		vec3f_from_psvr_vec(s->samples[i].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
-		// reset dt to tick_len for the last samples if there were more than one sample
-		dt = TICK_LEN;
+		if (i == 0) {
+			tick_delta = s->samples[1].tick - s->samples[0].tick;
+			if (tick_delta > 0xffffff)
+				tick_delta += 0x1000000;
+			dt = tick_delta * TICK_LEN;
+		}
 	}
 
 	priv->buttons = s->buttons;
