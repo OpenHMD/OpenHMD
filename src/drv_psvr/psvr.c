@@ -9,7 +9,7 @@
 
 #define FEATURE_BUFFER_SIZE 256
 
-#define TICK_LEN (1.0f / 1000000.0f) // 1000 Hz ticks
+#define TICK_LEN (1.0f / 1000000.0f) // 1 MHz ticks
 
 #define SONY_ID                  0x054c
 #define PSVR_HMD                 0x09af
@@ -31,7 +31,6 @@ typedef struct {
 	hid_device* hmd_control;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
-	uint32_t last_ticks;
 	uint8_t last_seq;
 	uint8_t buttons;
 	psvr_sensor_packet sensor;
@@ -47,7 +46,7 @@ void vec3f_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 
 static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, int size)
 {
-	uint32_t last_sample_tick = priv->sensor.tick;
+	uint32_t last_sample_tick = priv->sensor.samples[0].tick;
 
 	if(!psvr_decode_sensor_packet(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
@@ -56,8 +55,15 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 	psvr_sensor_packet* s = &priv->sensor;
 
 	uint32_t tick_delta = 1000;
-	if(last_sample_tick > 0) //startup correction
-		tick_delta = s->tick - last_sample_tick;
+	if(last_sample_tick > 0){ //startup correction
+		tick_delta = s->samples[0].tick - last_sample_tick;
+		if (tick_delta > 0xffffff)
+			tick_delta += 0x1000000;
+		if (tick_delta < 950 || tick_delta > 1050) {
+			LOGD("tick_delta = %u\n", tick_delta)
+			tick_delta = 1000;
+		}
+	}
 
 	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
