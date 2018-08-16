@@ -26,6 +26,7 @@ typedef struct
 	uint8_t state;
 	uint16_t volume;
 	psvr_sensor_sample samples[2];
+	uint16_t button_raw;
 	uint16_t proximity;
 	uint8_t seq;
 } psvr_sensor_packet;
