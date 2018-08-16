@@ -19,7 +19,6 @@ typedef struct
 	int16_t gyro[3];
 	uint32_t tick;
 	uint8_t seq;
-	uint8_t volume;
 	uint8_t proximity;
 	uint8_t proximity_state;
 } psvr_sensor_sample;
@@ -27,6 +26,7 @@ typedef struct
 typedef struct
 {
 	uint8_t buttons;
+	uint16_t volume;
 	uint32_t tick;
 	psvr_sensor_sample samples[1];
 } psvr_sensor_packet;
