@@ -46,7 +46,14 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 	for(int i = 0; i < 3; i++){
 		pkt->samples[0].accel[i] = read16(&buffer);
 	}//34
-	buffer += 23; //probably other sample somewhere
+	pkt->samples[1].tick = read32(&buffer);
+	for(int i = 0; i < 3; i++){
+		pkt->samples[1].gyro[i] = read16(&buffer);
+	}
+	for(int i = 0; i < 3; i++){
+		pkt->samples[1].accel[i] = read16(&buffer);
+	}//50
+	buffer += 7; //unknown, skip 7
 	pkt->proximity = read16(&buffer); // ~150 (nothing) to 1023 (headset is on)
 	buffer += 6; //unknown, skip 6
 	pkt->seq = read8(&buffer);
