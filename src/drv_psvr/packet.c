@@ -47,8 +47,7 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 		pkt->samples[0].accel[i] = read16(&buffer);
 	}//34
 	buffer += 23; //probably other sample somewhere
-	pkt->samples[0].proximity = read8(&buffer); //255 for close
-	pkt->samples[0].proximity_state = read8(&buffer); // 0 (nothing) to 3 (headset is on)
+	pkt->proximity = read16(&buffer); // ~150 (nothing) to 1023 (headset is on)
 
 	return true;
 }
