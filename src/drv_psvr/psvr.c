@@ -207,10 +207,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 
 	// turn the display on
-	hid_write(priv->hmd_control, psvr_power_on, sizeof(psvr_power_on));
-	
+	if (hid_write(priv->hmd_control, psvr_power_on, sizeof(psvr_power_on)) == -1) {
+		ohmd_set_error(driver->ctx, "failed to write to device (power on)");
+		goto cleanup;
+	}
+
 	// set VR mode for the hmd
-	hid_write(priv->hmd_control, psvr_vrmode_on, sizeof(psvr_vrmode_on));
+	if (hid_write(priv->hmd_control, psvr_vrmode_on, sizeof(psvr_vrmode_on)) == -1) {
+		ohmd_set_error(driver->ctx, "failed to write to device (set VR mode)");
+		goto cleanup;
+	}
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
