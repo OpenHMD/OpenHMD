@@ -105,7 +105,8 @@ int main(int argc, char** argv)
 	ohmd_device_geti(hmd, OHMD_CONTROL_COUNT, &control_count);
 
 	const char* controls_fn_str[] = { "generic", "trigger", "trigger_click", "squeeze", "menu", "home",
-		"analog-x", "analog-y", "anlog_press", "button-a", "button-b", "button-x", "button-y"};
+		"analog-x", "analog-y", "anlog_press", "button-a", "button-b", "button-x", "button-y",
+		"volume-up", "volume-down", "mic-mute"};
 
 	const char* controls_type_str[] = {"digital", "analog"};
 

@@ -9,7 +9,7 @@
 
 #define FEATURE_BUFFER_SIZE 256
 
-#define TICK_LEN (1.0f / 1000000.0f) // 1000 Hz ticks
+#define TICK_LEN (1.0f / 1000000.0f) // 1 MHz ticks
 
 #define SONY_ID                  0x054c
 #define PSVR_HMD                 0x09af
@@ -31,22 +31,29 @@ typedef struct {
 	hid_device* hmd_control;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
-	uint32_t last_ticks;
 	uint8_t last_seq;
+	uint8_t buttons;
 	psvr_sensor_packet sensor;
 
 } psvr_priv;
 
-void vec3f_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
+void accel_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 {
-	out_vec->x = (float)smp[1] * 0.001f;
-	out_vec->y = (float)smp[0] * 0.001f;
-	out_vec->z = (float)smp[2] * 0.001f * -1.0f;
+	out_vec->x = (float)smp[1] *  (9.81 / 16384);
+	out_vec->y = (float)smp[0] *  (9.81 / 16384);
+	out_vec->z = (float)smp[2] * -(9.81 / 16384);
+}
+
+void gyro_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
+{
+	out_vec->x = (float)smp[1] * 0.00105f;
+	out_vec->y = (float)smp[0] * 0.00105f;
+	out_vec->z = (float)smp[2] * 0.00105f * -1.0f;
 }
 
 static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, int size)
 {
-	uint32_t last_sample_tick = priv->sensor.tick;
+	uint32_t last_sample_tick = priv->sensor.samples[1].tick;
 
 	if(!psvr_decode_sensor_packet(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
@@ -54,22 +61,35 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 
 	psvr_sensor_packet* s = &priv->sensor;
 
-	uint32_t tick_delta = 1000;
-	if(last_sample_tick > 0) //startup correction
-		tick_delta = s->tick - last_sample_tick;
+	uint32_t tick_delta = 500;
+	if(last_sample_tick > 0){ //startup correction
+		tick_delta = s->samples[0].tick - last_sample_tick;
+		if (tick_delta > 0xffffff)
+			tick_delta += 0x1000000;
+		if (tick_delta < 475 || tick_delta > 525){
+			LOGD("tick_delta = %u\n", tick_delta)
+			tick_delta = 500;
+		}
+	}
 
 	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 1; i++){ //just use 1 sample since we don't have sample order for 	 frame
-		vec3f_from_psvr_vec(s->samples[i].accel, &priv->raw_accel);
-		vec3f_from_psvr_vec(s->samples[i].gyro, &priv->raw_gyro);
+	for(int i = 0; i < 2; i++){
+		accel_from_psvr_vec(s->samples[0].accel, &priv->raw_accel);
+		gyro_from_psvr_vec(s->samples[0].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
-		// reset dt to tick_len for the last samples if there were more than one sample
-		dt = TICK_LEN;
+		if (i == 0) {
+			tick_delta = s->samples[1].tick - s->samples[0].tick;
+			if (tick_delta > 0xffffff)
+				tick_delta += 0x1000000;
+			dt = tick_delta * TICK_LEN;
+		}
 	}
+
+	priv->buttons = s->buttons;
 }
 
 static void update_device(ohmd_device* device)
@@ -88,18 +108,7 @@ static void update_device(ohmd_device* device)
 			return; // No more messages, return.
 		}
 
-		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == PSVR_IRQ_SENSORS){
-			handle_tracker_sensor_msg(priv, buffer, size);
-		}else if (buffer[0] == PSVR_IRQ_VOLUME_PLUS){
-			//TODO implement
-		}else if (buffer[0] == PSVR_IRQ_VOLUME_MINUS){
-			//TODO implement
-		}else if (buffer[0] == PSVR_IRQ_MIC_MUTE){
-			//TODO implement
-		}else{
-			LOGE("unknown message type: %u", buffer[0]);
-		}
+		handle_tracker_sensor_msg(priv, buffer, size);
 	}
 
 	if(size < 0){
@@ -123,6 +132,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	case OHMD_DISTORTION_K:
 		// TODO this should be set to the equivalent of no distortion
 		memset(out, 0, sizeof(float) * 6);
+		break;
+
+	case OHMD_CONTROLS_STATE:
+		out[0] = (priv->buttons & PSVR_BUTTON_VOLUME_PLUS) != 0;
+		out[1] = (priv->buttons & PSVR_BUTTON_VOLUME_MINUS) != 0;
+		out[2] = (priv->buttons & PSVR_BUTTON_MIC_MUTE) != 0;
 		break;
 
 	default:
@@ -209,10 +224,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	}
 
 	// turn the display on
-	hid_write(priv->hmd_control, psvr_power_on, sizeof(psvr_power_on));
-	
+	if (hid_write(priv->hmd_control, psvr_power_on, sizeof(psvr_power_on)) == -1) {
+		ohmd_set_error(driver->ctx, "failed to write to device (power on)");
+		goto cleanup;
+	}
+
 	// set VR mode for the hmd
-	hid_write(priv->hmd_control, psvr_vrmode_on, sizeof(psvr_vrmode_on));
+	if (hid_write(priv->hmd_control, psvr_vrmode_on, sizeof(psvr_vrmode_on)) == -1) {
+		ohmd_set_error(driver->ctx, "failed to write to device (set VR mode)");
+		goto cleanup;
+	}
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
@@ -230,6 +251,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact mesurements
 	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
+
+	priv->base.properties.control_count = 3;
+	priv->base.properties.controls_hints[0] = OHMD_VOLUME_PLUS;
+	priv->base.properties.controls_hints[1] = OHMD_VOLUME_MINUS;
+	priv->base.properties.controls_hints[2] = OHMD_MIC_MUTE;
+	priv->base.properties.controls_types[0] = OHMD_DIGITAL;
+	priv->base.properties.controls_types[1] = OHMD_DIGITAL;
+	priv->base.properties.controls_types[2] = OHMD_DIGITAL;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
