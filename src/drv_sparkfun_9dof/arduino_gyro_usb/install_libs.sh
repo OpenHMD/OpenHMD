@@ -1,4 +1,9 @@
 #!/bin/sh
+# 
+# OpenHMD - Free and Open Source API and drivers for immersive technology.
+# Copyright (C) 2018 Bernd Lehmann.
+# Distributed under the Boost 1.0 licence, see LICENSE for full text.
+
 ARDUINO="arduino"
 BOARDMNG="https://raw.githubusercontent.com/sparkfun/Arduino_Boards/master/IDE_Board_Manager/package_sparkfun_index.json"
 MPU_9250_DMP="https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library/archive"

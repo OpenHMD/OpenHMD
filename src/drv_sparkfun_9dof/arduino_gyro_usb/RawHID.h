@@ -1,3 +1,8 @@
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ * Copyright (C) 2018 Bernd Lehmann.
+ * Distributed under the Boost 1.0 licence, see LICENSE for full text.
+ */
 #ifndef __RAWHID_H__
 #define __RAWHID_H__
 
