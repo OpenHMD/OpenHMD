@@ -15,7 +15,7 @@ Folowing software packages are required:
 - [SparkFun MPU-9250-DMP Arduino Library](https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library)
 
 For more information on the prerequisites for the SparkFun 9DoF Razor IMU M0 refere
-to the [Hookup Guide](https://leran.sparkfun.com/tutorials/9dof-razor-imu-m0-hookup-guide).
+to the [Hookup Guide](https://learn.sparkfun.com/tutorials/9dof-razor-imu-m0-hookup-guide).
 
 # Install on Linux
 
