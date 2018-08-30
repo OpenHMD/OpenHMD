@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 project(openhmd C CXX)
 set(CMAKE_C_FLAGS "-std=c99")
