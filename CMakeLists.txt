@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 project(openhmd C CXX)
-set(CMAKE_C_FLAGS "-std=c99")
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(LIB_VERSION_MAJOR 0)
