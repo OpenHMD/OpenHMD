@@ -10,7 +10,6 @@ set(LIB_VERSION_PATCH 0)
 set(LIB_VERSION_STRING ${LIB_VERSION_MAJOR}.${LIB_VERSION_MINOR}.${LIB_VERSION_PATCH})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
 if (MSVC)
   # Add the "lib" prefix for generated .lib outputs.
@@ -156,14 +155,18 @@ if (OPENHMD_EXAMPLE_SDL)
 	add_subdirectory(./examples/opengl)
 endif (OPENHMD_EXAMPLE_SDL)
 
-if (UNIX)
-	set(LIBS ${LIBS} rt pthread)
-endif (UNIX)
 
-link_libraries(${LIBS})
 add_library(openhmd ${openhmd_source_files})
 SET_TARGET_PROPERTIES(openhmd PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
+target_include_directories(openhmd PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(openhmd ${LIBS})
+if (UNIX)
+        target_link_libraries(openhmd rt pthread)
+endif (UNIX)
+
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
+
+export(TARGETS openhmd FILE openhmd-config.cmake)
 
 #install properties
 install (TARGETS openhmd DESTINATION lib)
