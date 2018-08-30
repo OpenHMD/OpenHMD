@@ -31,18 +31,18 @@ set(openhmd_source_files
 	${CMAKE_CURRENT_LIST_DIR}/src/shaders.c
 )
 
-OPTION(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
-OPTION(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
-OPTION(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
-OPTION(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
-OPTION(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
-OPTION(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
-OPTION(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
-OPTION(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
-OPTION(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
+option(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
+option(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
+option(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
+option(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
+option(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
+option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
+option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
+option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
+option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
-OPTION(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
-OPTION(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
+option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
+option(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
 
 if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(openhmd_source_files ${openhmd_source_files}
@@ -157,7 +157,7 @@ endif (OPENHMD_EXAMPLE_SDL)
 
 
 add_library(openhmd ${openhmd_source_files})
-SET_TARGET_PROPERTIES(openhmd PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
+set_target_properties(openhmd PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
 target_include_directories(openhmd PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(openhmd ${LIBS})
 if (UNIX)
