@@ -8,28 +8,27 @@
 
 typedef enum
 {
-	PSVR_IRQ_SENSORS = 0,
-	PSVR_IRQ_VOLUME_PLUS = 2,
-	PSVR_IRQ_VOLUME_MINUS = 4,
-	PSVR_IRQ_MIC_MUTE = 8
-} psvr_irq_cmd;
+	PSVR_BUTTON_VOLUME_PLUS = 2,
+	PSVR_BUTTON_VOLUME_MINUS = 4,
+	PSVR_BUTTON_MIC_MUTE = 8
+} psvr_button;
 
 typedef struct
 {
 	int16_t accel[3];
 	int16_t gyro[3];
 	uint32_t tick;
-	uint8_t seq;
-	uint8_t volume;
-	uint8_t proximity;
-	uint8_t proximity_state;
 } psvr_sensor_sample;
 
 typedef struct
 {
-	uint8_t report_id;
-	uint32_t tick;
-	psvr_sensor_sample samples[1];
+	uint8_t buttons;
+	uint8_t state;
+	uint16_t volume;
+	psvr_sensor_sample samples[2];
+	uint16_t button_raw;
+	uint16_t proximity;
+	uint8_t seq;
 } psvr_sensor_packet;
 
 static const unsigned char psvr_vrmode_on[8]  = {

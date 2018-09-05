@@ -81,6 +81,9 @@ typedef enum {
 	OHMD_BUTTON_B       = 10,
 	OHMD_BUTTON_X       = 11,
 	OHMD_BUTTON_Y       = 12,
+	OHMD_VOLUME_PLUS    = 13,
+	OHMD_VOLUME_MINUS   = 14,
+	OHMD_MIC_MUTE       = 15,
 } ohmd_control_hint;
 
 /** Control type. Indicates whether controls are digital or analog. */
