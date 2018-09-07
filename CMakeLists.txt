@@ -11,6 +11,8 @@ set(LIB_VERSION_STRING ${LIB_VERSION_MAJOR}.${LIB_VERSION_MINOR}.${LIB_VERSION_P
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
+option(BUILD_BOTH_STATIC_SHARED_LIB OFF)
+
 if (MSVC)
   # Add the "lib" prefix for generated .lib outputs.
   set(LIB_PREFIX lib)
@@ -155,19 +157,49 @@ if (OPENHMD_EXAMPLE_SDL)
 	add_subdirectory(./examples/opengl)
 endif (OPENHMD_EXAMPLE_SDL)
 
+if (BUILD_BOTH_STATIC_SHARED_LIBS)
 
-add_library(openhmd ${openhmd_source_files})
-set_target_properties(openhmd PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
-target_include_directories(openhmd PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(openhmd ${LIBS})
-if (UNIX)
-        target_link_libraries(openhmd rt pthread)
-endif (UNIX)
+	# Shared
+	add_library(openhmd-shared SHARED ${openhmd_source_files})
+	set_target_properties(openhmd-shared PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1 VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
+	target_include_directories(openhmd-shared PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+	target_link_libraries(openhmd-shared ${LIBS})
+	if (UNIX)
+	        target_link_libraries(openhmd-shared rt pthread)
+	endif (UNIX)
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
+	# Static
+	add_library(openhmd-static STATIC ${openhmd_source_files})
+	set_target_properties(openhmd-static PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1)
+	target_include_directories(openhmd-static PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+	target_link_libraries(openhmd-static ${LIBS})
+	if (UNIX)
+	        target_link_libraries(openhmd-static rt pthread)
+	endif (UNIX)
 
-export(TARGETS openhmd FILE openhmd-config.cmake)
+	add_library(openhmd ALIAS openhmd-shared)
+        
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
+	
+	install(TARGETS openhmd-shared openhmd-static DESTINATION lib)
+	install(FILES include/openhmd.h DESTINATION include)
 
-#install properties
-install (TARGETS openhmd DESTINATION lib)
-install (FILES include/openhmd.h DESTINATION include)
+else ()
+
+	# Static or Shared
+	add_library(openhmd ${openhmd_source_files})
+	set_target_properties(openhmd PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
+	target_include_directories(openhmd PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+	target_link_libraries(openhmd ${LIBS})
+	if (UNIX)
+	        target_link_libraries(openhmd rt pthread)
+	endif (UNIX)
+
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
+
+	export(TARGETS openhmd FILE openhmd-config.cmake)
+
+	install(TARGETS openhmd DESTINATION lib)
+	install(FILES include/openhmd.h DESTINATION include)
+
+endif ()
