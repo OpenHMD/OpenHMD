@@ -157,49 +157,44 @@ if (OPENHMD_EXAMPLE_SDL)
 	add_subdirectory(./examples/opengl)
 endif (OPENHMD_EXAMPLE_SDL)
 
+set(TARGETS "")
+
 if (BUILD_BOTH_STATIC_SHARED_LIBS)
 
 	# Shared
 	add_library(openhmd-shared SHARED ${openhmd_source_files})
-	set_target_properties(openhmd-shared PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1 VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
-	target_include_directories(openhmd-shared PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-	target_link_libraries(openhmd-shared ${LIBS})
-	if (UNIX)
-	        target_link_libraries(openhmd-shared rt pthread)
-	endif (UNIX)
+	set_target_properties(openhmd-shared PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1)
 
 	# Static
 	add_library(openhmd-static STATIC ${openhmd_source_files})
 	set_target_properties(openhmd-static PROPERTIES OUTPUT_NAME openhmd CLEAN_DIRECT_OUTPUT 1)
-	target_include_directories(openhmd-static PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-	target_link_libraries(openhmd-static ${LIBS})
-	if (UNIX)
-	        target_link_libraries(openhmd-static rt pthread)
-	endif (UNIX)
 
+	# Alias needed to compile examples
 	add_library(openhmd ALIAS openhmd-shared)
-        
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
-	
-	install(TARGETS openhmd-shared openhmd-static DESTINATION lib)
-	install(FILES include/openhmd.h DESTINATION include)
+
+	set(TARGETS "openhmd-shared" "openhmd-static")
 
 else ()
 
 	# Static or Shared
 	add_library(openhmd ${openhmd_source_files})
-	set_target_properties(openhmd PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
-	target_include_directories(openhmd PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-	target_link_libraries(openhmd ${LIBS})
-	if (UNIX)
-	        target_link_libraries(openhmd rt pthread)
-	endif (UNIX)
-
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_DIR}/)
 
 	export(TARGETS openhmd FILE openhmd-config.cmake)
 
-	install(TARGETS openhmd DESTINATION lib)
-	install(FILES include/openhmd.h DESTINATION include)
+	set(TARGETS "openhmd")
 
 endif ()
+
+foreach(target ${TARGETS})
+
+	set_target_properties(${target} PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
+	target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+	target_link_libraries(${target} ${LIBS})
+	if (UNIX)
+		target_link_libraries(${target} rt pthread)
+	endif (UNIX)
+
+endforeach(target)
+
+install(TARGETS ${TARGETS} DESTINATION lib)
+install(FILES include/openhmd.h DESTINATION include)
