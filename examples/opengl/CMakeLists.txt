@@ -1,4 +1,4 @@
-project (openglexample)
+project (openglexample C)
 include_directories(${CMAKE_BINARY_DIR}/include ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR})
 add_executable(openglexample gl.c main.c)
