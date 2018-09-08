@@ -151,8 +151,8 @@ void oquatf_slerp (float fT, const quatf* rkP, const quatf* rkQ, bool shortestPa
 		float fSin = sqrtf(1 - (fCos*fCos));
 		float fAngle = atan2f(fSin, fCos); 
 		float fInvSin = 1.0f / fSin;
-		float fCoeff0 = sin((1.0f - fT) * fAngle) * fInvSin;
-		float fCoeff1 = sin(fT * fAngle) * fInvSin;
+		float fCoeff0 = sinf((1.0f - fT) * fAngle) * fInvSin;
+		float fCoeff1 = sinf(fT * fAngle) * fInvSin;
 		
 		out_q->x = fCoeff0 * rkP->x + fCoeff1 * rkT.x;
 		out_q->y = fCoeff0 * rkP->y + fCoeff1 * rkT.y;
