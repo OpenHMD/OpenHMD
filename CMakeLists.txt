@@ -15,6 +15,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 option(BUILD_BOTH_STATIC_SHARED_LIB OFF)
 
 if (MSVC)
+	add_definitions(/D_CRT_SECURE_NO_WARNINGS=1)
+endif()
+
+if (MSVC)
   # Add the "lib" prefix for generated .lib outputs.
   set(LIB_PREFIX lib)
 else (MSVC)
