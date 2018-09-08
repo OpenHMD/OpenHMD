@@ -195,6 +195,11 @@ foreach(target ${TARGETS})
 		target_link_libraries(${target} rt pthread)
 	endif (UNIX)
 
+	get_target_property(target_type ${target} TYPE)
+	if (target_type STREQUAL "STATIC_LIBRARY")
+	    target_compile_definitions(${target} PUBLIC -DOHMD_STATIC)
+	endif()
+
 endforeach(target)
 
 install(TARGETS ${TARGETS} DESTINATION lib)
