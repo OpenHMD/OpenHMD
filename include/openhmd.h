@@ -63,6 +63,8 @@ typedef enum {
 	OHMD_GLSL_DISTORTION_FRAG_SRC = 1,
 	OHMD_GLSL_330_DISTORTION_VERT_SRC = 2,
 	OHMD_GLSL_330_DISTORTION_FRAG_SRC = 3,
+	OHMD_GLSL_ES_DISTORTION_VERT_SRC = 4,
+	OHMD_GLSL_ES_DISTORTION_FRAG_SRC = 5,
 } ohmd_string_description;
 
 /** Standard controls. Note that this is not an index into the control state. 
