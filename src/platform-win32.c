@@ -159,7 +159,7 @@ void ohmd_toggle_ovr_service(int state) //State is 0 for Disable, 1 for Enable
 	else if (state == 1 && _enable_ovr_service)
 	{
 		// Start it 
-		BOOL b = StartService(serviceHandle, NULL, NULL); 
+		BOOL b = StartService(serviceHandle, 0, NULL);
 		if (b) 
 			printf("OVRService started\n");
 		else 
