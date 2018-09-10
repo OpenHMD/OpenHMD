@@ -108,11 +108,11 @@ libopenhmd_la_CPPFLAGS += -DDRIVER_ANDROID
 libopenhmd_la_LDFLAGS += -landroid
 endif
 
-if BUILD_DRIVER_SPARKFUN_9DOF
+if BUILD_DRIVER_SPARKFUN9DOF
 
 libopenhmd_la_SOURCES += drv_sparkfun_9dof/sparkFun9DoF.c
 
-libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_SPARKFUN9DOF
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_COMMUNITY_SPARKFUN9DOF
 libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif

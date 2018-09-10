@@ -121,8 +121,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Set device properties (imitates the rift values)
 	priv->base.properties.hsize = 0.128490f;
 	priv->base.properties.vsize = 0.070940f;
-	priv->base.properties.hres = 2560;
-	priv->base.properties.vres = 1440;
+	priv->base.properties.hres = 1440;
+	priv->base.properties.vres = 2560;
 	priv->base.properties.lens_sep = 0.063500f;
 	priv->base.properties.lens_vpos = 0.070940f / 2;
 	priv->base.properties.fov = DEG_TO_RAD(103.0f);
