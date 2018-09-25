@@ -558,7 +558,7 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props)
 	// XXX: on CV1, props->hsize > props->lens_sep / 2.0,
 	// I am not sure about the implications, but just taking the absolute
 	// value of the offset seems to work.
-	float proj_offset = fabs(4.0f * lens_shift / props->hsize);
+	float proj_offset = fabsf(4.0f * lens_shift / props->hsize);
 
 	// Setup the base projection matrix. Each eye mostly have the
 	// same projection matrix with the exception of the offset.
