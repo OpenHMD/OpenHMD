@@ -97,6 +97,7 @@ if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \
 	drv_external/external.c
+libopenhmd_la_CPPFLAGS += -DDRIVER_EXTERNAL
 endif
 
 if BUILD_DRIVER_ANDROID

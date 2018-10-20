@@ -14,15 +14,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(BUILD_BOTH_STATIC_SHARED_LIB OFF)
 
-if (MSVC)
-  # Add the "lib" prefix for generated .lib outputs.
-  set(LIB_PREFIX lib)
-else (MSVC)
-  # When building with "make", "lib" prefix will be added automatically by
-  # the build tool.
-  set(LIB_PREFIX)
-endif (MSVC)
-
 #source files set just for Android
 set(openhmd_source_files
 	${CMAKE_CURRENT_LIST_DIR}/src/openhmd.c

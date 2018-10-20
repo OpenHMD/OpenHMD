@@ -61,10 +61,11 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 #if DRIVER_COMMUNITY_SPARKFUN9DOF
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_sparkfun9dof_drv(ctx);
 #endif
-
+  
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
+  
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
 
@@ -136,6 +137,12 @@ int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
 		return OHMD_S_OK;
 	case OHMD_GLSL_330_DISTORTION_FRAG_SRC:
 		*out = distortion_frag_330;
+		return OHMD_S_OK;
+	case OHMD_GLSL_ES_DISTORTION_VERT_SRC:
+		*out = distortion_vert_es;
+		return OHMD_S_OK;
+	case OHMD_GLSL_ES_DISTORTION_FRAG_SRC:
+		*out = distortion_frag_es;
 		return OHMD_S_OK;
 	default:
 		return OHMD_S_UNSUPPORTED;
