@@ -34,19 +34,36 @@ void imu_filter_msg_handler(omodule* source, omessage* msg, void* user_data)
 	}
 }
 
+test_data td;
+
+omodule* test_module_factory(ohmd_context* ctx, const char* module_name, omessage* args)
+{
+	if(strcmp(module_name, "test imu") == 0){
+		omodule* imu = omodule_create(ctx, "test imu", 0x123, NULL);
+		omodule_add_output(imu, "accel+gyro");
+
+		return imu;
+	}
+
+	if(strcmp(module_name, "test imu filter") == 0){
+		omodule* imu_filter = omodule_create(ctx, "test imu filter", 0x234, NULL);
+		omodule_add_input(imu_filter, "accel+gyro", imu_filter_msg_handler, &td);
+
+		return imu_filter;
+	}
+
+	return NULL;
+}
+
 void test_module_connect()
 {
-	ohmd_context* ctx = ohmd_ctx_create();
-	
-	omodule* imu = omodule_create(ctx, "test imu", 0x123);
-	omodule_add_output(imu, "accel+gyro");
-
-	omodule* imu_filter = omodule_create(ctx, "test imu filter", 0x234);
-
-	test_data td;
 	memset(&td, 0, sizeof(test_data));
+	ohmd_context* ctx = ohmd_ctx_create();
 
-	omodule_add_input(imu_filter, "accel+gyro", imu_filter_msg_handler, &td);
+	ohmd_ctx_add_module_factory(ctx, test_module_factory);
+
+	omodule* imu = ohmd_ctx_get_module_instance(ctx, "test imu", NULL);
+	omodule* imu_filter = ohmd_ctx_get_module_instance(ctx, "test imu filter", NULL);
 	
 	ohmd_status s = omodule_connect(imu, "accel+gyro", imu_filter, "accel+gyro");
 	TAssert(s == OHMD_S_OK);

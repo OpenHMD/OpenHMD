@@ -23,6 +23,7 @@ extern "C" {
 // modules and connections
 typedef struct omodule omodule;
 typedef struct omessage omessage;
+typedef omodule* (*omodule_factory_cb)(ohmd_context* ctx, const char* module_name, omessage* args);
 
 typedef enum
 {
@@ -43,7 +44,7 @@ typedef void (*omessage_callback)(omodule* source, omessage* msg, void* user_dat
 
 ohmd_status omodule_connect(omodule* from, const char* output_name, omodule* to, const char* input_name);
 
-omodule* omodule_create(ohmd_context* ctx, const char* name, uint64_t id);
+omodule* omodule_create(ohmd_context* ctx, const char* name, uint64_t id, void* data);
 int omodule_get_input_count(omodule* me);
 int omodule_get_output_count(omodule* me);
 const char* omodule_get_input_name(omodule* me, int idx);
@@ -51,6 +52,7 @@ const char* omodule_get_output_name(omodule* me, int idx);
 void omodule_add_output(omodule* me, const char* name);
 void omodule_add_input(omodule* me, const char* name,  omessage_callback callback, void* user_data);
 ohmd_status omodule_send_message(omodule* me, const char* output_name, omessage* msg);
+void* omodule_get_data(omodule* me);
 
 omessage* omessage_create(ohmd_context* ctx, const char* type_name);
 void omessage_add_float_data(omessage* me, const char* name, const float* data, int count, uint64_t timestamp);
@@ -65,6 +67,9 @@ const int* omessage_get_int_data(omessage* me, const char* name, int* out_count)
 const uint8_t* omessage_get_bin_data(omessage* me, const char* name, int* out_count);
 const char* omessage_get_string_data(omessage* me, const char* name, int* out_length);
 ohmd_status omessage_get_timestamp(omessage* me, const char* name, uint64_t* out_timestamp);
+
+void ohmd_ctx_add_module_factory(ohmd_context* ctx, omodule_factory_cb factory);
+omodule* ohmd_ctx_get_module_instance(ohmd_context* ctx, const char* name, omessage* args);
 
 #ifdef __cplusplus
 }

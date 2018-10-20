@@ -11,7 +11,8 @@ libopenhmd_la_SOURCES = \
 	platform-posix.c \
 	fusion.c \
 	shaders.c \
-	modules.c
+	modules.c \
+	drv_modular/modular.c
 
 libopenhmd_la_LDFLAGS = -no-undefined -version-info $(LT_VERSION)
 libopenhmd_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -Wall

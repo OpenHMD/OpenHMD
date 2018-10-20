@@ -21,6 +21,7 @@
 #include "platform.h"
 
 #define OHMD_MAX_DEVICES 16
+#define OHMD_MAX_MODULE_FACTORIES 256
 
 #define OHMD_MAX(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 #define OHMD_MIN(_a, _b) ((_a) < (_b) ? (_a) : (_b))
@@ -128,6 +129,9 @@ struct ohmd_context {
 	uint64_t monotonic_ticks_per_sec;
 
 	char error_msg[OHMD_STR_SIZE];
+
+	int num_module_factories;
+	omodule_factory_cb module_factories[OHMD_MAX_MODULE_FACTORIES];
 };
 
 // helper functions
@@ -140,9 +144,6 @@ void ohmd_calc_default_proj_matrices(ohmd_device_properties* props);
 void ohmd_set_universal_distortion_k(ohmd_device_properties* props, float a, float b, float c, float d);
 void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, float g, float b);
 
-// modules
-void ohmd_ctx_add_module(ohmd_context* ctx, omodule* module);
-
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
@@ -154,6 +155,7 @@ ohmd_driver* ohmd_create_nolo_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_xgvr_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_modular_drv(ohmd_context* ctx, omodule** out_module);
 
 #include "log.h"
 #include "omath.h"

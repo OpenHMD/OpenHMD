@@ -61,6 +61,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
+	
+	omodule* module;
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_modular_drv(ctx, &module);
+
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
 
@@ -608,4 +612,21 @@ uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_
 	// integer overflow.
 	return ticks / srcTicksPerSecond * dstTicksPerSecond +
 		ticks % srcTicksPerSecond * dstTicksPerSecond / srcTicksPerSecond;
+}
+
+void ohmd_ctx_add_module_factory(ohmd_context* ctx, omodule_factory_cb factory)
+{
+	ctx->module_factories[ctx->num_module_factories++] = factory;
+}
+
+omodule* ohmd_ctx_get_module_instance(ohmd_context* ctx, const char* name, omessage* args)
+{
+	for(int i = 0; i < ctx->num_module_factories; i++){
+		omodule* module = ((ctx->module_factories[i]))(ctx, name, args);
+
+		if(module != NULL)
+			return module;
+	}
+
+	return NULL;
 }

@@ -29,6 +29,7 @@ struct omodule
 	ohmd_context* ctx;
 	char name[MAX_NAME_LENGTH];
 	uint64_t id;
+	void* data;
 
 	ooutput outputs[MAX_OUTPUTS];
 	oinput inputs[MAX_INPUTS];
@@ -53,12 +54,13 @@ struct omessage
 	int data_count;
 };
 
-omodule* omodule_create(ohmd_context* ctx, const char* name, uint64_t id)
+omodule* omodule_create(ohmd_context* ctx, const char* name, uint64_t id, void* data)
 {
 	omodule* me = ohmd_alloc(ctx, sizeof(omodule));
 
 	strncpy(me->name, name, sizeof(me->name) - 1);
 	me->id = id;
+	me->data = data;
 
 	return me;
 }
@@ -162,6 +164,11 @@ ohmd_status omodule_send_message(omodule* me, const char* output_name, omessage*
 	}
 
 	return OHMD_S_OK; 
+}
+
+void* omodule_get_data(omodule* me)
+{
+	return me->data;
 }
 
 void omessage_add_data(omessage* me, const char* name, omessage_data_type type, int count, const void* data, uint64_t timestamp)
