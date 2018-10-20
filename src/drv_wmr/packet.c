@@ -1,3 +1,12 @@
+// Copyright 2018, Philipp Zabel.
+// SPDX-License-Identifier: BSL-1.0
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ */
+
+/* Windows Mixed Reality Driver */
+
+
 #include "wmr.h"
 
 #ifdef _MSC_VER

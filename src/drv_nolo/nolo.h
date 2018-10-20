@@ -1,10 +1,12 @@
+// Copyright 2017, Joey Ferwerda.
+// SPDX-License-Identifier: BSL-1.0
 /*
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
- * Copyright (C) 2017 Joey Ferwerda.
- * Distributed under the Boost 1.0 licence, see LICENSE for full text.
+ * Original implementation by: Yann Vernier.
  */
 
 /* NOLO VR - Internal Interface */
+
 
 #ifndef NOLODRIVER_H
 #define NOLODRIVER_H
