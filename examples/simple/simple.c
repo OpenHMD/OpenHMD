@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 	printf("\n\n");
 
 	int device_class = 0;
-	ohmd_device_geti(hmd, OHMD_DEVICE_CLASS, &device_class);
+	ohmd_list_geti(ctx, device_idx, OHMD_DEVICE_CLASS, &device_class);
 	// Ask for n rotation quaternions and position vectors
 	for(int i = 0; i < 10000; i++){
 		ohmd_ctx_update(ctx);
