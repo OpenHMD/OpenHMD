@@ -83,16 +83,31 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_XGVR
+
+libopenhmd_la_SOURCES += \
+	drv_3glasses/xgvr.c \
+	drv_3glasses/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_XGVR
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
 if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \
 	drv_external/external.c
+libopenhmd_la_CPPFLAGS += -DDRIVER_EXTERNAL
 endif
 
 if BUILD_DRIVER_ANDROID
 
 libopenhmd_la_SOURCES += \
 	drv_android/android.c
+
+libopenhmd_la_CPPFLAGS += -DDRIVER_ANDROID
+libopenhmd_la_LDFLAGS += -landroid
 endif
 
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)

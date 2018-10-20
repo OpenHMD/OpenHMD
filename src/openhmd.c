@@ -50,12 +50,16 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_nolo_drv(ctx);
 #endif
 
-#if DRIVER_EXTERNAL
-	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
+#if DRIVER_XGVR
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_xgvr_drv(ctx);
 #endif
 
 #if DRIVER_ANDROID
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
+#endif
+
+#if DRIVER_EXTERNAL
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
 	// add dummy driver last to make it the lowest priority
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_dummy_drv(ctx);
@@ -128,6 +132,12 @@ int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
 		return OHMD_S_OK;
 	case OHMD_GLSL_330_DISTORTION_FRAG_SRC:
 		*out = distortion_frag_330;
+		return OHMD_S_OK;
+	case OHMD_GLSL_ES_DISTORTION_VERT_SRC:
+		*out = distortion_vert_es;
+		return OHMD_S_OK;
+	case OHMD_GLSL_ES_DISTORTION_FRAG_SRC:
+		*out = distortion_frag_es;
 		return OHMD_S_OK;
 	default:
 		return OHMD_S_UNSUPPORTED;
@@ -210,6 +220,7 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 		ohmd_device* device = driver->open_device(driver, desc);
 
 		if (device == NULL) {
+			ohmd_set_error(ctx, "Could not open device with index: %d, check device permissions?", index);
 			ohmd_unlock_mutex(ctx->update_mutex);
 			return NULL;
 		}
@@ -273,9 +284,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	case OHMD_LEFT_EYE_GL_MODELVIEW_MATRIX: {
 			vec3f point = {{0, 0, 0}};
 			quatf rot = device->rotation;
-			quatf tmp = device->rotation_correction;
-			oquatf_mult_me(&tmp, &rot);
-			rot = tmp;
+			oquatf_mult_me(&rot, &device->rotation_correction);
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
 			omat4x4f_init_translate(&world_shift, -device->position.x +(device->properties.ipd / 2.0f), -device->position.y, -device->position.z);
@@ -340,9 +349,6 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 		*(quatf*)out = device->rotation;
 
 		oquatf_mult_me((quatf*)out, &device->rotation_correction);
-		quatf tmp = device->rotation_correction;
-		oquatf_mult_me(&tmp, (quatf*)out);
-		*(quatf*)out = tmp;
 		return OHMD_S_OK;
 	}
 	case OHMD_POSITION_VECTOR:

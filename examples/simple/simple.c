@@ -105,7 +105,8 @@ int main(int argc, char** argv)
 	ohmd_device_geti(hmd, OHMD_CONTROL_COUNT, &control_count);
 
 	const char* controls_fn_str[] = { "generic", "trigger", "trigger_click", "squeeze", "menu", "home",
-		"analog-x", "analog-y", "anlog_press", "button-a", "button-b", "button-x", "button-y"};
+		"analog-x", "analog-y", "anlog_press", "button-a", "button-b", "button-x", "button-y",
+		"volume-up", "volume-down", "mic-mute"};
 
 	const char* controls_type_str[] = {"digital", "analog"};
 
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
 	printf("\n\n");
 
 	int device_class = 0;
-	ohmd_device_geti(hmd, OHMD_DEVICE_CLASS, &device_class);
+	ohmd_list_geti(ctx, device_idx, OHMD_DEVICE_CLASS, &device_class);
 	// Ask for n rotation quaternions and position vectors
 	for(int i = 0; i < 10000; i++){
 		ohmd_ctx_update(ctx);

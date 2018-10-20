@@ -20,16 +20,23 @@ PKG_PROG_PKG_CONFIG([0.24])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 hidapi="hidapi"
+deps_ld_flags="-lhidapi"
 AC_SUBST(hidapi)
+AC_SUBST(deps_ld_flags)
 
 AC_SUBST(PKG_CONFIG_EXTRA_PATH, "")
 AC_SUBST(EXTRA_LD_FLAGS, "")
 
 AC_MSG_CHECKING([operating system])
 AS_CASE(["$host"],
+	[*-androideabi],
+		[hidapi=""
+		deps_ld_flags="-landroid"
+		AC_SUBST(EXTRA_LD_FLAGS, "-lm")],
 	[*-linux*],
 		[AC_MSG_RESULT([$host (Linux)])
 		hidapi="hidapi-libusb"
+		deps_ld_flags="-lhidapi-libusb"
 
 		#link with realtime lib on linux for clock_gettime, and libm for math functions such as sincosf
 		AC_SUBST(EXTRA_LD_FLAGS, "-lrt -lpthread -lm")],
@@ -95,6 +102,15 @@ AC_ARG_ENABLE([driver-nolo],
 
 AM_CONDITIONAL([BUILD_DRIVER_NOLO], [test "x$driver_nolo_enabled" != "xno"])
 
+# 3Glasses HMD driver
+AC_ARG_ENABLE([driver-xgvr],
+        [AS_HELP_STRING([--disable-driver-xgvr],
+                [disable building of 3glasses driver [default=yes]])],
+        [driver_xgvr_enabled=$enableval],
+        [driver_xgvr_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_XGVR], [test "x$driver_xgvr_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
@@ -132,6 +148,10 @@ AS_IF([test "x$driver_psvr_enabled" != "xno"],
 # Libs required by NOLO VR Driver
 AS_IF([test "x$driver_nolo_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by 3Glasses HMD Driver
+AS_IF([test "x$driver_xgvr_enabled" != "xno"],
+        [PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?
 AC_ARG_ENABLE([openglexample],
