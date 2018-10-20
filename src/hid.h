@@ -1,3 +1,12 @@
+// Copyright 2018, Philipp Zabel.
+// SPDX-License-Identifier: BSL-1.0
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ */
+
+/* Hid helper. */
+
+
 static inline char* _hid_to_unix_path(char* path)
 {
 	char bus [5];
@@ -12,4 +21,3 @@ static inline char* _hid_to_unix_path(char* path)
 		(int)strtol(dev, NULL, 16));
 	return result;
 }
-
