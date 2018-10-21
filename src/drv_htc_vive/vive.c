@@ -288,7 +288,7 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	return ret;
 }
 
-void vive_read_config(vive_priv* priv)
+int vive_read_config(vive_priv* priv)
 {
 	unsigned char buffer[128];
 	int bytes;
@@ -297,6 +297,10 @@ void vive_read_config(vive_priv* priv)
 	buffer[0] = VIVE_CONFIG_START_PACKET_ID;
 	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 	printf("got %i bytes\n", bytes);
+
+	if (bytes < 0)
+		return bytes;
+
 	for (int i = 0; i < bytes; i++) {
 		printf("%02x ", buffer[i]);
 	}
@@ -317,6 +321,8 @@ void vive_read_config(vive_priv* priv)
   vive_decode_config_packet(&priv->imu_config, packet_buffer, offset);
 
   free(packet_buffer);
+
+  return 0;
 }
 
 #define OHMD_GRAVITY_EARTH 9.80665 // m/s²
@@ -414,11 +420,31 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
 	//LOGD("enable lighthouse magic: %d\n", hret);
 
-	vive_read_config(priv);
+	if (vive_read_config(priv) != 0)
+	{
+		LOGW("Could not read config. Using defaults.\n");
+		priv->imu_config.acc_bias.x = 0.157200f;
+		priv->imu_config.acc_bias.y = -0.011150f;
+		priv->imu_config.acc_bias.z = -0.144900f;
+
+		priv->imu_config.acc_scale.x = 0.999700f;
+		priv->imu_config.acc_scale.y = 0.998900f;
+		priv->imu_config.acc_scale.z = 0.998000f;
+
+		priv->imu_config.gyro_bias.x = -0.027770f;
+		priv->imu_config.gyro_bias.y = -0.011410f;
+		priv->imu_config.gyro_bias.z = -0.014760f;
+
+		priv->imu_config.gyro_scale.x = 1.0f;
+		priv->imu_config.gyro_scale.y = 1.0f;
+		priv->imu_config.gyro_scale.z = 1.0f;
+	}
 
 	if (vive_get_range_packet(priv) != 0)
 	{
-		LOGE("Could not get range packet.\n");
+		LOGW("Could not get range packet.\n");
+		priv->imu_config.gyro_range = 8.726646f;
+		priv->imu_config.acc_range = 39.226600f;
 	}
 
 	// Set default device properties
