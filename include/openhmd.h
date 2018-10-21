@@ -452,6 +452,26 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_in
  **/
 OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, const void* in);
 
+/**
+ * Get the library version.
+ *
+ * @param major Major version.
+ * @param minor Minor version.
+ * @param patch Patch version.
+ **/
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_get_version(int* out_major, int* out_minor, int* out_patch);
+
+/**
+ * Set an void* data value for a device.
+ *
+ * @param major Required major version.
+ * @param minor Required minor version.
+ * @param patch Required patch version.
+ * @return OMHD_S_OK if the version is compatible or OHMD_S_UNSUPPORTED if it's not.
+ **/
+OHMD_APIENTRYDLL ohmd_status OHMD_APIENTRY ohmd_require_version(int major, int minor, int patch);
+
+
 #ifdef __cplusplus
 }
 #endif
