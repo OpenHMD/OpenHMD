@@ -127,15 +127,8 @@ bool vive_decode_config_packet(vive_imu_config* result,
 	LOGD("Decompressed from %u to %u bytes\n",
 	     (mz_uint32)pkt.length, (mz_uint32)output_size);
 
-	//LOGD("Debug print all the RAW JSON things!\n%s", output);
-	//pUncomp should now be the uncompressed data, lets get the json from it
-	/** DEBUG JSON PARSER CODE **/
 	trim((char*)output, (char*)output, (unsigned int)output_size);
-	//LOGD("%s\n",output);
-	/*
-	FILE* dfp;
-	dfp = fopen("jsondebug.json","w");
-	json_enable_debug(3, dfp);*/
+
 	const nx_json* json = nx_json_parse((char*)output, 0);
 
 	if (json) {
@@ -156,11 +149,6 @@ bool vive_decode_config_packet(vive_imu_config* result,
 		LOGE("Could not parse JSON data.\n");
 		return false;
 	}
-
-	/** END OF DEBUG JSON PARSER CODE **/
-
-//	free(pCmp);
-//	free(pUncomp);
 
 	return true;
 }
