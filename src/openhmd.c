@@ -289,7 +289,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
 			omat4x4f_init_translate(&world_shift, -device->position.x +(device->properties.ipd / 2.0f), -device->position.y, -device->position.z);
-			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_mult(&orient, &world_shift, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return OHMD_S_OK;
 		}
@@ -300,7 +300,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 			mat4x4f orient, world_shift, result;
 			omat4x4f_init_look_at(&orient, &rot, &point);
 			omat4x4f_init_translate(&world_shift, -device->position.x + -(device->properties.ipd / 2.0f), -device->position.y, -device->position.z);
-			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_mult(&orient, &world_shift, &result);
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return OHMD_S_OK;
 		}
