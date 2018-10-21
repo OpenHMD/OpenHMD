@@ -42,6 +42,13 @@ int main(int argc, char** argv)
 	if(argc > 1)
 		device_idx = atoi(argv[1]);
 
+	ohmd_require_version(0, 3, 0);
+
+	int major, minor, patch;
+	ohmd_get_version(&major, &minor, &patch);
+
+	printf("OpenHMD version: %d.%d.%d\n", major, minor, patch);
+
 	ohmd_context* ctx = ohmd_ctx_create();
 
 	// Probe for devices

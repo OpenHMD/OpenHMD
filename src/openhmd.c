@@ -610,3 +610,36 @@ uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_
 	return ticks / srcTicksPerSecond * dstTicksPerSecond +
 		ticks % srcTicksPerSecond * dstTicksPerSecond / srcTicksPerSecond;
 }
+
+void ohmd_get_version(int* out_major, int* out_minor, int* out_patch)
+{
+	*out_major = OHMD_VERSION_MAJOR;
+	*out_minor = OHMD_VERSION_MINOR;
+	*out_patch = OHMD_VERSION_PATCH;
+}
+
+ohmd_status ohmd_require_version(int major, int minor, int patch)
+{
+	int curr_major, curr_minor, curr_patch;
+	ohmd_get_version(&curr_major, &curr_minor, &curr_patch);
+
+	if(curr_major != major){
+		// require same major version
+		return OHMD_S_UNSUPPORTED;
+	}
+
+	if(curr_minor == minor){
+		// check patch version if the required minor version matches current
+		if(curr_patch < patch){
+			// fail is patch is too low
+			return OHMD_S_UNSUPPORTED;
+		}
+	}
+	else if(curr_minor < minor)
+	{
+		// fail if minor is too low
+		return OHMD_S_UNSUPPORTED;
+	}
+
+	return OHMD_S_OK;
+}

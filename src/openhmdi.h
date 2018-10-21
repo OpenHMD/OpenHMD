@@ -27,6 +27,10 @@
 
 #define OHMD_STRINGIFY(_what) #_what
 
+#define OHMD_VERSION_MAJOR 0
+#define OHMD_VERSION_MINOR 3
+#define OHMD_VERSION_PATCH 0
+
 typedef struct ohmd_driver ohmd_driver;
 
 typedef struct {
