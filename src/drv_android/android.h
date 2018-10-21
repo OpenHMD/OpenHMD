@@ -1,9 +1,9 @@
+// Copyright 2013, Fredrik Hultin.
+// Copyright 2013, Jakob Bornecrantz.
+// Copyright 2015, Joey Ferwerda.
+// SPDX-License-Identifier: BSL-1.0
 /*
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
- * Copyright (C) 2013 Fredrik Hultin.
- * Copyright (C) 2013 Jakob Bornecrantz.
- * Copyright (C) 2015 Joey Ferwerda
- * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
 /* Android Driver */

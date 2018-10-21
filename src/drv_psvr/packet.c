@@ -1,3 +1,12 @@
+// Copyright 2016, Joey Ferwerda.
+// SPDX-License-Identifier: BSL-1.0
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ */
+
+/* Sony PSVR Driver - Packet reading code. */
+
+
 #include "psvr.h"
 
 #ifdef _MSC_VER

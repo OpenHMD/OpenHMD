@@ -1,3 +1,13 @@
+// Copyright 2017, James Sarrett.
+// Copyright 2017, Bastiaan Olij.
+// SPDX-License-Identifier: BSL-1.0
+/*
+ * OpenHMD - Free and Open Source API and drivers for immersive technology.
+ */
+
+/* Shaders */
+
+
 #include "shaders.h"
 
 const char * const distortion_vert =
