@@ -126,7 +126,7 @@ static void update_device(ohmd_device* device)
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
 	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
-		if(buffer[0] == VIVE_IRQ_SENSORS){
+		if(buffer[0] == VIVE_HMD_IMU_PACKET_ID){
 			vive_headset_imu_packet pkt;
 			vive_decode_sensor_packet(&pkt, buffer, size);
 
