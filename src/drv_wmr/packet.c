@@ -50,7 +50,8 @@ inline static uint64_t read64(const unsigned char** buffer)
 
 bool hololens_sensors_decode_packet(hololens_sensors_packet* pkt, const unsigned char* buffer, int size)
 {
-	if(size != 497){
+	if(size != 497 &&
+	   size != 381){
 		LOGE("invalid hololens sensor packet size (expected 497 but got %d)", size);
 		return false;
 	}
