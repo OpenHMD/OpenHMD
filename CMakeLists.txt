@@ -157,12 +157,19 @@ if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)
 endif(OPENHMD_EXAMPLE_SIMPLE)
 
-if (OPENHMD_EXAMPLE_SDL)
+if (OPENHMD_EXAMPLE_SDL_OPENGL2)
 	find_package(SDL2 REQUIRED)
 	find_package(GLEW REQUIRED)
 	find_package(OpenGL REQUIRED)
 	add_subdirectory(./examples/opengl)
-endif (OPENHMD_EXAMPLE_SDL)
+endif (OPENHMD_EXAMPLE_SDL_OPENGL2)
+
+if (OPENHMD_EXAMPLE_SDL_OPENGL3)
+	find_package(SDL2 REQUIRED)
+	find_package(GLEW REQUIRED)
+	find_package(OpenGL REQUIRED)
+	add_subdirectory(./examples/opengl3)
+endif (OPENHMD_EXAMPLE_SDL_OPENGL3)
 
 set(TARGETS "")
 
