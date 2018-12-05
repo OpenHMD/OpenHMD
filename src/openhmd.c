@@ -55,6 +55,10 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_xgvr_drv(ctx);
 #endif
 
+#if DRIVER_LGR
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_lgr100_drv(ctx);
+#endif
+
 #if DRIVER_ANDROID
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
 #endif
