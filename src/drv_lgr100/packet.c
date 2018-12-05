@@ -6,8 +6,6 @@
 
 /* LG R100 (360VR) Driver */
 
-
-#include <stdio.h>
 #include "lgr100.h"
 
 #define SKIP8 (buffer++)
@@ -25,7 +23,7 @@
 
 bool decode_lgr100_imu_msg(lgr100_sensor_sample* smp, const unsigned char* buffer, int size)
 {
-	if(!size == 32){
+	if(size != 32){
 		LOGE("invalid packet size (expected 32 but got %d)", size);
 		return false;
 	}
