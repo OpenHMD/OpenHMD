@@ -40,7 +40,7 @@ static void update_device(ohmd_device* device)
 
 	// Read all the messages from the device.
 	while(true){
-		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
+		int size = hid_read_timeout(priv->handle, buffer, FEATURE_BUFFER_SIZE, 20);
 		if(size < 0){
 			LOGE("error reading from device");
 			return;
@@ -49,15 +49,16 @@ static void update_device(ohmd_device* device)
 		}
 
 		if(buffer[0] == 0) {
+			return;
 		}
 		// Type 5 seems to contain IMU information
-		if(buffer[0] == 5) {
+		else if(buffer[0] == 5) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}
 		else if(buffer[0] == 2){
 			//button 'OK' is buffer[1] state 01 and 04
 			//button '<-' is buffer[1] state 02 and 03
-			LOGE("Looking at: %u", buffer[1]);
+			//LOGE("Looking at: %u", buffer[1]);
 			if (buffer[1] == 1)
 				priv->controller_values[0] = 1;
 			else if (buffer[1] == 2)
@@ -141,12 +142,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties (currently just aproximations)
-	priv->base.properties.hsize = 0.149760f;
-	priv->base.properties.vsize = 0.093600f;
+	// If you have one, please open it and measure!
+	priv->base.properties.hsize = 0.140000f;
+	priv->base.properties.vsize = 0.040000f;
 	priv->base.properties.hres = 1440;
 	priv->base.properties.vres = 960;
 	priv->base.properties.lens_sep = 0.063500f;
-	priv->base.properties.lens_vpos = 0.046800f;
+	priv->base.properties.lens_vpos = 0.020000f;
 	priv->base.properties.fov = DEG_TO_RAD(80.0f); //based on website information, probably not perfect
 	priv->base.properties.ratio = (1440.0f / 960.0f) / 2.0f;
 	
@@ -197,7 +199,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	desc->driver_ptr = driver;
 
 	desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
-	desc->device_class = OHMD_DEVICE_CLASS_HMD;
+	desc->device_class = OHMD_DEVICE_CLASS_HMD | OHMD_DEVICE_CLASS_CONTROLLER;
 
 	desc->id = id++;
 	hid_free_enumeration(cur_dev);
