@@ -32,6 +32,7 @@ option(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
 option(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
 option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
+option(OPENHMD_DRIVER_LGR "LG R100 (360VR) HMD" ON)
 option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -123,6 +124,18 @@ if(OPENHMD_DRIVER_XGVR)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_XGVR)
+
+if(OPENHMD_DRIVER_LGR)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_lgr100/lgr100.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_lgr100/packet.c
+	)
+	add_definitions(-DDRIVER_LGR)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_LGR)
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files}
