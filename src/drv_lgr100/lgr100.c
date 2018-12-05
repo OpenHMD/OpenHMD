@@ -23,49 +23,14 @@ typedef struct {
 	vec3f raw_accel, raw_gyro;
 } lgr100_priv;
 
-#define TICK_LEN (1.0f / 200000.0f) // 200 Hz ticks
-
 static lgr100_priv* lgr100_priv_get(ohmd_device* device)
 {
 	return (lgr100_priv*)device;
 }
 
-void accel_from_lgr100_vec(const float* smp, vec3f* out_vec)
-{
-	out_vec->x = (float)smp[0];
-	out_vec->y = (float)smp[1];
-	out_vec->z = -(float)smp[2];
-	//printf("accel = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
-}
-
-void gyro_from_lgr100_vec(const float* smp, vec3f* out_vec)
-{
-	out_vec->x = (float)smp[0] * 4.0f;
-	out_vec->y = (float)smp[1] * 4.0f;
-	out_vec->z = -((float)smp[2] * 4.0f);
-	//printf("gyro = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
-}
-
 static void handle_tracker_sensor_msg(lgr100_priv* priv, unsigned char* buffer, int size)
 {
-	uint32_t last_sample_tick = priv->sample.tick;
-	uint32_t tick_delta = 200;
-	if(last_sample_tick > 0) //startup correction
-		tick_delta = priv->sample.tick - last_sample_tick;
-
-	float dt = tick_delta * TICK_LEN;
-
 	decode_lgr100_imu_msg(&priv->sample, buffer, size);
-	accel_from_lgr100_vec(priv->sample.accel, &priv->raw_accel);
-	gyro_from_lgr100_vec(priv->sample.gyro, &priv->raw_gyro);
-	
-	vec3f mag = {{0.0f, 0.0f, 0.0f}};
-	
-	//printf("x %f, y %f, z %f\n", (float)priv->sample.accel[0], (float)priv->sample.accel[1], (float)priv->sample.accel[2]);
-	//printf("x %f, y %f, z %f\n", (float)priv->sample.gyro[0], (float)priv->sample.gyro[1], (float)priv->sample.gyro[2]);
-	//printf("x %f, y %f, z %f\n", priv->raw_accel.x, priv->raw_accel.y, priv->raw_accel.z);
-
-	ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 }
 
 static void update_device(ohmd_device* device)
@@ -83,51 +48,27 @@ static void update_device(ohmd_device* device)
 			return; // No more messages, return.
 		}
 
-		//NULL package
-		if(buffer[0] == LGR100_IRQ_NULL) {
+		if(buffer[0] == 0) {
 			return;
 		}
-		else if(buffer[0] == LGR100_IRQ_BUTTONS){
+		// Type 5 seems to contain IMU information
+		else if(buffer[0] == 5) {
+			handle_tracker_sensor_msg(priv, buffer, size);
+		}
+		else if(buffer[0] == 2){
 			//button 'OK' is buffer[1] state 01 and 04
 			//button '<-' is buffer[1] state 02 and 03
-			if (buffer[1] == LGR100_BUTTON_OK_ON)
+			//LOGE("Looking at: %u", buffer[1]);
+			if (buffer[1] == 1)
 				priv->controller_values[0] = 1;
-			else if (buffer[1] == LGR100_BUTTON_BACK_ON)
+			else if (buffer[1] == 2)
 				priv->controller_values[1] = 1;
-			else if (buffer[1] == LGR100_BUTTON_BACK_OFF)
+			else if (buffer[1] == 3)
 				priv->controller_values[1] = 0;
-			else if (buffer[1] == LGR100_BUTTON_OK_OFF)
+			else if (buffer[1] == 4)
 				priv->controller_values[0] = 0;
-		}
-		//Print all the verbose debug information
-		else if(buffer[0] == LGR100_IRQ_DEBUG1 ||
-				buffer[0] == LGR100_IRQ_DEBUG2 ||
-				buffer[0] == LGR100_IRQ_DEBUG_SEQ1 ||
-				buffer[0] == LGR100_IRQ_DEBUG_SEQ2)
-		{
-			//*buffer += 1;
-			//printf("%s", buffer);
-		}
-		else if(buffer[0] == LGR100_IRQ_SENSORS) {
-			handle_tracker_sensor_msg(priv, buffer, size);
-			return;
-		}
-		else if (buffer[0] == LGR100_IRQ_UNKNOWN1) {
-			// prints different data based on if there is anything in front of the proximity sensor
-			// Example prox on
-			// 01:07:00:40:BD:97:B1:D1:3B:BD:72:2E:BC:CD:EC:53:BF:33:47:19:41:66:22:17:C0:82:AC:C9:00:02:00:00
-			// Example prox off
-			// 01:07:05:14:3D:97:B1:D1:3B:3A:85:0B:BC:9A:59:4B:BF:9A:28:1A:41:9A:E1:1B:C0:99:41:B4:E2:02:00:00
-		}
-		else if (buffer[0] == LGR100_IRQ_UNKNOWN2) {
-			// prints
-			// FF:48:42:00:20:A8:DE:00:20:A8:DE:00:20:89:2F:03:08:60:6C:00:20:05:00:CC:CC:06:00:CC:CC:1B:FF:02
-		}
-		else if (buffer[0] == LGR100_IRQ_UNKNOWN3) {
-			// prints
-			// 65:20:28:30:29:0A:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
 		}else{
-			LOGE("unknown message type: %u", buffer[0]);
+			//LOGE("unknown message type: %u", buffer[0]);
 		}
 	}
 }
@@ -191,6 +132,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	//Start the headset with the 'vr start app' command
 	hid_write(priv->handle, start_device, sizeof(start_device));
 
+	//Keep Alive
+	hid_write(priv->handle, keep_alive, sizeof(keep_alive));
+
 	hid_write(priv->handle, start_accel, sizeof(start_accel));
 	hid_write(priv->handle, start_gyro, sizeof(start_gyro));
 
@@ -199,14 +143,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// Set device properties (currently just aproximations)
 	// If you have one, please open it and measure!
-	priv->base.properties.hsize = 0.110000f;
-	priv->base.properties.vsize = 0.038000f;
+	priv->base.properties.hsize = 0.140000f;
+	priv->base.properties.vsize = 0.040000f;
 	priv->base.properties.hres = 1440;
 	priv->base.properties.vres = 960;
 	priv->base.properties.lens_sep = 0.063500f;
 	priv->base.properties.lens_vpos = 0.020000f;
 	priv->base.properties.fov = DEG_TO_RAD(80.0f); //based on website information, probably not perfect
-	priv->base.properties.ratio = (1920.0f / 720.0f) / 2.0f;
+	priv->base.properties.ratio = (1440.0f / 960.0f) / 2.0f;
 	
 	// Some buttons and axes
 	priv->base.properties.control_count = 2;
