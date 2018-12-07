@@ -27,7 +27,21 @@ inline static int16_t read16(const unsigned char** buffer)
 	return ret;
 }
 
-inline static int32_t read32(const unsigned char** buffer)
+inline static int32_t read_i32(const unsigned char** buffer)
+{
+	int32_t ret = **buffer | (*(*buffer + 1) << 8) | (*(*buffer + 2) << 16) | (*(*buffer + 3) << 24);
+	*buffer += 4;
+	return ret;
+}
+
+inline static int32_t read24(const unsigned char** buffer)
+{
+	int32_t ret = (**buffer << 8) | (*(*buffer + 1) << 16) | (*(*buffer + 2) << 24);
+	*buffer += 3;
+	return ret >> 8;
+}
+
+inline static int32_t read_u32(const unsigned char** buffer)
 {
 	int32_t ret = **buffer | (*(*buffer + 1) << 8) | (*(*buffer + 2) << 16) | (*(*buffer + 3) << 24);
 	*buffer += 4;
@@ -69,10 +83,42 @@ bool hololens_sensors_decode_packet(hololens_sensors_packet* pkt, const unsigned
 		pkt->accel_timestamp[i] = read64(&buffer);
 	for(int i = 0; i < 3; i++){
 		for (int j = 0; j < 4; j++)
-			pkt->accel[i][j] = read32(&buffer);
+			pkt->accel[i][j] = read_i32(&buffer);
 	}
 	for(int i = 0; i < 4; i++)
 		pkt->video_timestamp[i] = read64(&buffer);
+
+	return true;
+}
+
+bool motion_controller_decode_packet(motion_controller_packet* pkt, const unsigned char* buffer, int size)
+{
+	uint8_t stick[3];
+
+	if(size != 45){
+		LOGE("invalid motion controller packet size (expected 45 but got %d)", size);
+		return false;
+	}
+
+	pkt->id = read8(&buffer);
+	pkt->buttons = read8(&buffer);
+	stick[0] = read8(&buffer);
+	stick[1] = read8(&buffer);
+	stick[2] = read8(&buffer);
+	pkt->stick[0] = stick[0] | ((stick[1] & 0xf) << 8);
+	pkt->stick[1] = ((stick[1] & 0xf0) >> 4) | (stick[2] << 4);
+	pkt->trigger = read8(&buffer);
+	pkt->touchpad[0] = read8(&buffer);
+	pkt->touchpad[1] = read8(&buffer);
+	pkt->battery = read8(&buffer);
+	pkt->accel[0] = read24(&buffer); /* 2 µg per LSB */
+	pkt->accel[1] = read24(&buffer);
+	pkt->accel[2] = read24(&buffer);
+	buffer += 2;
+	pkt->gyro[0] = read24(&buffer);
+	pkt->gyro[1] = read24(&buffer);
+	pkt->gyro[2] = read24(&buffer);
+	pkt->timestamp = read_u32(&buffer); /* 100 µs per LSB */
 
 	return true;
 }

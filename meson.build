@@ -114,6 +114,7 @@ endif
 if _drivers.contains('wmr')
 	sources += [
 		'src/drv_wmr/wmr.c',
+		'src/drv_wmr/controller.c',
 		'src/drv_wmr/packet.c',
 		'src/ext_deps/nxjson.c'
 	]

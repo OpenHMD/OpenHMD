@@ -54,6 +54,7 @@ if BUILD_DRIVER_WMR
 
 libopenhmd_la_SOURCES += \
 	drv_wmr/wmr.c \
+	drv_wmr/controller.c \
 	drv_wmr/packet.c
 
 libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_WMR

@@ -11,9 +11,6 @@
 
 #define TICK_LEN (1.0f / 10000000.0f) // 1000 Hz ticks
 
-#define MICROSOFT_VID        0x045e
-#define HOLOLENS_SENSORS_PID 0x0659
-
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
@@ -151,7 +148,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		break;
 
 	default:
-		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
+		ohmd_set_error(priv->base.ctx, "invalid type given to hmd getf (%ud)", type);
 		return -1;
 		break;
 	}
@@ -301,7 +298,6 @@ unsigned char *read_config(wmr_priv *priv)
 	return data;
 }
 
-
 void process_nxjson_obj(const nx_json* node, const nx_json* (*list)[32], char* match)
 {
 	if (!node)
@@ -329,7 +325,7 @@ void resetList(const nx_json* (*list)[32])
 	memset(list, 0, sizeof(*list));
 }
 
-static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+static ohmd_device* open_hmd_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	wmr_priv* priv = ohmd_alloc(driver->ctx, sizeof(wmr_priv));
 	unsigned char *config;
@@ -460,30 +456,66 @@ cleanup:
 	return NULL;
 }
 
+static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+{
+	if (desc->device_flags & (OHMD_DEVICE_FLAGS_LEFT_CONTROLLER |
+				  OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER))
+		return open_motion_controller_device(driver, desc);
+	else
+		return open_hmd_device(driver, desc);
+}
+
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-	struct hid_device_info* devs = hid_enumerate(MICROSOFT_VID, HOLOLENS_SENSORS_PID);
+	struct hid_device_info* devs = hid_enumerate(MICROSOFT_VID, 0);
 	struct hid_device_info* cur_dev = devs;
 
-	int idx = 0;
+	int id = 0, hmd_idx = 0, controller_idx = 0;
 	while (cur_dev) {
-		ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		if (cur_dev->product_id == HOLOLENS_SENSORS_PID) {
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-		strcpy(desc->driver, "OpenHMD Windows Mixed Reality Driver");
-		strcpy(desc->vendor, "Microsoft");
-		strcpy(desc->product, "HoloLens Sensors");
+			strcpy(desc->driver, "OpenHMD Windows Mixed Reality Driver");
+			strcpy(desc->vendor, "Microsoft");
+			strcpy(desc->product, "HoloLens Sensors");
 
-		desc->revision = 0;
+			desc->revision = 0;
 
-		snprintf(desc->path, OHMD_STR_SIZE, "%d", idx);
+			snprintf(desc->path, OHMD_STR_SIZE, "%d", hmd_idx);
 
-		desc->driver_ptr = driver;
+			desc->driver_ptr = driver;
+			desc->id = id++;
 
-		desc->device_class = OHMD_DEVICE_CLASS_HMD;
-		desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			desc->device_class = OHMD_DEVICE_CLASS_HMD;
+			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+
+			hmd_idx++;
+		} else if (cur_dev->product_id == MOTION_CONTROLLER_PID) {
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+
+			strcpy(desc->driver, "OpenHMD Windows Mixed Reality Driver");
+			strcpy(desc->vendor, "Microsoft");
+			// "Motion controller - Left" or "Motion controller - Right"
+			snprintf(desc->product, OHMD_STR_SIZE, "%S", cur_dev->product_string);
+
+			desc->revision = 0;
+
+			snprintf(desc->path, OHMD_STR_SIZE, "%d", controller_idx);
+
+			desc->driver_ptr = driver;
+			desc->id = id++;
+
+			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			if (strcmp(desc->product, "Motion controller - Left") == 0)
+				desc->device_flags |= OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
+			else
+				desc->device_flags |= OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
+
+			controller_idx++;
+		}
 
 		cur_dev = cur_dev->next;
-		idx++;
 	}
 
 	hid_free_enumeration(devs);
