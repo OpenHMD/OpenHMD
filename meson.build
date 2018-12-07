@@ -12,8 +12,17 @@ library_version = '0.1.0'
 #
 
 hidapi = 'hidapi'
+_hidapi = get_option('hidapi')
 if host_machine.system() == 'linux'
-	hidapi = 'hidapi-libusb'
+	if _hidapi == 'hidraw'
+		hidapi = 'hidapi-hidraw'
+	else
+		hidapi = 'hidapi-libusb'
+	endif
+else
+	if _hidapi != 'auto'
+		warning('hidapi option ignored on non-Linux systems')
+	endif
 endif
 
 dep_libm = meson.get_compiler('c').find_library('m', required: false)
