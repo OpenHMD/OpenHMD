@@ -65,6 +65,7 @@ endif(OPENHMD_DRIVER_DEEPOON)
 if(OPENHMD_DRIVER_WMR)
 	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/wmr.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/controller.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/packet.c
 	)
 	add_definitions(-DDRIVER_WMR)
