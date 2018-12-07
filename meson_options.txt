@@ -1,2 +1,3 @@
 option('examples', type : 'array', choices : ['simple', 'opengl', ''], value : ['simple'])
 option('drivers', type : 'array', choices : ['rift', 'deepoon', 'psvr', 'vive', 'nolo', 'wmr', 'xgvr', 'external', 'android'], value : ['rift', 'deepoon', 'psvr', 'vive', 'nolo', 'wmr', 'xgvr', 'external'])
+option('hidapi', type : 'combo', choices : ['auto', 'libusb', 'hidraw'], value : 'auto')
