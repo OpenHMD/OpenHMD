@@ -36,3 +36,14 @@ option(
 		'external',
 	],
 )
+
+option(
+	'hidapi',
+	type: 'combo',
+	choices: [
+		'auto',
+		'libusb',
+		'hidraw'
+	],
+	value: 'auto',
+)
