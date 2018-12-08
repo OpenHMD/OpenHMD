@@ -17,8 +17,17 @@ sources = [
 ]
 
 hidapi = 'hidapi'
+_hidapi = get_option('hidapi')
 if host_machine.system() == 'linux'
-	hidapi = 'hidapi-libusb'
+	if _hidapi == 'hidraw'
+		hidapi = 'hidapi-hidraw'
+	else
+		hidapi = 'hidapi-libusb'
+	endif
+else
+	if _hidapi != 'auto'
+		warning('hidapi option ignored on non-Linux systems')
+	endif
 endif
 dep_hidapi = dependency(hidapi)
 deps = [
@@ -76,6 +85,7 @@ endif
 if _drivers.contains('wmr')
 	sources += [
 		'src/drv_wmr/wmr.c',
+		'src/drv_wmr/controller.c',
 		'src/drv_wmr/packet.c'
 	]
 	c_args += '-DDRIVER_WMR'
