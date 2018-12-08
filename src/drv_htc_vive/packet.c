@@ -34,12 +34,15 @@ inline static int16_t read16(const unsigned char** buffer)
 
 inline static uint32_t read32(const unsigned char** buffer)
 {
-	uint32_t ret = **buffer | (*(*buffer + 1) << 8) | (*(*buffer + 2) << 16) | (*(*buffer + 3) << 24);
+	uint32_t ret = **buffer | (*(*buffer + 1) << 8) |
+	                          (*(*buffer + 2) << 16) |
+	                          (*(*buffer + 3) << 24);
 	*buffer += 4;
 	return ret;
 }
 
-bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt, const unsigned char* buffer, int size)
+bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt,
+                               const unsigned char* buffer, int size)
 {
 	if(size != 52){
 		LOGE("invalid vive sensor packet size (expected 52 but got %d)", size);

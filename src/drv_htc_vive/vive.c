@@ -85,13 +85,15 @@ static bool process_error(vive_priv* priv)
 
 	if(priv->gyro_q.at >= priv->gyro_q.size - 1){
 		ofq_get_mean(&priv->gyro_q, &priv->gyro_error);
-		LOGE("gyro error: %f, %f, %f\n", priv->gyro_error.x, priv->gyro_error.y, priv->gyro_error.z);
+		LOGE("gyro error: %f, %f, %f\n",
+		     priv->gyro_error.x, priv->gyro_error.y, priv->gyro_error.z);
 	}
 
 	return false;
 }
 
-vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt, int last_seq)
+vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt,
+                                         int last_seq)
 {
 	int diff[3];
 
@@ -128,7 +130,7 @@ static void update_device(ohmd_device* device)
 	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
-	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0){
+	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0) {
 		if(buffer[0] == VIVE_HMD_IMU_PACKET_ID){
 			vive_headset_imu_packet pkt;
 			vive_decode_sensor_packet(&pkt, buffer, size);
@@ -148,7 +150,8 @@ static void update_device(ohmd_device* device)
 
 				priv->last_ticks = smp->time_ticks;
 
-				vec3f_from_vive_vec_accel(&priv->imu_config, smp->acc, &priv->raw_accel);
+				vec3f_from_vive_vec_accel(&priv->imu_config, smp->acc,
+				                          &priv->raw_accel);
 				vec3f_from_vive_vec_gyro(&priv->imu_config, smp->rot, &priv->raw_gyro);
 
 				// Fix imu orientation
@@ -174,7 +177,8 @@ static void update_device(ohmd_device* device)
 					vec3f gyro;
 					ovec3f_subtract(&priv->raw_gyro, &priv->gyro_error, &gyro);
 
-					ofusion_update(&priv->sensor_fusion, dt, &gyro, &priv->raw_accel, &mag);
+					ofusion_update(&priv->sensor_fusion, dt,
+					               &gyro, &priv->raw_accel, &mag);
 				}
 
 				priv->last_seq = smp->seq;
@@ -267,7 +271,8 @@ static void dump_indexed_string(hid_device* device, int index)
 }
 #endif
 
-static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t), const char* what, hid_device* device)
+static void dump_info_string(int (*fun)(hid_device*, wchar_t*, size_t),
+                            const char* what, hid_device* device)
 {
 	wchar_t wbuffer[512] = {0};
 	char buffer[1024] = {0};
@@ -293,7 +298,8 @@ static void dumpbin(const char* label, const unsigned char* data, int length)
 }
 #endif
 
-static hid_device* open_device_idx(int manufacturer, int product, int iface, int iface_tot, int device_index)
+static hid_device* open_device_idx(int manufacturer, int product, int iface,
+                                   int iface_tot, int device_index)
 {
 	struct hid_device_info* devs = hid_enumerate(manufacturer, product);
 	struct hid_device_info* cur_dev = devs;
@@ -465,9 +471,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 	}
 
-	dump_info_string(hid_get_manufacturer_string, "manufacturer", priv->hmd_handle);
-	dump_info_string(hid_get_product_string , "product", priv->hmd_handle);
-	dump_info_string(hid_get_serial_number_string, "serial number", priv->hmd_handle);
+	dump_info_string(hid_get_manufacturer_string,
+	                 "manufacturer", priv->hmd_handle);
+	dump_info_string(hid_get_product_string, "product", priv->hmd_handle);
+	dump_info_string(hid_get_serial_number_string,
+	                 "serial number", priv->hmd_handle);
 
 	switch (desc->revision) {
 		case REV_VIVE:
@@ -494,9 +502,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			LOGE("Unknown VIVE revision.\n");
 	}
 
+#if 0
 	// enable lighthouse
-	//hret = hid_send_feature_report(priv->hmd_handle, vive_magic_enable_lighthouse, sizeof(vive_magic_enable_lighthouse));
-	//LOGD("enable lighthouse magic: %d\n", hret);
+	hret = hid_send_feature_report(priv->hmd_handle,
+	                               vive_magic_enable_lighthouse,
+	                               sizeof(vive_magic_enable_lighthouse));
+	LOGD("enable lighthouse magic: %d\n", hret);
+#endif
 
 	if (vive_read_config(priv) != 0)
 	{
