@@ -123,66 +123,71 @@ vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt,
 	return NULL;
 }
 
+static void handle_imu_packet(vive_priv* priv, unsigned char *buffer, int size)
+{
+	vive_headset_imu_packet pkt;
+	vive_decode_sensor_packet(&pkt, buffer, size);
+
+	vive_headset_imu_sample* smp = NULL;
+
+	while((smp = get_next_sample(&pkt, priv->last_seq)) != NULL)
+	{
+		if(priv->last_ticks == 0)
+			priv->last_ticks = smp->time_ticks;
+
+		uint32_t t1, t2;
+		t1 = smp->time_ticks;
+		t2 = priv->last_ticks;
+
+		float dt = (t1 - t2) / VIVE_CLOCK_FREQ;
+
+		priv->last_ticks = smp->time_ticks;
+
+		vec3f_from_vive_vec_accel(&priv->imu_config, smp->acc, &priv->raw_accel);
+		vec3f_from_vive_vec_gyro(&priv->imu_config, smp->rot, &priv->raw_gyro);
+
+		// Fix imu orientation
+		switch (priv->revision) {
+			case REV_VIVE:
+				priv->raw_accel.y *= -1;
+				priv->raw_accel.z *= -1;
+				priv->raw_gyro.y *= -1;
+				priv->raw_gyro.z *= -1;
+				break;
+			case REV_VIVE_PRO:
+				priv->raw_accel.x *= -1;
+				priv->raw_accel.z *= -1;
+				priv->raw_gyro.x *= -1;
+				priv->raw_gyro.z *= -1;
+				break;
+			default:
+				LOGE("Unknown VIVE revision.\n");
+		}
+
+		if(process_error(priv)){
+			vec3f mag = {{0.0f, 0.0f, 0.0f}};
+			vec3f gyro;
+			ovec3f_subtract(&priv->raw_gyro, &priv->gyro_error, &gyro);
+
+			ofusion_update(&priv->sensor_fusion, dt,
+			               &gyro, &priv->raw_accel, &mag);
+		}
+
+		priv->last_seq = smp->seq;
+	}
+}
+
 static void update_device(ohmd_device* device)
 {
 	vive_priv* priv = (vive_priv*)device;
 
 	int size = 0;
+
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
 	while((size = hid_read(priv->imu_handle, buffer, FEATURE_BUFFER_SIZE)) > 0) {
 		if(buffer[0] == VIVE_HMD_IMU_PACKET_ID){
-			vive_headset_imu_packet pkt;
-			vive_decode_sensor_packet(&pkt, buffer, size);
-
-			vive_headset_imu_sample* smp = NULL;
-
-			while((smp = get_next_sample(&pkt, priv->last_seq)) != NULL)
-			{
-				if(priv->last_ticks == 0)
-					priv->last_ticks = smp->time_ticks;
-
-				uint32_t t1, t2;
-				t1 = smp->time_ticks;
-				t2 = priv->last_ticks;
-
-				float dt = (t1 - t2) / VIVE_CLOCK_FREQ;
-
-				priv->last_ticks = smp->time_ticks;
-
-				vec3f_from_vive_vec_accel(&priv->imu_config, smp->acc,
-				                          &priv->raw_accel);
-				vec3f_from_vive_vec_gyro(&priv->imu_config, smp->rot, &priv->raw_gyro);
-
-				// Fix imu orientation
-				switch (priv->revision) {
-					case REV_VIVE:
-						priv->raw_accel.y *= -1;
-						priv->raw_accel.z *= -1;
-						priv->raw_gyro.y *= -1;
-						priv->raw_gyro.z *= -1;
-						break;
-					case REV_VIVE_PRO:
-						priv->raw_accel.x *= -1;
-						priv->raw_accel.z *= -1;
-						priv->raw_gyro.x *= -1;
-						priv->raw_gyro.z *= -1;
-						break;
-					default:
-						LOGE("Unknown VIVE revision.\n");
-				}
-
-				if(process_error(priv)){
-					vec3f mag = {{0.0f, 0.0f, 0.0f}};
-					vec3f gyro;
-					ovec3f_subtract(&priv->raw_gyro, &priv->gyro_error, &gyro);
-
-					ofusion_update(&priv->sensor_fusion, dt,
-					               &gyro, &priv->raw_accel, &mag);
-				}
-
-				priv->last_seq = smp->seq;
-			}
+			handle_imu_packet(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
 		}
