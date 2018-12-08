@@ -331,6 +331,36 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface,
 	return ret;
 }
 
+int vive_read_firmware(hid_device* device)
+{
+	vive_firmware_version_packet packet = {
+		.id = VIVE_FIRMWARE_VERSION_PACKET_ID,
+	};
+
+	int bytes;
+
+	LOGI("Getting vive_firmware_version_packet...");
+	bytes = hid_get_feature_report(device,
+	                               (unsigned char*) &packet,
+	                               sizeof(packet));
+
+	if (bytes < 0)
+	{
+		LOGE("Could not get vive_firmware_version_packet: %d", bytes);
+		return bytes;
+	}
+
+	LOGI("Firmware version %u %s@%s FPGA %u.%u\n",
+		packet.firmware_version, packet.string1,
+		packet.string2, packet.fpga_version_major,
+		packet.fpga_version_minor);
+	LOGI("Hardware revision: %d rev %d.%d.%d\n",
+		packet.hardware_revision, packet.hardware_version_major,
+		packet.hardware_version_minor, packet.hardware_version_micro);
+
+	return 0;
+}
+
 int vive_read_config(vive_priv* priv)
 {
 	vive_config_start_packet start_packet = {
@@ -510,6 +540,12 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			                               vive_magic_power_on,
 			                               sizeof(vive_magic_power_on));
 			LOGI("power on magic: %d\n", hret);
+
+			if (vive_read_firmware(priv->imu_handle) != 0)
+			{
+				LOGE("Could not get headset firmware version!");
+			}
+
 			break;
 		case REV_VIVE_PRO:
 			// turn the display on
@@ -535,6 +571,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	                               sizeof(vive_magic_enable_lighthouse));
 	LOGD("enable lighthouse magic: %d\n", hret);
 #endif
+
+
 
 	if (vive_read_config(priv) != 0)
 	{
