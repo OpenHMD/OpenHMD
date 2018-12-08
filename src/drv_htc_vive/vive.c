@@ -350,64 +350,64 @@ int vive_read_config(vive_priv* priv)
 		buffer[0] = VIVE_CONFIG_READ_PACKET_ID;
 		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
 
-    memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
-    offset += buffer[1];
-  }
-  packet_buffer[offset] = '\0';
-  //LOGD("Result: %s\n", packet_buffer);
-  vive_decode_config_packet(&priv->imu_config, packet_buffer, offset);
+		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
+		offset += buffer[1];
+	}
+	packet_buffer[offset] = '\0';
+	//LOGD("Result: %s\n", packet_buffer);
+	vive_decode_config_packet(&priv->imu_config, packet_buffer, offset);
 
-  free(packet_buffer);
+	free(packet_buffer);
 
-  return 0;
+	return 0;
 }
 
 #define OHMD_GRAVITY_EARTH 9.80665 // m/s²
 
 int vive_get_range_packet(vive_priv* priv)
 {
-  unsigned char buffer[64];
+	unsigned char buffer[64];
 
-  int ret;
-  int i;
+	int ret;
+	int i;
 
-  buffer[0] = VIVE_IMU_RANGE_MODES_PACKET_ID;
+	buffer[0] = VIVE_IMU_RANGE_MODES_PACKET_ID;
 
-  ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-  if (ret < 0)
-    return ret;
+	ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	if (ret < 0)
+		return ret;
 
-  if (!buffer[1] || !buffer[2]) {
-    ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-    if (ret < 0)
-      return ret;
+	if (!buffer[1] || !buffer[2]) {
+		ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+		if (ret < 0)
+			return ret;
 
-    if (!buffer[1] || !buffer[2]) {
-      LOGE("unexpected range mode report: %02x %02x %02x",
-        buffer[0], buffer[1], buffer[2]);
-      for (i = 0; i < 61; i++)
-        LOGE(" %02x", buffer[3+i]);
-      LOGE("\n");
-    }
-  }
+		if (!buffer[1] || !buffer[2]) {
+			LOGE("unexpected range mode report: %02x %02x %02x",
+			     buffer[0], buffer[1], buffer[2]);
+			for (i = 0; i < 61; i++)
+				LOGE(" %02x", buffer[3+i]);
+			LOGE("\n");
+		}
+	}
 
-  if (buffer[1] > 4 || buffer[2] > 4)
-    return -1;
+	if (buffer[1] > 4 || buffer[2] > 4)
+		return -1;
 
-  /*
-   * Convert MPU-6500 gyro full scale range (+/-250°/s, +/-500°/s,
-   * +/-1000°/s, or +/-2000°/s) into rad/s, accel full scale range
-   * (+/-2g, +/-4g, +/-8g, or +/-16g) into m/s².
-   */
-  double gyro_range = M_PI / 180.0 * (250 << buffer[0]);
-  priv->imu_config.gyro_range = (float) gyro_range;
-  LOGI("gyro_range %f\n", gyro_range);
+	/*
+	 * Convert MPU-6500 gyro full scale range (+/-250°/s, +/-500°/s,
+	 * +/-1000°/s, or +/-2000°/s) into rad/s, accel full scale range
+	 * (+/-2g, +/-4g, +/-8g, or +/-16g) into m/s².
+	 */
+	double gyro_range = M_PI / 180.0 * (250 << buffer[0]);
+	priv->imu_config.gyro_range = (float) gyro_range;
+	LOGI("gyro_range %f\n", gyro_range);
 
-  double acc_range = OHMD_GRAVITY_EARTH * (2 << buffer[1]);
-  priv->imu_config.acc_range = (float) acc_range;
-  LOGI("acc_range %f\n", acc_range);
+	double acc_range = OHMD_GRAVITY_EARTH * (2 << buffer[1]);
+	priv->imu_config.acc_range = (float) acc_range;
+	LOGI("acc_range %f\n", acc_range);
 
-  return 0;
+	return 0;
 }
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)

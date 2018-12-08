@@ -69,18 +69,18 @@ bool vive_decode_sensor_packet(vive_headset_imu_packet* pkt, const unsigned char
 //Trim function for removing tabs and spaces from string buffers
 void trim(const char* src, char* buff, const unsigned int sizeBuff)
 {
-    if(sizeBuff < 1)
-    return;
+	if(sizeBuff < 1)
+		return;
 
-    const char* current = src;
-    unsigned int i = 0;
-    while(*current != '\0' && i < sizeBuff-1)
-    {
-        if(*current != ' ' && *current != '\t' && *current != '\n')
-            buff[i++] = *current;
-        ++current;
-    }
-    buff[i] = '\0';
+	const char* current = src;
+	unsigned int i = 0;
+	while(*current != '\0' && i < sizeBuff-1)
+	{
+		if(*current != ' ' && *current != '\t' && *current != '\n')
+			buff[i++] = *current;
+		++current;
+	}
+	buff[i] = '\0';
 }
 
 void get_vec3f_from_json(const nx_json* json, const char* name, vec3f* result)
@@ -95,7 +95,7 @@ void get_vec3f_from_json(const nx_json* json, const char* name, vec3f* result)
 
 void print_vec3f(const char* title, vec3f *vec)
 {
-  LOGI("%s = %f %f %f\n", title, vec->x, vec->y, vec->z);
+	LOGI("%s = %f %f %f\n", title, vec->x, vec->y, vec->z);
 }
 
 bool vive_decode_config_packet(vive_imu_config* result,
