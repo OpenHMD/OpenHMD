@@ -372,47 +372,64 @@ int vive_read_config(vive_priv* priv)
 
 int vive_get_range_packet(vive_priv* priv)
 {
-	unsigned char buffer[64];
-
 	int ret;
-	int i;
 
-	buffer[0] = VIVE_IMU_RANGE_MODES_PACKET_ID;
+	vive_imu_range_modes_packet packet = {
+		.id = VIVE_IMU_RANGE_MODES_PACKET_ID
+	};
 
-	ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	ret = hid_get_feature_report(priv->imu_handle,
+	                             (unsigned char*) &packet,
+	                             sizeof(packet));
+
 	if (ret < 0)
+	{
+		LOGE("Could not get feature report %d.", packet.id);
 		return ret;
+	}
 
-	if (!buffer[1] || !buffer[2]) {
-		ret = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	if (!packet.gyro_range || !packet.accel_range)
+	{
+		LOGW("Invalid gyroscope and accelerometer data. Trying to fetch again.");
+		ret = hid_get_feature_report(priv->imu_handle,
+		                             (unsigned char*) &packet,
+		                             sizeof(packet));
 		if (ret < 0)
+		{
+			LOGE("Could not get feature report %d.", packet.id);
 			return ret;
+		}
 
-		if (!buffer[1] || !buffer[2]) {
-			LOGE("unexpected range mode report: %02x %02x %02x",
-			     buffer[0], buffer[1], buffer[2]);
-			for (i = 0; i < 61; i++)
-				LOGE(" %02x", buffer[3+i]);
-			LOGE("\n");
+		if (!packet.gyro_range || !packet.accel_range)
+		{
+			LOGE("Unexpected range mode report: %02x %02x %02x",
+				packet.id, packet.gyro_range, packet.accel_range);
+			for (int i = 0; i < 61; i++)
+				printf(" %02x", packet.unknown[i]);
+			printf("\n");
+			return -1;
 		}
 	}
 
-	if (buffer[1] > 4 || buffer[2] > 4)
+	if (packet.gyro_range > 4 || packet.accel_range > 4)
+	{
+		LOGE("Gyroscope or accelerometer range too large.");
 		return -1;
+	}
 
 	/*
 	 * Convert MPU-6500 gyro full scale range (+/-250°/s, +/-500°/s,
 	 * +/-1000°/s, or +/-2000°/s) into rad/s, accel full scale range
 	 * (+/-2g, +/-4g, +/-8g, or +/-16g) into m/s².
 	 */
-	double gyro_range = M_PI / 180.0 * (250 << buffer[0]);
+
+	double gyro_range = M_PI / 180.0 * (250 << packet.gyro_range);
 	priv->imu_config.gyro_range = (float) gyro_range;
-	LOGI("gyro_range %f\n", gyro_range);
+	LOGI("Vive gyroscope range     %f", gyro_range);
 
-	double acc_range = OHMD_GRAVITY_EARTH * (2 << buffer[1]);
+	double acc_range = OHMD_GRAVITY_EARTH * (2 << packet.accel_range);
 	priv->imu_config.acc_range = (float) acc_range;
-	LOGI("acc_range %f\n", acc_range);
-
+	LOGI("Vive accelerometer range %f", acc_range);
 	return 0;
 }
 
