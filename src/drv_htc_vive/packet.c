@@ -105,30 +105,18 @@ bool vive_decode_config_packet(vive_imu_config* result,
                                const unsigned char* buffer,
                                uint16_t size)
 {
-	/*
-	if(size != 4069){
-		LOGE("invalid vive sensor packet size (expected 4069 but got %d)", size);
-		return false;
-	}*/
-
-	vive_config_packet pkt;
-
-	pkt.report_id = VIVE_CONFIG_READ_PACKET_ID;
-	pkt.length = size;
-
 	unsigned char output[32768];
 	mz_ulong output_size = 32768;
 
-	//int cmp_status = uncompress(pUncomp, &uncomp_len, pCmp, cmp_len);
 	int cmp_status = uncompress(output, &output_size,
-	                            buffer, (mz_ulong)pkt.length);
+	                            buffer, (mz_ulong)size);
 	if (cmp_status != Z_OK){
 		LOGE("invalid vive config, could not uncompress");
 		return false;
 	}
 
 	LOGD("Decompressed from %u to %u bytes\n",
-	     (mz_uint32)pkt.length, (mz_uint32)output_size);
+	     (mz_uint32)packet.length, (mz_uint32)output_size);
 
 	trim((char*)output, (char*)output, (unsigned int)output_size);
 

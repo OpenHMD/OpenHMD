@@ -42,10 +42,16 @@ typedef struct
 
 typedef struct
 {
-	uint8_t report_id;
-	uint16_t length;
-	unsigned char config_data[99999];
-} vive_config_packet;
+	uint8_t id;
+	uint8_t unused[63];
+} vive_config_start_packet;
+
+typedef struct
+{
+	uint8_t id;
+	uint8_t length;
+	uint8_t payload[62];
+} vive_config_read_packet;
 
 typedef struct
 {

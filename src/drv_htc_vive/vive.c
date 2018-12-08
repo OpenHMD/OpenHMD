@@ -333,34 +333,43 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface,
 
 int vive_read_config(vive_priv* priv)
 {
-	unsigned char buffer[128];
+	vive_config_start_packet start_packet = {
+		.id = VIVE_CONFIG_START_PACKET_ID,
+	};
+
 	int bytes;
 
-	LOGI("Getting feature report 16 to 39\n");
-	buffer[0] = VIVE_CONFIG_START_PACKET_ID;
-	bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
-	printf("got %i bytes\n", bytes);
+	LOGI("Getting vive_config_start_packet...");
+	bytes = hid_get_feature_report(priv->imu_handle,
+	                               (unsigned char*) &start_packet,
+	                               sizeof(start_packet));
 
 	if (bytes < 0)
+	{
+		LOGE("Could not get vive_config_start_packet: %d", bytes);
 		return bytes;
-
-	for (int i = 0; i < bytes; i++) {
-		printf("%02x ", buffer[i]);
 	}
-	printf("\n\n");
+
+	LOGI("Config packet size is %i bytes.", bytes);
+
+	vive_config_read_packet read_packet = {
+		.id = VIVE_CONFIG_READ_PACKET_ID,
+	};
 
 	unsigned char* packet_buffer = malloc(4096);
 
 	int offset = 0;
-	while (buffer[1] != 0) {
-		buffer[0] = VIVE_CONFIG_READ_PACKET_ID;
-		bytes = hid_get_feature_report(priv->imu_handle, buffer, sizeof(buffer));
+	do {
+		bytes = hid_get_feature_report(priv->imu_handle,
+		                               (unsigned char*) &read_packet,
+		                               sizeof(read_packet));
 
-		memcpy((uint8_t*)packet_buffer + offset, buffer+2, buffer[1]);
-		offset += buffer[1];
-	}
+		memcpy((uint8_t*)packet_buffer + offset,
+		       &read_packet.payload,
+		       read_packet.length);
+		offset += read_packet.length;
+	} while (read_packet.length);
 	packet_buffer[offset] = '\0';
-	//LOGD("Result: %s\n", packet_buffer);
 	vive_decode_config_packet(&priv->imu_config, packet_buffer, offset);
 
 	free(packet_buffer);
