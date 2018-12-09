@@ -32,15 +32,15 @@ typedef struct
 } lgr100_sensor_sample;
 
 /* All known commands as found in a firmware dump */
-static const unsigned char start_accel[10] = {0x03, 0x0C,'A','c','c','e','l',' ','O','n'};
 static const unsigned char start_device[14] = {0x03, 0x0C,'V','R',' ','A','p','p',' ','S','t','a','r','t'};
+static const unsigned char start_accel[10] = {0x03, 0x0C,'A','c','c','e','l',' ','O','n'};
+static const unsigned char start_gyro[9] = {0x03, 0x0C,'G','y','r','o',' ','O','n'};
 static const unsigned char keep_alive[15] = {0x03, 0x0C,'S','l','e','e','p',' ','D','i','s','a','b','l','e'};
 //static const unsigned char get_debug_info[14] = {0x03, 0x0C,'g','e','t','D','e','b','u','g','I','n','f','o1'};
 //static const unsigned char get_result[14] = {0x03, 0x0C,'g','e','t','A','A','T','R','e','s','u','l','t'};
 //static const unsigned char enable[11] = {0x03, 0x0C,'A','c','c','e','l',' ','O','f','f'};
 //static const unsigned char enable[16] = {0x03, 0x0C,'A','c','c','e','l',' ','S','e','l','f','t','e','s','t'};
 //static const unsigned char enable[15] = {0x03, 0x0C,'A','c','c','e','l',' ','G','e','t',' ','X','Y','Z'};
-//static const unsigned char start_gyro[9] = {0x03, 0x0C,'G','y','r','o',' ','O','n'};
 //static const unsigned char enable[10] = {0x03, 0x0C,'G','y','r','o',' ','O','f','f'};
 //static const unsigned char enable[15] = {0x03, 0x0C,'G','y','r','o',' ','S','e','l','f','t','e','s','t'};
 //static const unsigned char enable[14] = {0x03, 0x0C,'G','y','r','o',' ','G','e','t',' ','X','Y','Z'};
