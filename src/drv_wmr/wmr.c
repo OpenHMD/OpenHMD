@@ -490,7 +490,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 
 			hmd_idx++;
-		} else if (cur_dev->product_id == MOTION_CONTROLLER_PID) {
+		} else if (cur_dev->product_id == MOTION_CONTROLLER_PID || cur_dev->product_id == MOTION_CONTROLLER_PID_SAMSUNG) {
 			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
 			strcpy(desc->driver, "OpenHMD Windows Mixed Reality Driver");
