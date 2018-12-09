@@ -23,14 +23,47 @@ typedef struct {
 	vec3f raw_accel, raw_gyro;
 } lgr100_priv;
 
+#define TICK_LEN (1.0f / 200000.0f) // 200 Hz ticks
+
 static lgr100_priv* lgr100_priv_get(ohmd_device* device)
 {
 	return (lgr100_priv*)device;
 }
 
+void accel_from_lgr100_vec(const float* smp, vec3f* out_vec)
+{
+	out_vec->x = (float)smp[0];
+	out_vec->y = (float)smp[1];
+	out_vec->z = (float)smp[2];
+}
+
+void gyro_from_lgr100_vec(const float* smp, vec3f* out_vec)
+{
+	out_vec->x = (float)smp[0] * 4.0f;
+	out_vec->y = (float)smp[1] * 4.0f;
+	out_vec->z = (float)smp[2] * 4.0f;
+}
+
 static void handle_tracker_sensor_msg(lgr100_priv* priv, unsigned char* buffer, int size)
 {
+	uint32_t last_sample_tick = priv->sample.tick;
+	uint32_t tick_delta = 200;
+	if(last_sample_tick > 0) //startup correction
+		tick_delta = priv->sample.tick - last_sample_tick;
+
+	float dt = tick_delta * TICK_LEN;
+
 	decode_lgr100_imu_msg(&priv->sample, buffer, size);
+	accel_from_lgr100_vec(priv->sample.accel, &priv->raw_accel);
+	gyro_from_lgr100_vec(priv->sample.gyro, &priv->raw_gyro);
+	
+	vec3f mag = {{0.0f, 0.0f, 0.0f}};
+	
+	//printf("x %f, y %f, z %f\n", (float)priv->sample.accel[0], (float)priv->sample.accel[1], (float)priv->sample.accel[2]);
+	//printf("x %f, y %f, z %f\n", (float)priv->sample.gyro[0], (float)priv->sample.gyro[1], (float)priv->sample.gyro[2]);
+	//printf("x %f, y %f, z %f\n", priv->raw_accel.x, priv->raw_accel.y, priv->raw_accel.z);
+
+	ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 }
 
 static void update_device(ohmd_device* device)
@@ -48,17 +81,21 @@ static void update_device(ohmd_device* device)
 			return; // No more messages, return.
 		}
 
+		//NULL package
 		if(buffer[0] == 0) {
 			return;
 		}
-		// Type 5 seems to contain IMU information
+		//Print all the verbose debug information
+		else if(buffer[0] != 5){
+			//*buffer += 1;
+			//printf("%s", buffer);
+		}
 		else if(buffer[0] == 5) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}
 		else if(buffer[0] == 2){
 			//button 'OK' is buffer[1] state 01 and 04
 			//button '<-' is buffer[1] state 02 and 03
-			//LOGE("Looking at: %u", buffer[1]);
 			if (buffer[1] == 1)
 				priv->controller_values[0] = 1;
 			else if (buffer[1] == 2)
@@ -143,14 +180,14 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// Set device properties (currently just aproximations)
 	// If you have one, please open it and measure!
-	priv->base.properties.hsize = 0.140000f;
-	priv->base.properties.vsize = 0.040000f;
+	priv->base.properties.hsize = 0.110000f;
+	priv->base.properties.vsize = 0.038000f;
 	priv->base.properties.hres = 1440;
 	priv->base.properties.vres = 960;
 	priv->base.properties.lens_sep = 0.063500f;
 	priv->base.properties.lens_vpos = 0.020000f;
 	priv->base.properties.fov = DEG_TO_RAD(80.0f); //based on website information, probably not perfect
-	priv->base.properties.ratio = (1440.0f / 960.0f) / 2.0f;
+	priv->base.properties.ratio = (1920.0f / 720.0f) / 2.0f;
 	
 	// Some buttons and axes
 	priv->base.properties.control_count = 2;
