@@ -381,7 +381,8 @@ int vive_read_config(vive_priv* priv)
 
 	if (bytes < 0)
 	{
-		LOGE("Could not get vive_config_start_packet: %d", bytes);
+		LOGE("Could not get vive_config_start_packet: %ls (%d)",
+		     hid_error(priv->imu_handle), bytes);
 		return bytes;
 	}
 
@@ -538,18 +539,56 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	dump_info_string(hid_get_serial_number_string,
 	                 "serial number", priv->hmd_handle);
 
+#if 0
+	// enable lighthouse
+	hret = hid_send_feature_report(priv->hmd_handle,
+	                               vive_magic_enable_lighthouse,
+	                               sizeof(vive_magic_enable_lighthouse));
+	LOGD("enable lighthouse magic: %d\n", hret);
+#endif
+
+	/* IMU config defaults */
+	priv->imu_config.acc_bias.x = 0;
+	priv->imu_config.acc_bias.y = 0;
+	priv->imu_config.acc_bias.z = 0;
+
+	priv->imu_config.acc_scale.x = 1.0f;
+	priv->imu_config.acc_scale.y = 1.0f;
+	priv->imu_config.acc_scale.z = 1.0f;
+
+	priv->imu_config.gyro_bias.x = 0;
+	priv->imu_config.gyro_bias.y = 0;
+	priv->imu_config.gyro_bias.z = 0;
+
+	priv->imu_config.gyro_scale.x = 1.0f;
+	priv->imu_config.gyro_scale.y = 1.0f;
+	priv->imu_config.gyro_scale.z = 1.0f;
+
+	priv->imu_config.gyro_range = 8.726646f;
+	priv->imu_config.acc_range = 39.226600f;
+
 	switch (desc->revision) {
 		case REV_VIVE:
-			// turn the display on
-			hret = hid_send_feature_report(priv->hmd_handle,
-			                               vive_magic_power_on,
-			                               sizeof(vive_magic_power_on));
-			LOGI("power on magic: %d\n", hret);
+			if (vive_read_config(priv) != 0)
+			{
+				LOGW("Could not read config. Using defaults.\n");
+			}
+
+			if (vive_get_range_packet(priv) != 0)
+			{
+				LOGW("Could not get range packet.\n");
+			}
 
 			if (vive_read_firmware(priv->imu_handle) != 0)
 			{
 				LOGE("Could not get headset firmware version!");
 			}
+
+			// turn the display on
+			hret = hid_send_feature_report(priv->hmd_handle,
+			                               vive_magic_power_on,
+			                               sizeof(vive_magic_power_on));
+			LOGI("power on magic: %d\n", hret);
 
 			break;
 		case REV_VIVE_PRO:
@@ -567,43 +606,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			break;
 		default:
 			LOGE("Unknown VIVE revision.\n");
-	}
-
-#if 0
-	// enable lighthouse
-	hret = hid_send_feature_report(priv->hmd_handle,
-	                               vive_magic_enable_lighthouse,
-	                               sizeof(vive_magic_enable_lighthouse));
-	LOGD("enable lighthouse magic: %d\n", hret);
-#endif
-
-
-
-	if (vive_read_config(priv) != 0)
-	{
-		LOGW("Could not read config. Using defaults.\n");
-		priv->imu_config.acc_bias.x = 0.157200f;
-		priv->imu_config.acc_bias.y = -0.011150f;
-		priv->imu_config.acc_bias.z = -0.144900f;
-
-		priv->imu_config.acc_scale.x = 0.999700f;
-		priv->imu_config.acc_scale.y = 0.998900f;
-		priv->imu_config.acc_scale.z = 0.998000f;
-
-		priv->imu_config.gyro_bias.x = -0.027770f;
-		priv->imu_config.gyro_bias.y = -0.011410f;
-		priv->imu_config.gyro_bias.z = -0.014760f;
-
-		priv->imu_config.gyro_scale.x = 1.0f;
-		priv->imu_config.gyro_scale.y = 1.0f;
-		priv->imu_config.gyro_scale.z = 1.0f;
-	}
-
-	if (vive_get_range_packet(priv) != 0)
-	{
-		LOGW("Could not get range packet.\n");
-		priv->imu_config.gyro_range = 8.726646f;
-		priv->imu_config.acc_range = 39.226600f;
 	}
 
 	// Set default device properties
