@@ -15,9 +15,10 @@
 
 #include "../openhmdi.h"
 
-#define MICROSOFT_VID         0x045e
-#define HOLOLENS_SENSORS_PID  0x0659
-#define MOTION_CONTROLLER_PID 0x065b
+#define MICROSOFT_VID                   0x045e
+#define HOLOLENS_SENSORS_PID            0x0659
+#define MOTION_CONTROLLER_PID           0x065b
+#define MOTION_CONTROLLER_PID_SAMSUNG   0x065d
 
 typedef enum
 {

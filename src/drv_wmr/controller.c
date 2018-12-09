@@ -211,9 +211,11 @@ ohmd_device* open_motion_controller_device(ohmd_driver* driver, ohmd_device_desc
 	// Open the controller device
 	priv->controller_imu = open_device_idx(MICROSOFT_VID, MOTION_CONTROLLER_PID, 0, 1, idx);
 
-	if(!priv->controller_imu)
-		goto cleanup;
-
+	if(!priv->controller_imu) {
+		priv->controller_imu = open_device_idx(MICROSOFT_VID, MOTION_CONTROLLER_PID_SAMSUNG, 0, 1, idx);
+		if(!priv->controller_imu)
+			goto cleanup;
+	}
 	// TODO read_config
 
 	if(hid_set_nonblocking(priv->controller_imu, 1) == -1){
