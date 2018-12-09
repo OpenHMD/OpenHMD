@@ -8,18 +8,7 @@
 
 #include "lgr100.h"
 
-#define SKIP8 (buffer++)
-#define SKIP_CMD (buffer++)
-#define READ8 *(buffer++);
-#define READ16 *buffer | (*(buffer + 1) << 8); buffer += 2;
-#define READ32 *buffer | (*(buffer + 1) << 8) | (*(buffer + 2) << 16) | (*(buffer + 3) << 24); buffer += 4;
-#define READFLOAT ((float)(*buffer)); buffer += 4;
-#define READFIXED (float)(*buffer | (*(buffer + 1) << 8) | (*(buffer + 2) << 16) | (*(buffer + 3) << 24)) / 1000000.0f; buffer += 4;
-
-#define WRITE8(_val) *(buffer++) = (_val);
-#define WRITE16(_val) WRITE8((_val) & 0xff); WRITE8(((_val) >> 8) & 0xff);
-#define WRITE32(_val) WRITE16((_val) & 0xffff) *buffer; WRITE16(((_val) >> 16) & 0xffff);
-
+#define READFLOAT (*(float*)buffer); buffer += 4;
 
 bool decode_lgr100_imu_msg(lgr100_sensor_sample* smp, const unsigned char* buffer, int size)
 {
@@ -28,5 +17,19 @@ bool decode_lgr100_imu_msg(lgr100_sensor_sample* smp, const unsigned char* buffe
 		return false;
 	}
 
+	buffer += 1;
+	
+	for(int i = 0; i < 3; i++){
+		smp->gyro[i] = READFLOAT;
+	}
+
+	for(int i = 0; i < 3; i++){
+		smp->accel[i] = READFLOAT;
+	}
+
+	//Unused
+	//buffer += 1 //unknown
+	//buffer += 4 //some counter
+	//buffer += 1 //unknown or 0?
 	return true;
 }
