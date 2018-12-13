@@ -12,8 +12,8 @@
 
 bool decode_lgr100_imu_msg(lgr100_sensor_sample* smp, const unsigned char* buffer, int size)
 {
-	if(size != 32){
-		LOGE("invalid packet size (expected 32 but got %d)", size);
+	if(size != 32 || size != 31){
+		LOGE("invalid packet size (expected 32 or 31 but got %d)", size);
 		return false;
 	}
 
