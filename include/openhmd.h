@@ -462,7 +462,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohm
 OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_get_version(int* out_major, int* out_minor, int* out_patch);
 
 /**
- * Set an void* data value for a device.
+ * Check that the library is compatible with the required version.
  *
  * @param major Required major version.
  * @param minor Required minor version.
