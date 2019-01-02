@@ -35,6 +35,7 @@ void accel_from_lgr100_vec(const float* smp, vec3f* out_vec)
 	out_vec->x = (float)smp[0];
 	out_vec->y = (float)smp[1];
 	out_vec->z = (float)smp[2];
+	//printf("accel = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
 }
 
 void gyro_from_lgr100_vec(const float* smp, vec3f* out_vec)
@@ -42,6 +43,7 @@ void gyro_from_lgr100_vec(const float* smp, vec3f* out_vec)
 	out_vec->x = (float)smp[0] * 4.0f;
 	out_vec->y = (float)smp[1] * 4.0f;
 	out_vec->z = (float)smp[2] * 4.0f;
+	//printf("gyro = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
 }
 
 static void handle_tracker_sensor_msg(lgr100_priv* priv, unsigned char* buffer, int size)
@@ -82,30 +84,53 @@ static void update_device(ohmd_device* device)
 		}
 
 		//NULL package
-		if(buffer[0] == 0) {
+		if(buffer[0] == LGR100_IRQ_NULL) {
 			return;
 		}
-		//Print all the verbose debug information
-		else if(buffer[0] != 5){
-			//*buffer += 1;
-			//printf("%s", buffer);
-		}
-		else if(buffer[0] == 5) {
-			handle_tracker_sensor_msg(priv, buffer, size);
-		}
-		else if(buffer[0] == 2){
+		else if(buffer[0] == LGR100_IRQ_BUTTONS){
 			//button 'OK' is buffer[1] state 01 and 04
 			//button '<-' is buffer[1] state 02 and 03
-			if (buffer[1] == 1)
+			if (buffer[1] == LGR100_BUTTON_OK_ON)
 				priv->controller_values[0] = 1;
-			else if (buffer[1] == 2)
+			else if (buffer[1] == LGR100_BUTTON_BACK_ON)
 				priv->controller_values[1] = 1;
-			else if (buffer[1] == 3)
+			else if (buffer[1] == LGR100_BUTTON_BACK_OFF)
 				priv->controller_values[1] = 0;
-			else if (buffer[1] == 4)
+			else if (buffer[1] == LGR100_BUTTON_OK_OFF)
 				priv->controller_values[0] = 0;
+		}
+		//Print all the verbose debug information
+		else if(buffer[0] == LGR100_IRQ_DEBUG1 ||
+				buffer[0] == LGR100_IRQ_DEBUG2 ||
+				buffer[0] == LGR100_IRQ_DEBUG_SEQ1 ||
+				buffer[0] == LGR100_IRQ_DEBUG_SEQ2)
+		{
+			*buffer += 1;
+			printf("%s", buffer);
+		}
+		else if(buffer[0] == LGR100_IRQ_SENSORS) {
+			handle_tracker_sensor_msg(priv, buffer, size);
+		}
+		else if (buffer[0] == LGR100_IRQ_UNKNOWN1) {
+
+		}
+		else if (buffer[0] == LGR100_IRQ_UNKNOWN2) {
+			/*
+			for (int i = 0; i < size; i++)
+			{
+				if (i+1 < size)
+					printf("%02X:", buffer[i]);
+				else
+					printf("%02X", buffer[i]);
+			}
+			printf("\n");
+			printf("%s", buffer);
+			*/
+		}
+		else if (buffer[0] == LGR100_IRQ_UNKNOWN3) {
+
 		}else{
-			//LOGE("unknown message type: %u", buffer[0]);
+			LOGE("unknown message type: %u", buffer[0]);
 		}
 	}
 }
@@ -168,9 +193,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	//Start the headset with the 'vr start app' command
 	hid_write(priv->handle, start_device, sizeof(start_device));
-
-	//Keep Alive
-	hid_write(priv->handle, keep_alive, sizeof(keep_alive));
 
 	hid_write(priv->handle, start_accel, sizeof(start_accel));
 	hid_write(priv->handle, start_gyro, sizeof(start_gyro));
