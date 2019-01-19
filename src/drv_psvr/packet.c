@@ -72,3 +72,25 @@ bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buf
 
 	return true;
 }
+
+bool ds4_controller_decode_packet(ds4_controller_packet* pkt, const unsigned char* buffer, int size)
+{
+	if(size != 45){
+		LOGE("invalid psvr sensor packet size (expected 45 but got %d)", size);
+		return false;
+	}
+
+	buffer += 3; //skip 1 for usb, skip 3 for BT
+	//uint8_t leftX = read8(&buffer);
+	//printf("TESTLOL: %f\n", (float)leftX);
+	buffer += 12; //skip 12 for now, buttons and counter
+
+	for(int i = 0; i < 3; i++){
+		pkt->gyro[i] = read16(&buffer);
+	}
+	for(int i = 0; i < 3; i++){
+		pkt->accel[i] = read16(&buffer);
+	}
+
+	return true;
+}

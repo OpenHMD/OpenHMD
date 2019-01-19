@@ -78,6 +78,7 @@ if(OPENHMD_DRIVER_PSVR)
 	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/psvr.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/packet.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/controller.c
 	)
 	add_definitions(-DDRIVER_PSVR)
 

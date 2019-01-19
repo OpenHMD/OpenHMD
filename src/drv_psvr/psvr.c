@@ -13,9 +13,6 @@
 
 #define TICK_LEN (1.0f / 1000000.0f) // 1 MHz ticks
 
-#define SONY_ID                  0x054c
-#define PSVR_HMD                 0x09af
-
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
@@ -39,14 +36,14 @@ typedef struct {
 
 } psvr_priv;
 
-void accel_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
+static void accel_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[1] *  (9.81 / 16384);
 	out_vec->y = (float)smp[0] *  (9.81 / 16384);
 	out_vec->z = (float)smp[2] * -(9.81 / 16384);
 }
 
-void gyro_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
+static void gyro_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[1] * 0.00105f;
 	out_vec->y = (float)smp[0] * 0.00105f;
@@ -192,7 +189,7 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	return ret;
 }
 
-static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+static ohmd_device* open_hmd_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	psvr_priv* priv = ohmd_alloc(driver->ctx, sizeof(psvr_priv));
 
@@ -281,42 +278,74 @@ cleanup:
 	return NULL;
 }
 
+static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+{
+	if (desc->device_flags & (OHMD_DEVICE_FLAGS_LEFT_CONTROLLER |
+				  OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER))
+		return open_ds4_controller_device(driver, desc);
+	else
+		return open_hmd_device(driver, desc);
+}
+
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-	struct hid_device_info* devs = hid_enumerate(SONY_ID, PSVR_HMD);
+	struct hid_device_info* devs = hid_enumerate(SONY_ID, 0);
 	struct hid_device_info* cur_dev = devs;
 
-	int idx = 0;
+	int id = 0, hmd_idx = 0, controller_idx = 0;
 	while (cur_dev) {
-		ohmd_device_desc* desc;
+		if (cur_dev->product_id == PSVR_HMD) {
+			ohmd_device_desc* desc;
 
-		// Warn if hidapi does not provide interface numbers
-		if (cur_dev->interface_number == -1) {
-			LOGE("hidapi does not provide PSVR interface numbers\n");
-#ifdef __APPLE__
-			LOGE("see https://github.com/signal11/hidapi/pull/380\n");
-#endif
-			break;
-		}
+			// Warn if hidapi does not provide interface numbers
+			if (cur_dev->interface_number == -1) {
+				LOGE("hidapi does not provide PSVR interface numbers\n");
+	#ifdef __APPLE__
+				LOGE("see https://github.com/signal11/hidapi/pull/380\n");
+	#endif
+				break;
+			}
 
-		// Register one device for each IMU sensor interface
-		if (cur_dev->interface_number == 4) {
-			desc = &list->devices[list->num_devices++];
+			// Register one device for each IMU sensor interface
+			if (cur_dev->interface_number == 4) {
+				desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD Sony PSVR Driver");
+				strcpy(desc->driver, "OpenHMD Sony PSVR Driver");
+				strcpy(desc->vendor, "Sony");
+				strcpy(desc->product, "PSVR");
+
+				desc->revision = 0;
+
+				snprintf(desc->path, OHMD_STR_SIZE, "%d", hmd_idx);
+
+				desc->driver_ptr = driver;
+				desc->id = id++;
+
+				desc->device_class = OHMD_DEVICE_CLASS_HMD;
+				desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+
+				hmd_idx++;
+			}
+		} else if (cur_dev->product_id == DUALSHOCK_4) {
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+
+			strcpy(desc->driver, "OpenHMD Sony DualShock 4 driver");
 			strcpy(desc->vendor, "Sony");
-			strcpy(desc->product, "PSVR");
+			// "Motion controller - Left" or "Motion controller - Right"
+			snprintf(desc->product, OHMD_STR_SIZE, "%S", cur_dev->product_string);
 
 			desc->revision = 0;
 
-			snprintf(desc->path, OHMD_STR_SIZE, "%d", idx);
+			snprintf(desc->path, OHMD_STR_SIZE, "%d", controller_idx);
 
 			desc->driver_ptr = driver;
+			desc->id = id++;
 
-			desc->device_class = OHMD_DEVICE_CLASS_HMD;
+			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			desc->device_flags |= OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
-			idx++;
+			controller_idx++;
 		}
 
 		cur_dev = cur_dev->next;

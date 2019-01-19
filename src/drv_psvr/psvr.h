@@ -15,6 +15,11 @@
 
 #include "../openhmdi.h"
 
+#define SONY_ID                  0x054c
+#define PSVR_HMD                 0x09af
+
+#define DUALSHOCK_4 			 0x05c4
+
 typedef enum
 {
 	PSVR_BUTTON_VOLUME_PLUS = 2,
@@ -40,6 +45,19 @@ typedef struct
 	uint8_t seq;
 } psvr_sensor_packet;
 
+typedef struct
+{
+	uint8_t id;
+	uint8_t buttons;
+	uint16_t stick[2];
+	uint8_t trigger;
+	uint8_t touchpad[2];
+	uint8_t battery;
+	int16_t accel[3];
+	int16_t gyro[3];
+	uint32_t timestamp;
+} ds4_controller_packet;
+
 static const unsigned char psvr_vrmode_on[8]  = {
 	0x23, 0x00, 0xaa, 0x04, 0x01, 0x00, 0x00, 0x00
 };
@@ -56,5 +74,8 @@ static const unsigned char psvr_power_on[8]  = {
 
 void vec3f_from_psvr_vec(const int16_t* smp, vec3f* out_vec);
 bool psvr_decode_sensor_packet(psvr_sensor_packet* pkt, const unsigned char* buffer, int size);
+bool ds4_controller_decode_packet(ds4_controller_packet* pkt, const unsigned char* buffer, int size);
+
+ohmd_device* open_ds4_controller_device(ohmd_driver* driver, ohmd_device_desc* desc);
 
 #endif
