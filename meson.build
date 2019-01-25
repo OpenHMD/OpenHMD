@@ -91,6 +91,15 @@ if _drivers.contains('xgvr')
 	deps += dep_hidapi
 endif
 
+if _drivers.contains('xgvr')
+	sources += [
+		'src/drv_lgr100/lgr100.c',
+		'src/drv_lgr100/packet.c',
+	]
+	c_args += '-DDRIVER_LGR'
+	deps += dep_hidapi
+endif
+
 if _drivers.contains('external')
 	sources += [
 		'src/drv_external/external.c'
