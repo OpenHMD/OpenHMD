@@ -221,6 +221,24 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
 
+	// Set up rotation matrix
+	mat4x4f rotation;
+	omat4x4f_init_ident(&rotation);
+
+	rotation.m[0][0] = 0.0f;
+	rotation.m[0][1] = -1.0f;
+	rotation.m[1][0] = 1.0f;
+	rotation.m[1][1] = 0.0f;
+
+	omat4x4f_mult(&priv->base.properties.proj_right, &rotation, &priv->base.properties.proj_right);
+
+	rotation.m[0][0] = 0.0f;
+	rotation.m[0][1] = 1.0f;
+	rotation.m[1][0] = -1.0f;
+	rotation.m[1][1] = 0.0f;
+
+	omat4x4f_mult(&priv->base.properties.proj_left, &rotation, &priv->base.properties.proj_left);
+
 	// set up device callbacks
 	priv->base.update = update_device;
 	priv->base.close = close_device;
