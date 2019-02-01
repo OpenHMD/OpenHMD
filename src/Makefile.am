@@ -93,6 +93,17 @@ libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
 
 endif
 
+if BUILD_DRIVER_LGR
+
+libopenhmd_la_SOURCES += \
+	drv_lgr100/lgr100.c \
+	drv_lgr100/packet.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_LGR
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
+endif
+
 if BUILD_DRIVER_EXTERNAL
 
 libopenhmd_la_SOURCES += \

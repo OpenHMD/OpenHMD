@@ -111,6 +111,15 @@ AC_ARG_ENABLE([driver-xgvr],
 
 AM_CONDITIONAL([BUILD_DRIVER_XGVR], [test "x$driver_xgvr_enabled" != "xno"])
 
+# LG R100
+AC_ARG_ENABLE([driver-lgr],
+        [AS_HELP_STRING([--disable-driver-lgr],
+                [disable building of LG R100 driver [default=yes]])],
+        [driver_lgr_enabled=$enableval],
+        [driver_lgr_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_LGR], [test "x$driver_lgr_enabled" != "xno"])
+
 # External Driver
 AC_ARG_ENABLE([driver-external],
         [AS_HELP_STRING([--disable-driver-external],
