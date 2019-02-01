@@ -48,7 +48,8 @@ endif
 if _drivers.contains('psvr')
 	sources += [
 		'src/drv_psvr/psvr.c',
-		'src/drv_psvr/packet.c'
+		'src/drv_psvr/packet.c',
+		'src/drv_psvr/controller.c'
 	]
 	c_args += '-DDRIVER_PSVR'
 	deps += dep_hidapi
