@@ -105,30 +105,26 @@ static void update_device(ohmd_device* device)
 				buffer[0] == LGR100_IRQ_DEBUG_SEQ1 ||
 				buffer[0] == LGR100_IRQ_DEBUG_SEQ2)
 		{
-			*buffer += 1;
-			printf("%s", buffer);
+			//*buffer += 1;
+			//printf("%s", buffer);
 		}
 		else if(buffer[0] == LGR100_IRQ_SENSORS) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}
 		else if (buffer[0] == LGR100_IRQ_UNKNOWN1) {
-
+			// prints different data based on if there is anything in front of the proximity sensor
+			// Example prox on
+			// 01:07:00:40:BD:97:B1:D1:3B:BD:72:2E:BC:CD:EC:53:BF:33:47:19:41:66:22:17:C0:82:AC:C9:00:02:00:00
+			// Example prox off
+			// 01:07:05:14:3D:97:B1:D1:3B:3A:85:0B:BC:9A:59:4B:BF:9A:28:1A:41:9A:E1:1B:C0:99:41:B4:E2:02:00:00
 		}
 		else if (buffer[0] == LGR100_IRQ_UNKNOWN2) {
-			/*
-			for (int i = 0; i < size; i++)
-			{
-				if (i+1 < size)
-					printf("%02X:", buffer[i]);
-				else
-					printf("%02X", buffer[i]);
-			}
-			printf("\n");
-			printf("%s", buffer);
-			*/
+			// prints
+			// FF:48:42:00:20:A8:DE:00:20:A8:DE:00:20:89:2F:03:08:60:6C:00:20:05:00:CC:CC:06:00:CC:CC:1B:FF:02
 		}
 		else if (buffer[0] == LGR100_IRQ_UNKNOWN3) {
-
+			// prints
+			// 65:20:28:30:29:0A:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
 		}
