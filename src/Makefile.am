@@ -65,7 +65,8 @@ if BUILD_DRIVER_PSVR
 libopenhmd_la_SOURCES += \
 	drv_psvr/psvr.c \
 	drv_psvr/packet.c \
-	drv_psvr/controller.c
+	drv_psvr/controller.c \
+	drv_psvr/psmove.c
 
 libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_PSVR
 libopenhmd_la_LDFLAGS += $(hidapi_LIBS)

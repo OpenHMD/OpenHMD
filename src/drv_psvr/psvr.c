@@ -285,6 +285,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	    (OHMD_DEVICE_FLAGS_LEFT_CONTROLLER |
 	     OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER))
 		return open_ds4_controller_device(driver, desc);
+	else if (desc->device_class == OHMD_DEVICE_CLASS_CONTROLLER)
+		return open_psmove_device(driver, desc);
 	else
 		return open_hmd_device(driver, desc);
 }
@@ -294,7 +296,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	struct hid_device_info* devs = hid_enumerate(SONY_ID, 0);
 	struct hid_device_info* cur_dev = devs;
 
-	int id = 0, hmd_idx = 0, controller_idx = 0;
+	int id = 0, hmd_idx = 0, controller_idx = 0, psmove_idx = 0;
 	while (cur_dev) {
 		if (cur_dev->product_id == PSVR_HMD) {
 			ohmd_device_desc* desc;
@@ -350,6 +352,29 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			desc->device_flags |= OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
 			controller_idx++;
+		} else if (cur_dev->product_id == PSMOVE_ZCM1 ||
+		           cur_dev->product_id == PSMOVE_ZCM2) {
+			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+
+			strcpy(desc->driver, "OpenHMD Sony PlayStation Move controller driver");
+			strcpy(desc->vendor, "Sony");
+			snprintf(desc->product, OHMD_STR_SIZE, "%S", cur_dev->product_string);
+
+			desc->revision = 0;
+
+			snprintf(desc->path, OHMD_STR_SIZE, "%d", psmove_idx);
+
+			desc->driver_ptr = driver;
+			desc->id = id++;
+
+			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			// For now assign alternating handedness
+			desc->device_flags |= (psmove_idx & 1) ?
+				OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER :
+				OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
+
+			psmove_idx++;
 		}
 
 		cur_dev = cur_dev->next;

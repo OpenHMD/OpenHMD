@@ -94,3 +94,35 @@ bool ds4_controller_decode_packet(ds4_controller_packet* pkt, const unsigned cha
 
 	return true;
 }
+
+bool psmove_decode_packet(psmove_packet* pkt, const unsigned char* buffer, int size)
+{
+	if(size != 49){
+		LOGE("invalid psmove packet size (expected 49 but got %d)", size);
+		return false;
+	}
+
+	buffer++; //skip id
+	pkt->buttons = read32(&buffer);
+	pkt->trigger[0] = read8(&buffer);
+	pkt->trigger[1] = read8(&buffer);
+	buffer += 4; //skip 4
+	pkt->timestamp = read8(&buffer) << 8;
+	pkt->battery = read8(&buffer);
+	for(int i = 0; i < 3; i++){
+		pkt->accel[0][i] = read16(&buffer);
+	}
+	for(int i = 0; i < 3; i++){
+		pkt->accel[1][i] = read16(&buffer);
+	}
+	for(int i = 0; i < 3; i++){
+		pkt->gyro[0][i] = read16(&buffer);
+	}
+	for(int i = 0; i < 3; i++){
+		pkt->gyro[1][i] = read16(&buffer);
+	}
+	buffer += 2; //skip temp and magnetometer
+	pkt->timestamp += read8(&buffer);
+
+	return true;
+}

@@ -79,6 +79,7 @@ if(OPENHMD_DRIVER_PSVR)
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/psvr.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/packet.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/controller.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_psvr/psmove.c
 	)
 	add_definitions(-DDRIVER_PSVR)
 
