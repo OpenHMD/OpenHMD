@@ -110,6 +110,7 @@ static void update_device(ohmd_device* device)
 		}
 		else if(buffer[0] == LGR100_IRQ_SENSORS) {
 			handle_tracker_sensor_msg(priv, buffer, size);
+			return;
 		}
 		else if (buffer[0] == LGR100_IRQ_UNKNOWN1) {
 
