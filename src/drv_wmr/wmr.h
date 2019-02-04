@@ -84,6 +84,10 @@ static const unsigned char motion_controller_imu_on[64] = {
 	0x06, 0x03, 0x01, 0x00, 0x02
 };
 
+static const unsigned char motion_controller_leds_bright[12] = {
+	0x03, 0x01, 0x21, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x2c,
+};
+
 bool hololens_sensors_decode_packet(hololens_sensors_packet* pkt, const unsigned char* buffer, int size);
 bool motion_controller_decode_packet(motion_controller_packet* pkt, const unsigned char* buffer, int size);
 

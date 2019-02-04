@@ -226,6 +226,10 @@ ohmd_device* open_motion_controller_device(ohmd_driver* driver, ohmd_device_desc
 	// turn the IMU on
 	hid_write(priv->controller_imu, motion_controller_imu_on, sizeof(motion_controller_imu_on));
 
+	// turn the LEDs bright
+	hid_write(priv->controller_imu, motion_controller_leds_bright,
+		  sizeof(motion_controller_leds_bright));
+
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
