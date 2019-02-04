@@ -17,11 +17,11 @@ addons:
       - libglew-dev
       - libhidapi-dev
       - libsdl2-dev
+      - ninja-build
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2; fi
-  - ./autogen.sh
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2 cmake ninja; fi
 
 install: true # skip install step
 
-script: ./configure --enable-openglexample && make
+script: cmake . -G Ninja && ninja
