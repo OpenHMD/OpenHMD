@@ -280,8 +280,10 @@ cleanup:
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
-	if (desc->device_flags & (OHMD_DEVICE_FLAGS_LEFT_CONTROLLER |
-				  OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER))
+	if ((desc->device_flags & (OHMD_DEVICE_FLAGS_LEFT_CONTROLLER |
+				   OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER)) ==
+	    (OHMD_DEVICE_FLAGS_LEFT_CONTROLLER |
+	     OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER))
 		return open_ds4_controller_device(driver, desc);
 	else
 		return open_hmd_device(driver, desc);
@@ -343,6 +345,8 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 			desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+			// For now assign both hands
+			desc->device_flags |= OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
 			desc->device_flags |= OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
 			controller_idx++;
