@@ -20,14 +20,15 @@ bool decode_dwdg_imu_msg(dwdg_sensor_sample* smp, const unsigned char* buffer, i
 		return false;
 	}
 
-	//buffer += 1;
+	buffer += 16;
 	
 	for(int i = 0; i < 3; i++){
-		smp->gyro[i] = READ32;
+		smp->gyro[i] = READFLOAT;
 	}
+	//buffer += 0;
 
 	for(int i = 0; i < 3; i++){
-		smp->accel[i] = READ32;
+		smp->accel[i] = READFLOAT;
 	}
 	return true;
 }

@@ -34,20 +34,18 @@ static dwdg_priv* dwdg_priv_get(ohmd_device* device)
 	return (dwdg_priv*)device;
 }
 
-void accel_from_dwdg_vec(const int32_t* smp, vec3f* out_vec)
+void accel_from_dwdg_vec(const float* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0];
-	out_vec->y = (float)smp[1];
-	out_vec->z = (float)smp[2];
-	//printf("accel = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
+	out_vec->y = (float)smp[2];
+	out_vec->z = (float)smp[1];
 }
 
-void gyro_from_dwdg_vec(const int32_t* smp, vec3f* out_vec)
+void gyro_from_dwdg_vec(const float* smp, vec3f* out_vec)
 {
-	out_vec->x = (float)smp[0];// * 4.0f;
-	out_vec->y = (float)smp[1];// * 4.0f;
-	out_vec->z = (float)smp[2];// * 4.0f;
-	//printf("gyro = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
+	out_vec->x = (float)smp[0];
+	out_vec->y = (float)smp[2];
+	out_vec->z = (float)smp[1];
 }
 
 static void update_device(ohmd_device* device)
@@ -56,9 +54,9 @@ static void update_device(ohmd_device* device)
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
 	// Read all the messages from the device.
-	int i = 0;
-	while(i < 20){
-		int size = hid_read_timeout(priv->handle, buffer, FEATURE_BUFFER_SIZE, 20);
+	while(true){
+		//Setting timeout will result in never breaking from the loop, so needs 0ms
+		int size = hid_read_timeout(priv->handle, buffer, FEATURE_BUFFER_SIZE, 0);
 		if(size < 0){
 			LOGE("error reading from device");
 			return;
@@ -66,8 +64,11 @@ static void update_device(ohmd_device* device)
 			return; // No more messages, return.
 		}
 
+		//It seems that as a exception to regular usb hid design, we have no packet descriptor
+		//In this case just treating all data as IMU data
+
 		uint32_t last_sample_tick = priv->sample.tick;
-		uint32_t tick_delta = 200;
+		uint32_t tick_delta = 1000;
 		if(last_sample_tick > 0) //startup correction
 			tick_delta = priv->sample.tick - last_sample_tick;
 
@@ -78,13 +79,8 @@ static void update_device(ohmd_device* device)
 		gyro_from_dwdg_vec(priv->sample.gyro, &priv->raw_gyro);
 		
 		vec3f mag = {{0.0f, 0.0f, 0.0f}};
-		
-		//printf("x %f, y %f, z %f\n", (float)priv->sample.accel[0], (float)priv->sample.accel[1], (float)priv->sample.accel[2]);
-		//printf("x %f, y %f, z %f\n", (float)priv->sample.gyro[0], (float)priv->sample.gyro[1], (float)priv->sample.gyro[2]);
-		printf("x %f, y %f, z %f\n", priv->raw_accel.x, priv->raw_accel.y, priv->raw_accel.z);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
-		i += 1;
 	}
 }
 
@@ -141,13 +137,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
-	// Set device properties (imitates the rift values)
-	priv->base.properties.hsize = 0.149760f;
-	priv->base.properties.vsize = 0.093600f;
+	// Set device properties
+	priv->base.properties.hsize = 0.1356f;
+	priv->base.properties.vsize = 0.0412f;
 	priv->base.properties.hres = 1600;
 	priv->base.properties.vres = 1280;
-	priv->base.properties.lens_sep = 0.063500f;
-	priv->base.properties.lens_vpos = 0.046800f;
+	priv->base.properties.lens_sep = 0.073500f;
+	priv->base.properties.lens_vpos = 0.016800f;
 	priv->base.properties.fov = DEG_TO_RAD(90.0f);
 	priv->base.properties.ratio = (1600.0f / 1280.0f) / 2.0f;
 

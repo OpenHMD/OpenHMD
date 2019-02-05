@@ -18,8 +18,8 @@
 
 typedef struct
 {
-	int32_t accel[3];
-	int32_t gyro[3];
+	float accel[3];
+	float gyro[3];
 	uint32_t tick;
 } dwdg_sensor_sample;
 
