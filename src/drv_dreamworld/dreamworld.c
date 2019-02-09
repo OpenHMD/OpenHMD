@@ -38,14 +38,14 @@ void accel_from_dwdg_vec(const float* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0];
 	out_vec->y = (float)smp[2];
-	out_vec->z = (float)smp[1];
+	out_vec->z = -(float)smp[1];
 }
 
 void gyro_from_dwdg_vec(const float* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0];
 	out_vec->y = (float)smp[2];
-	out_vec->z = (float)smp[1];
+	out_vec->z = -(float)smp[1];
 }
 
 static void update_device(ohmd_device* device)
