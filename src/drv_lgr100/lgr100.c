@@ -34,7 +34,7 @@ void accel_from_lgr100_vec(const float* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0];
 	out_vec->y = (float)smp[1];
-	out_vec->z = (float)smp[2];
+	out_vec->z = -(float)smp[2];
 	//printf("accel = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
 }
 
@@ -42,7 +42,7 @@ void gyro_from_lgr100_vec(const float* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0] * 4.0f;
 	out_vec->y = (float)smp[1] * 4.0f;
-	out_vec->z = (float)smp[2] * 4.0f;
+	out_vec->z = -((float)smp[2] * 4.0f);
 	//printf("gyro = %f, %f, %f\n", out_vec->x, out_vec->y, out_vec->z);
 }
 
