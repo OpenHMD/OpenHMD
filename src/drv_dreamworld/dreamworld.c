@@ -55,8 +55,7 @@ static void update_device(ohmd_device* device)
 
 	// Read all the messages from the device.
 	while(true){
-		//Setting timeout will result in never breaking from the loop, so needs 0ms
-		int size = hid_read_timeout(priv->handle, buffer, FEATURE_BUFFER_SIZE, 0);
+		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
 		if(size < 0){
 			LOGE("error reading from device");
 			return;
@@ -99,7 +98,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		break;
 
 	case OHMD_DISTORTION_K:
-		// TODO this should be set to the equivalent of no distortion
+		// TODO this should be set to the equivalent of no distortion_coeffs
 		memset(out, 0, sizeof(float) * 6);
 		break;
 
@@ -134,21 +133,40 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 	}
 
+	if(hid_set_nonblocking(priv->handle, 1) == -1){
+		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
+		goto cleanup;
+	}
+
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
 	// Set device properties
-	priv->base.properties.hsize = 0.1356f;
-	priv->base.properties.vsize = 0.0412f;
+	priv->base.properties.hsize = 0.1315f;
+	priv->base.properties.vsize = 0.0467f;
 	priv->base.properties.hres = 1600;
 	priv->base.properties.vres = 1280;
-	priv->base.properties.lens_sep = 0.073500f;
-	priv->base.properties.lens_vpos = 0.016800f;
+	priv->base.properties.lens_sep = 0.050500f; //total guesstimate
+	priv->base.properties.lens_vpos = 0.045200f; //total guesstimate
 	priv->base.properties.fov = DEG_TO_RAD(90.0f);
-	priv->base.properties.ratio = (1600.0f / 1280.0f) / 2.0f;
+	priv->base.properties.ratio = (2560.0f / 800.0f) / 2.0f;
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
+
+
+	// Flip the screen over vertical line to correct for the physical projection
+	mat4x4f flip;
+	omat4x4f_init_ident(&flip);
+
+	flip.m[0][0] = -1.0f; flip.m[1][1] = 1.0f; flip.m[2][2] = 1.0f;
+
+	omat4x4f_mult(&priv->base.properties.proj_right, &flip, &priv->base.properties.proj_right);
+	omat4x4f_mult(&priv->base.properties.proj_left, &flip, &priv->base.properties.proj_left);
+
+	mat4x4f left_inv = priv->base.properties.proj_left;
+	priv->base.properties.proj_left = priv->base.properties.proj_right;
+	priv->base.properties.proj_right = left_inv;
 
 	// set up device callbacks
 	priv->base.update = update_device;
@@ -208,8 +226,6 @@ ohmd_driver* ohmd_create_dwdg_drv(ohmd_context* ctx)
 	if(!drv)
 		return NULL;
 
-	drv->get_device_list = get_device_list;
-	drv->open_device = open_device;
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->destroy = destroy_driver;
