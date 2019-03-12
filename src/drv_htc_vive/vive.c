@@ -202,6 +202,10 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		out[0] = out[1] = out[2] = 0;
 		break;
 
+	case OHMD_ANGULAR_VELOCITY:
+		*(vec3f*)out =  priv->sensor_fusion.ang_vel;
+		break;
+
 	case OHMD_DISTORTION_K:
 		// TODO this should be set to the equivalent of no distortion
 		memset(out, 0, sizeof(float) * 6);
