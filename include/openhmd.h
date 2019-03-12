@@ -163,6 +163,8 @@ typedef enum {
 	/** float[OHMD_CONTROL_COUNT] (get): Get the state of the device's controls. */
 	OHMD_CONTROLS_STATE                = 22,
 
+	/** float[3] (get): Angular velocity vector in radians/s. */
+	OHMD_ANGULAR_VELOCITY                 = 23,
 } ohmd_float_value;
 
 /** A collection of int value information types used for getting information with ohmd_device_geti(). */
