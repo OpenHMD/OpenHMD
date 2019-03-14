@@ -86,7 +86,8 @@ if _drivers.contains('wmr')
 	sources += [
 		'src/drv_wmr/wmr.c',
 		'src/drv_wmr/controller.c',
-		'src/drv_wmr/packet.c'
+		'src/drv_wmr/packet.c',
+		'src/ext_deps/nxjson.c'
 	]
 	c_args += '-DDRIVER_WMR'
 	deps += dep_hidapi
@@ -117,7 +118,7 @@ endif
 
 openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), c_args : c_args, dependencies : deps, install : true, version : library_version)
 
-# build examples and install pkg-config file + header only for shared library. shared is the default
+# build examples only for shared library. shared is the default
 if get_option('default_library') == 'shared'
 	_examples = get_option('examples')
 	if _examples.contains('simple')
@@ -134,15 +135,16 @@ if get_option('default_library') == 'shared'
 		glewdep = dependency('glew')
 		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, gldep, glewdep], install : true)
 	endif
-	pkg = import('pkgconfig')
-	pkg.generate(
-		name : 'openhmd',
-		description : 'API and drivers for immersive technology devices such as HMDs',
-		version : meson.project_version(),
-		subdirs : 'openhmd',
-		requires : hidapi,
-		libraries : openhmd_lib,
-		url : 'http://www.openhmd.net/'
-	)
-	install_headers('include/openhmd.h', subdir : 'openhmd')
 endif
+
+pkg = import('pkgconfig')
+pkg.generate(
+	name : 'openhmd',
+	description : 'API and drivers for immersive technology devices such as HMDs',
+	version : meson.project_version(),
+	subdirs : 'openhmd',
+	requires : hidapi,
+	libraries : openhmd_lib,
+	url : 'http://www.openhmd.net/'
+)
+install_headers('include/openhmd.h', subdir : 'openhmd')
