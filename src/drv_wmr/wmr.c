@@ -323,7 +323,7 @@ void process_nxjson_obj(const nx_json* node, const nx_json* (*list)[32], char* m
 
 void resetList(const nx_json* (*list)[32])
 {
-	memset(list, 0, sizeof(list));
+	memset(list, 0, sizeof(*list));
 }
 
 static ohmd_device* open_hmd_device(ohmd_driver* driver, ohmd_device_desc* desc)
