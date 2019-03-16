@@ -23,6 +23,8 @@ For a full list of supported devices please check https://github.com/OpenHMD/Ope
   * HIDAPI
     * http://www.signal11.us/oss/hidapi/
     * https://github.com/signal11/hidapi/
+  * libusb
+    * https://libusb.info/
 
 ## Language Bindings
   * Java bindings by Joey Ferwerda and Koen Mertens

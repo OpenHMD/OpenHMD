@@ -17,9 +17,10 @@ addons:
       - libglew-dev
       - libhidapi-dev
       - libsdl2-dev
+      - libusb-1.0-0-dev
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2 libusb; fi
   - ./autogen.sh
 
 install: true # skip install step
