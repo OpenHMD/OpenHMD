@@ -27,6 +27,7 @@
 typedef struct {
 	ohmd_device base;
 
+	wmr_usb usb;
 	hid_device* hmd_imu;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
@@ -104,6 +105,8 @@ static void update_device(ohmd_device* device)
 {
 	wmr_priv* priv = (wmr_priv*)device;
 
+	wmr_usb_update(&priv->usb);
+
 	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
@@ -163,6 +166,7 @@ static void close_device(ohmd_device* device)
 	LOGD("closing Microsoft HoloLens Sensors device");
 
 	hid_close(priv->hmd_imu);
+	wmr_usb_destroy(&priv->usb);
 
 	free(device);
 }
@@ -339,7 +343,10 @@ static ohmd_device* open_hmd_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	int idx = atoi(desc->path);
 
-	// Open the HMD device
+	if(!wmr_usb_init(&priv->usb, idx))
+		goto cleanup;
+
+	// Open the HMD hid device
 	priv->hmd_imu = open_device_idx(MICROSOFT_VID, HOLOLENS_SENSORS_PID, 0, 1, idx);
 
 	if(!priv->hmd_imu)

@@ -65,6 +65,7 @@ endif(OPENHMD_DRIVER_DEEPOON)
 if(OPENHMD_DRIVER_WMR)
 	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/wmr.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/usb.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/controller.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_wmr/packet.c
 	)
@@ -73,6 +74,10 @@ if(OPENHMD_DRIVER_WMR)
 	find_package(HIDAPI REQUIRED)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+
+	find_package(LibUSB REQUIRED)
+	include_directories(${LibUSB_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${LibUSB_LIBRARIES})
 endif(OPENHMD_DRIVER_WMR)
 
 if(OPENHMD_DRIVER_PSVR)

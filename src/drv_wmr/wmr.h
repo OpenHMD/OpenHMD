@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <libusb.h>
 
 #include "../openhmdi.h"
 
@@ -87,6 +88,18 @@ static const unsigned char motion_controller_imu_on[64] = {
 static const unsigned char motion_controller_leds_bright[12] = {
 	0x03, 0x01, 0x21, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x2c,
 };
+
+typedef struct {
+	libusb_context* ctx;
+	libusb_device_handle* dev;
+	struct libusb_transfer* img_xfer;
+	uint8_t img_buffer[616538];
+	uint8_t img_frame[1280*481];
+} wmr_usb;
+
+bool wmr_usb_init(wmr_usb* usb, int idx);
+void wmr_usb_destroy(wmr_usb* usb);
+void wmr_usb_update(wmr_usb* usb);
 
 bool hololens_sensors_decode_packet(hololens_sensors_packet* pkt, const unsigned char* buffer, int size);
 bool motion_controller_decode_packet(motion_controller_packet* pkt, const unsigned char* buffer, int size);
