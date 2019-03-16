@@ -69,7 +69,7 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 		if (tick_delta > 0xffffff)
 			tick_delta += 0x1000000;
 		if (tick_delta < 475 || tick_delta > 525){
-			LOGD("tick_delta = %u\n", tick_delta)
+			LOGD("tick_delta = %u\n", tick_delta);
 			tick_delta = 500;
 		}
 	}
