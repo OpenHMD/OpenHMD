@@ -69,12 +69,11 @@ err_0:
 
 static bool wmr_camera_start(wmr_usb* usb)
 {
-    static const uint8_t start_cmd[] = {
-            0x44, 0x6c, 0x6f, 0x2b, 0x0c, 0x00,
-            0x00, 0x00, 0x81, 0x00, 0x00, 0x00
-    };
     int res;
     int transferred;
+    uint8_t start_cmd[sizeof(hololens_camera_start)];
+
+    memcpy(start_cmd, hololens_camera_start, sizeof(hololens_camera_start));
 
     res = libusb_bulk_transfer(usb->dev, 0x05, start_cmd, sizeof(start_cmd), &transferred, 0);
     if(res < 0)
@@ -101,12 +100,11 @@ err:
 
 static bool wmr_camera_stop(wmr_usb* usb)
 {
-    static const uint8_t stop_cmd[] = {
-            0x44, 0x6c, 0x6f, 0x2b, 0x0c, 0x00,
-            0x00, 0x00, 0x82, 0x00, 0x00, 0x00
-    };
     int res;
     int transferred;
+    uint8_t stop_cmd[sizeof(hololens_camera_stop)];
+
+    memcpy(stop_cmd, hololens_camera_stop, sizeof(hololens_camera_stop));
 
     libusb_cancel_transfer(usb->img_xfer);
 
