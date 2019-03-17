@@ -30,6 +30,7 @@ else
 	endif
 endif
 dep_hidapi = dependency(hidapi)
+dep_libusb = dependency('libusb-1.0')
 deps = [
 	meson.get_compiler('c').find_library('m', required : false), #-lm
 	dependency('threads') #pthread
@@ -87,10 +88,11 @@ if _drivers.contains('wmr')
 		'src/drv_wmr/wmr.c',
 		'src/drv_wmr/controller.c',
 		'src/drv_wmr/packet.c',
+		'src/drv_wmr/usb.c',
 		'src/ext_deps/nxjson.c'
 	]
 	c_args += '-DDRIVER_WMR'
-	deps += dep_hidapi
+	deps += [dep_hidapi, dep_libusb]
 endif
 
 if _drivers.contains('xgvr')
@@ -143,7 +145,7 @@ pkg.generate(
 	description : 'API and drivers for immersive technology devices such as HMDs',
 	version : meson.project_version(),
 	subdirs : 'openhmd',
-	requires : hidapi,
+	requires : [hidapi, dep_libusb],
 	libraries : openhmd_lib,
 	url : 'http://www.openhmd.net/'
 )
