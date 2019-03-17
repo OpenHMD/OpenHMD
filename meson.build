@@ -41,13 +41,16 @@ deps = [
 
 sources = [
 	'src/openhmd.c',
-	'src/platform-win32.c',
 	'src/drv_dummy/dummy.c',
 	'src/omath.c',
-	'src/platform-posix.c',
 	'src/fusion.c',
 	'src/shaders.c',
 ]
+if host_machine.system() == 'windows'
+	sources += 'src/platform-win32.c'
+else
+	sources += 'src/platform-posix.c'
+endif
 c_args = []
 
 _drivers = get_option('drivers')
