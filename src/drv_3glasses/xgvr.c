@@ -179,6 +179,10 @@ static int _getf(ohmd_device* device, ohmd_float_value type, float* out)
         out[2] = priv->hmd_data.als;
         break;
 
+    case OHMD_ANGULAR_VELOCITY:
+        *(vec3f*)out = *(vec3f*)priv->hmd_data.gyr;
+        break;
+
     default:
         ohmd_set_error(priv->device.ctx, "invalid type given to getf (%ud)", type);
         return -1;
