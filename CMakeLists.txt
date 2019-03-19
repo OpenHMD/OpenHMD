@@ -193,5 +193,12 @@ foreach(target ${TARGETS})
 
 endforeach(target)
 
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/pkg-config/openhmd.pc.cmakein"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
+
 install(TARGETS ${TARGETS} DESTINATION lib)
 install(FILES include/openhmd.h DESTINATION include)
+install(FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc"
+        DESTINATION lib/pkgconfig)
