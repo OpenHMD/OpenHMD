@@ -1,0 +1,11 @@
+prefix=${CMAKE_INSTALL_PREFIX}
+libdir=$${PKG_CONFIG_INCLUDEDIR}
+includedir=${PKG_CONFIG_LIBDIR}
+
+Name: openhmd
+Description: API and drivers for immersive technology devices such as HMDs
+Version: 0.3.0
+Requires: @hidapi@
+Conflicts:
+Libs: -L${libdir} -lopenhmd @deps_ld_flags@
+Cflags: -I${includedir}
