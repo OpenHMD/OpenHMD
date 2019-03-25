@@ -20,7 +20,10 @@ hidapi = 'hidapi'
 if host_machine.system() == 'linux'
 	hidapi = 'hidapi-libusb'
 endif
+
 dep_hidapi = dependency(hidapi)
+dep_threads = dependency('threads')
+
 deps = [
 	meson.get_compiler('c').find_library('m', required : false), #-lm
 	dependency('threads') #pthread
@@ -107,23 +110,37 @@ endif
 
 openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), c_args : c_args, dependencies : deps, install : true, version : library_version)
 
-# build examples only for shared library. shared is the default
-if get_option('default_library') == 'shared'
-	_examples = get_option('examples')
-	if _examples.contains('simple')
-		executable('openhmd_simple_example', 'examples/simple/simple.c', include_directories : include_directories('./include'), link_with: [openhmd_lib], install : true)
-	endif
 
-	if _examples.contains('opengl')
-		opengl_sources = [
-			'examples/opengl/main.c',
-			'examples/opengl/gl.c',
-		]
-		sdldep = dependency('sdl2')
-		gldep = dependency('gl')
-		glewdep = dependency('glew')
-		executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : [sdldep, gldep, glewdep], install : true)
-	endif
+#
+# Examples
+#
+
+_examples = get_option('examples')
+
+# Simple
+if _examples.contains('simple')
+	deps = [dep_threads]
+
+	simple_sources = [
+		'examples/simple/simple.c'
+	]
+
+	executable('openhmd_simple_example', simple_sources, include_directories : include_directories('./include'), link_with: [openhmd_lib], dependencies : deps, install : true)
+endif
+
+# OpenGL
+if _examples.contains('opengl')
+	dep_sdl2 = dependency('sdl2')
+	dep_gl = dependency('gl')
+	dep_glew = dependency('glew')
+	deps = [dep_sdl2, dep_gl, dep_glew, dep_threads]
+
+	opengl_sources = [
+		'examples/opengl/main.c',
+		'examples/opengl/gl.c',
+	]
+
+	executable('openhmd_opengl_example', opengl_sources , include_directories : include_directories(['./include', 'examples/opengl']), link_with: [openhmd_lib], dependencies : deps, install : true)
 endif
 
 pkg = import('pkgconfig')
