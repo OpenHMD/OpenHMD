@@ -4,18 +4,18 @@
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
-/*  SparkFun 9DoF Driver */
+/* Relativ HMD Driver */
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <hidapi.h>
-#include "../openhmdi.h"
+#include <hidapi/hidapi.h>
+#include <openhmdi.h>
 
 #define VENDOR_ID 0x1b4f
 #define PRODUCT_ID 0x8d21
-#define DEVICE_NAME "SparkFun 9 DoF"
+#define DEVICE_NAME "Relativ"
 
 struct data {
         float w;
@@ -27,11 +27,11 @@ struct data {
 typedef struct {
 	ohmd_device base;
         hid_device *handle;
-} sparkFun9DoF_priv;
+} relativ_priv;
 
 static void update_device(ohmd_device* device)
 {
-	sparkFun9DoF_priv* priv = (sparkFun9DoF_priv*)device;
+	relativ_priv* priv = (relativ_priv*)device;
         int size;
         struct data _data;
 
@@ -46,12 +46,12 @@ static void update_device(ohmd_device* device)
                 priv->base.rotation.w = _data.w;
         }
 
-        //printf("%f %f %f %f\n", _data.x, _data.y, _data.z, _data.w);
+     	printf("%f %f %f %f\n", _data.x, _data.y, _data.z, _data.w);
 }
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
-	sparkFun9DoF_priv* priv = (sparkFun9DoF_priv*)device;
+	relativ_priv* priv = (relativ_priv*)device;
 
 	switch(type){
 	case OHMD_ROTATION_QUAT:
@@ -85,9 +85,9 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
 static void close_device(ohmd_device* device)
 {
-	sparkFun9DoF_priv* priv = (sparkFun9DoF_priv*)device;
+	relativ_priv* priv = (relativ_priv*)device;
         
-	LOGD("closing sparkfun9dof device");
+	LOGD("closing relativ device");
 
         if (priv->handle) {
                 hid_close(priv->handle);
@@ -99,7 +99,7 @@ static void close_device(ohmd_device* device)
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
-	sparkFun9DoF_priv* priv = ohmd_alloc(driver->ctx, sizeof(sparkFun9DoF_priv));
+	relativ_priv* priv = ohmd_alloc(driver->ctx, sizeof(relativ_priv));
 
 	if(!priv)
 		return NULL;
@@ -123,7 +123,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.070940f;
 	priv->base.properties.hres = 1440;
 	priv->base.properties.vres = 2560;
-	priv->base.properties.lens_sep = 0.063500f;
+	priv->base.properties.lens_sep = 0.0163500f;
 	priv->base.properties.lens_vpos = 0.070940f / 2;
 	priv->base.properties.fov = DEG_TO_RAD(103.0f);
 	priv->base.properties.ratio = (2560.0f / 1440.0f) / 2.0f;
@@ -157,9 +157,9 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
                 printf("id: %d\n", id);
                 desc = &list->devices[list->num_devices++];
 
-                strcpy(desc->driver, "SparkFun 9DoF Driver");
-                strcpy(desc->vendor, "SparkFun");
-                strcpy(desc->product, "SparkFun 9DoF Device");
+                strcpy(desc->driver, "Relativ HMD Driver");
+                strcpy(desc->vendor, "STMicroelectronics");
+                strcpy(desc->product, "Relativ HMD");
 
                 strncpy(desc->path, cur_dev->path, OHMD_STR_SIZE);
 
