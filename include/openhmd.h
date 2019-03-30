@@ -471,6 +471,12 @@ OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_get_version(int* out_major, int* out_mi
  **/
 OHMD_APIENTRYDLL ohmd_status OHMD_APIENTRY ohmd_require_version(int major, int minor, int patch);
 
+/**
+ * Sleep for the given amount of seconds.
+ *
+ * @param time Time to sleep in seconds.
+ **/
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_sleep(double time);
 
 #ifdef __cplusplus
 }
