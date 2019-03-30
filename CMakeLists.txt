@@ -12,7 +12,7 @@ set(LIB_VERSION_STRING ${LIB_VERSION_MAJOR}.${LIB_VERSION_MINOR}.${LIB_VERSION_P
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-option(BUILD_BOTH_STATIC_SHARED_LIB OFF)
+option(BUILD_BOTH_STATIC_SHARED_LIBS OFF)
 
 #source files set just for Android
 set(openhmd_source_files
