@@ -59,6 +59,8 @@ c_args = []
 if get_option('default_library') == 'shared'
 	if host_machine.system() == 'windows'
 		c_args += '-DDLL_EXPORT'
+	else
+		c_args += '-fvisibility=hidden'
 	endif
 endif
 

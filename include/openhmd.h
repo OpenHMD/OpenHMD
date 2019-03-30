@@ -32,7 +32,7 @@ extern "C" {
 #endif
 #else
 #define OHMD_APIENTRY
-#define OHMD_APIENTRYDLL
+#define OHMD_APIENTRYDLL __attribute__((visibility("default")))
 #endif
 
 /** Maximum length of a string, including termination, in OpenHMD. */
