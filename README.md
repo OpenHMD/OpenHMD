@@ -25,6 +25,8 @@ For a full list of supported devices please check https://github.com/OpenHMD/Ope
     * https://github.com/signal11/hidapi/
 
 ## Language Bindings
+  * GO bindings by Marko Apfel
+    * https://github.com/Apfel/OpenHMD-GO
   * Java bindings by Joey Ferwerda and Koen Mertens
     * https://github.com/OpenHMD/OpenHMD-Java
   * .NET bindings by Jurrien Fakkeldij
