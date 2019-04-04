@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.h": "cpp",
+        "string": "c",
+        "bitset": "cpp",
+        "iosfwd": "c",
+        "iterator": "c",
+        "vector": "c"
+    }
+}

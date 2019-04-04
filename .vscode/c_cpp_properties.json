@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/anorak/.arduino15/packages/STM32/tools/**",
+                "/home/anorak/.arduino15/packages/STM32/hardware/stm32/1.5.0/**",
+                "${workspaceFolder}/**",
+                "/usr/include/c++/8.2.1"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64",
+            "forcedInclude": [
+                "/home/anorak/.arduino15/packages/STM32/hardware/stm32/1.5.0/cores/arduino/Arduino.h"
+            ]
+        }
+    ],
+    "version": 4
+}

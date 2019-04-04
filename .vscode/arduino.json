@@ -1,0 +1,6 @@
+{
+    "board": "STM32:stm32:GenF1",
+    "configuration": "pnum=BLUEPILL_F103C6,upload_method=STLinkMethod,xserial=generic,usb=CDCgen,xusb=FS,opt=osstd,rtlib=nano",
+    "programmer": "AVRISP mkII",
+    "sketch": "src/drv_relativ/STM32_BluePill/STM32_BluePill.ino"
+}

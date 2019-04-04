@@ -8,23 +8,26 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <unistd.h>
-#include <errno.h>
-#include <hidapi/hidapi.h>
-#include <openhmdi.h>
+#include <errno.h> 	   //Used for reporting errors
+#include <hidapi/hidapi.h> //Used for communication with USB devices
+#include <openhmdi.h>	
 
 #define VENDOR_ID 1E3
 #define PRODUCT_ID 1676
 #define DEVICE_NAME "Relativ"
 
-struct data {
+struct data 
+{
         float w;
         float x;
         float y;
         float z;
 };
 
-typedef struct {
+typedef struct 
+{
 	ohmd_device base;
         hid_device *handle;
 } relativ_priv;
@@ -33,20 +36,25 @@ static void update_device(ohmd_device* device)
 {
 	relativ_priv* priv = (relativ_priv*)device;
         int size;
-        struct data _data;
+        struct data Vector;
 
-        if(!priv->handle) {
+        if(!priv->handle) 
+	{
                 return;
         }
 
-        while(0 < (size = hid_read(priv->handle, (void *)&_data, sizeof(_data)))) {
-                priv->base.rotation.x = _data.x;
-                priv->base.rotation.y = _data.y;
-                priv->base.rotation.z = _data.z;
-                priv->base.rotation.w = _data.w;
+	//Read the values from the device and save them 
+	//The _data var, is the same declared on the Arduino code for x,y,z,w.
+	//We need to change the name variable for the one that it is in the STM32 code
+        while(0 < (size = hid_read(priv->handle, (void *)&Vector, sizeof(Vector)))) 
+	{
+                priv->base.rotation.x = Vector.x;
+                priv->base.rotation.y = Vector.y;
+                priv->base.rotation.z = Vector.z;
+                priv->base.rotation.w = Vector.w;
         }
 
-     	printf("%f %f %f %f\n", _data.x, _data.y, _data.z, _data.w);
+     	//printf("%f %f %f %f\n", _data.x, _data.y, _data.z, _data.w);
 }
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -89,7 +97,8 @@ static void close_device(ohmd_device* device)
         
 	LOGD("closing relativ device");
 
-        if (priv->handle) {
+        if (priv->handle) 
+	{
                 hid_close(priv->handle);
                 priv->handle = NULL;
         }
@@ -153,7 +162,8 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	ohmd_device_desc* desc;
 
 	// HMD
-        while(cur_dev) {
+        while(cur_dev) 
+	{
                 printf("id: %d\n", id);
                 desc = &list->devices[list->num_devices++];
 
@@ -181,7 +191,7 @@ static void destroy_driver(ohmd_driver* drv)
 	free(drv);
 }
 
-ohmd_driver* ohmd_create_sparkfun9dof_drv(ohmd_context* ctx)
+ohmd_driver* ohmd_create_relativ_drv(ohmd_context* ctx)
 {
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 	if(!drv)
