@@ -129,6 +129,15 @@ AC_ARG_ENABLE([driver-android],
 
 AM_CONDITIONAL([BUILD_DRIVER_ANDROID], [test "x$driver_android_enabled" != "xno"])
 
+# SparkFun 9DoF
+AC_ARG_ENABLE([driver-community-sparkfun9dof],
+        [AS_HELP_STRING([--enable-driver-community-sparkfun9dof],
+                [enable building of SparkFun 9DoF driver [default=no]])],
+        [driver_community_sparkfun9dof_enabled=$enableval],
+        [driver_community_sparkfun9dof_enabled='no'])
+
+AM_CONDITIONAL([BUILD_DRIVER_SPARKFUN9DOF], [test "x$driver_community_sparkfun9dof_enabled" != "xno"])
+
 # Libs required by Oculus Rift Driver
 AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])

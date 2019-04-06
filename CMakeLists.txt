@@ -34,6 +34,7 @@ option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
 option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
+option(OPENHMD_DRIVER_COMMUNITY_SPARKFUN9DOF "General Community SparkFun 9DoF driver" OFF)
 
 option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
 option(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
@@ -137,6 +138,16 @@ if (OPENHMD_DRIVER_ANDROID)
 	)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
+
+if (OPENHMD_DRIVER_COMMUNITY_SPARKFUN9DOF)
+	set(openhmd_source_files ${openhmd_source_files}
+        ${CMAKE_CURRENT_LIST_DIR}/src/drv_sparkfun_9dof/sparkFun9DoF.c
+	)
+        add_definitions(-DDRIVER_COMMUNITY_SPARKFUN9DOF)
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_COMMUNITY_SPARKFUN9DOF)
 
 if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)

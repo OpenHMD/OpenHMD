@@ -108,6 +108,14 @@ if _drivers.contains('android')
 	c_args += '-DDRIVER_ANDROID'
 endif
 
+if _drivers.contains('community-sparkfun9dof')
+	sources += [
+		'src/drv_sparkfun_9dof/sparkFun9DoF.c'
+	]
+	c_args += '-DDRIVER_COMMUNITY_SPARKFUN9DOF'
+	deps += dep_hidapi
+endif
+
 openhmd_lib = library('openhmd', sources, include_directories : include_directories('./include'), c_args : c_args, dependencies : deps, install : true, version : library_version)
 
 
