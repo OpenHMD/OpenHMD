@@ -86,6 +86,8 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 
 		// The PSVR device can buffer sensor data from previous
 		// sessions which we can get at the start of new sessions.
+		// @todo Maybe just skip the first 10 sensor packets?
+		// @todo Maybe reset sensor fusion?
 		if (tick_delta < 475 || tick_delta > 525) {
 			LOGD("tick_delta = %u", tick_delta);
 			tick_delta = 500;
