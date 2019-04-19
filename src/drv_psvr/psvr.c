@@ -53,6 +53,20 @@ void gyro_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 	out_vec->z = (float)smp[2] * 0.00105f * -1.0f;
 }
 
+
+static uint32_t calc_delta_and_handle_rollover(uint32_t next, uint32_t last)
+{
+	uint32_t tick_delta = next - last;
+
+	// The 24-bit tick counter has rolled over,
+	// adjust the "negative" value to be positive.
+	if (tick_delta > 0xffffff) {
+		tick_delta += 0x1000000;
+	}
+
+	return tick_delta;
+}
+
 static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, int size)
 {
 	uint32_t last_sample_tick = priv->sensor.samples[1].tick;
@@ -64,30 +78,34 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 	psvr_sensor_packet* s = &priv->sensor;
 
 	uint32_t tick_delta = 500;
-	if(last_sample_tick > 0){ //startup correction
-		tick_delta = s->samples[0].tick - last_sample_tick;
-		if (tick_delta > 0xffffff)
-			tick_delta += 0x1000000;
-		if (tick_delta < 475 || tick_delta > 525){
-			LOGD("tick_delta = %u\n", tick_delta)
+
+	// Startup correction, ignore last_sample_tick if zero.
+	if (last_sample_tick > 0) {
+		tick_delta = calc_delta_and_handle_rollover(
+			s->samples[0].tick, last_sample_tick);
+
+		// The PSVR device can buffer sensor data from previous
+		// sessions which we can get at the start of new sessions.
+		// @todo Maybe just skip the first 10 sensor packets?
+		// @todo Maybe reset sensor fusion?
+		if (tick_delta < 475 || tick_delta > 525) {
+			LOGD("tick_delta = %u", tick_delta);
 			tick_delta = 500;
 		}
 	}
 
-	float dt = tick_delta * TICK_LEN;
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 2; i++){
-		accel_from_psvr_vec(s->samples[0].accel, &priv->raw_accel);
-		gyro_from_psvr_vec(s->samples[0].gyro, &priv->raw_gyro);
+	for (int i = 0; i < 2; i++) {
+		float dt = tick_delta * TICK_LEN;
+		accel_from_psvr_vec(s->samples[i].accel, &priv->raw_accel);
+		gyro_from_psvr_vec(s->samples[i].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
 		if (i == 0) {
-			tick_delta = s->samples[1].tick - s->samples[0].tick;
-			if (tick_delta > 0xffffff)
-				tick_delta += 0x1000000;
-			dt = tick_delta * TICK_LEN;
+			tick_delta = calc_delta_and_handle_rollover(
+				s->samples[1].tick, s->samples[0].tick);
 		}
 	}
 
@@ -155,7 +173,7 @@ static void close_device(ohmd_device* device)
 {
 	psvr_priv* priv = (psvr_priv*)device;
 
-	LOGD("closing HTC PSVR device");
+	LOGD("Closing Sony PSVR device.");
 
 	hid_close(priv->hmd_handle);
 	hid_close(priv->hmd_control);
