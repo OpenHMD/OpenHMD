@@ -171,7 +171,7 @@ static void close_device(ohmd_device* device)
 {
 	psvr_priv* priv = (psvr_priv*)device;
 
-	LOGD("closing HTC PSVR device");
+	LOGD("Closing Sony PSVR device.");
 
 	hid_close(priv->hmd_handle);
 	hid_close(priv->hmd_control);
