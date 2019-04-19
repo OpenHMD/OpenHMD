@@ -96,8 +96,8 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 
 	for (int i = 0; i < 2; i++) {
 		float dt = tick_delta * TICK_LEN;
-		accel_from_psvr_vec(s->samples[0].accel, &priv->raw_accel);
-		gyro_from_psvr_vec(s->samples[0].gyro, &priv->raw_gyro);
+		accel_from_psvr_vec(s->samples[i].accel, &priv->raw_accel);
+		gyro_from_psvr_vec(s->samples[i].gyro, &priv->raw_gyro);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
