@@ -17,7 +17,7 @@
 // Running automatic updates at 1000 Hz
 #define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
 
-ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
+OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 {
 	ohmd_context* ctx = calloc(1, sizeof(ohmd_context));
 	if(!ctx){
@@ -70,7 +70,7 @@ ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	return ctx;
 }
 
-void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 {
 	ctx->update_request_quit = true;
 
@@ -90,7 +90,7 @@ void OHMD_APIENTRY ohmd_ctx_destroy(ohmd_context* ctx)
 	free(ctx);
 }
 
-void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
 {
 	for(int i = 0; i < ctx->num_active_devices; i++){
 		ohmd_device* dev = ctx->active_devices[i];
@@ -104,12 +104,12 @@ void OHMD_APIENTRY ohmd_ctx_update(ohmd_context* ctx)
 	}
 }
 
-const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx)
+OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_ctx_get_error(ohmd_context* ctx)
 {
 	return ctx->error_msg;
 }
 
-int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 {
 	memset(&ctx->list, 0, sizeof(ohmd_device_list));
 	for(int i = 0; i < ctx->num_drivers; i++){
@@ -119,7 +119,7 @@ int OHMD_APIENTRY ohmd_ctx_probe(ohmd_context* ctx)
 	return ctx->list.num_devices;
 }
 
-int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
 {
 	switch(type){
 	case OHMD_GLSL_DISTORTION_VERT_SRC:
@@ -145,7 +145,7 @@ int OHMD_APIENTRY ohmd_gets(ohmd_string_description type, const char ** out)
 	}
 }
 
-const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
+OHMD_APIENTRYDLL const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_string_value type)
 {
 	if(index >= ctx->list.num_devices)
 		return NULL;
@@ -162,7 +162,7 @@ const char* OHMD_APIENTRY ohmd_list_gets(ohmd_context* ctx, int index, ohmd_stri
 	}
 }
 
-int OHMD_APIENTRY ohmd_list_geti(ohmd_context* ctx, int index, ohmd_int_value type, int* out)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_list_geti(ohmd_context* ctx, int index, ohmd_int_value type, int* out)
 {
 	if(index >= ctx->list.num_devices)
 		return OHMD_S_INVALID_PARAMETER;
@@ -210,7 +210,7 @@ static void ohmd_set_up_update_thread(ohmd_context* ctx)
 	}
 }
 
-ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index, ohmd_device_settings* settings)
+OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index, ohmd_device_settings* settings)
 {
 	ohmd_lock_mutex(ctx->update_mutex);
 
@@ -248,7 +248,7 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context* ctx, int index,
 	return NULL;
 }
 
-ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
+OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 {
 	ohmd_device_settings settings;
 
@@ -257,7 +257,7 @@ ohmd_device* OHMD_APIENTRY ohmd_list_open_device(ohmd_context* ctx, int index)
 	return ohmd_list_open_device_s(ctx, index, &settings);
 }
 
-int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_close_device(ohmd_device* device)
 {
 	ohmd_lock_mutex(device->ctx->update_mutex);
 
@@ -377,7 +377,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
 	ohmd_lock_mutex(device->ctx->update_mutex);
 	int ret = ohmd_device_getf_unp(device, type, out);
@@ -438,7 +438,7 @@ int ohmd_device_setf_unp(ohmd_device* device, ohmd_float_value type, const float
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, const float* in)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, const float* in)
 {
 	ohmd_lock_mutex(device->ctx->update_mutex);
 	int ret = ohmd_device_setf_unp(device, type, in);
@@ -447,7 +447,7 @@ int OHMD_APIENTRY ohmd_device_setf(ohmd_device* device, ohmd_float_value type, c
 	return ret;
 }
 
-int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int* out)
 {
 	switch(type){
 		case OHMD_SCREEN_HORIZONTAL_RESOLUTION:
@@ -475,7 +475,7 @@ int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_int_value type, int
 	}
 }
 
-int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, const int* in)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_int_value type, const int* in)
 {
 	switch(type){
 	default:
@@ -500,7 +500,7 @@ int ohmd_device_set_data_unp(ohmd_device* device, ohmd_data_value type, const vo
     }
 }
 
-int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, const void* in)
+OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type, const void* in)
 {
 	ohmd_lock_mutex(device->ctx->update_mutex);
 	int ret = ohmd_device_set_data_unp(device, type, in);
@@ -509,7 +509,7 @@ int OHMD_APIENTRY ohmd_device_set_data(ohmd_device* device, ohmd_data_value type
 	return ret;
 }
 
-ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settings, ohmd_int_settings key, const int* val)
+OHMD_APIENTRYDLL ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settings, ohmd_int_settings key, const int* val)
 {
 	switch(key){
 	case OHMD_IDS_AUTOMATIC_UPDATE:
@@ -521,12 +521,12 @@ ohmd_status OHMD_APIENTRY ohmd_device_settings_seti(ohmd_device_settings* settin
 	}
 }
 
-ohmd_device_settings* OHMD_APIENTRY ohmd_device_settings_create(ohmd_context* ctx)
+OHMD_APIENTRYDLL ohmd_device_settings* OHMD_APIENTRY ohmd_device_settings_create(ohmd_context* ctx)
 {
 	return ohmd_alloc(ctx, sizeof(ohmd_device_settings));
 }
 
-void OHMD_APIENTRY ohmd_device_settings_destroy(ohmd_device_settings* settings)
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_device_settings_destroy(ohmd_device_settings* settings)
 {
 	free(settings);
 }

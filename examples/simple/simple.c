@@ -8,6 +8,7 @@
 /* Simple Test */
 
 #include <openhmd.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +17,8 @@ void ohmd_sleep(double);
 // gets float values from the device and prints them
 void print_infof(ohmd_device* hmd, const char* name, int len, ohmd_float_value val)
 {
-	float f[len];
+	float f[16];
+	assert(len <= 16);
 	ohmd_device_getf(hmd, val, f);
 	printf("%-25s", name);
 	for(int i = 0; i < len; i++)
@@ -27,7 +29,8 @@ void print_infof(ohmd_device* hmd, const char* name, int len, ohmd_float_value v
 // gets int values from the device and prints them
 void print_infoi(ohmd_device* hmd, const char* name, int len, ohmd_int_value val)
 {
-	int iv[len];
+	int iv[16];
+	assert(len <= 16);
 	ohmd_device_geti(hmd, val, iv);
 	printf("%-25s", name);
 	for(int i = 0; i < len; i++)

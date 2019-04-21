@@ -26,7 +26,11 @@ else
 endif
 
 dep_libm = meson.get_compiler('c').find_library('m', required: false)
-dep_hidapi = dependency(hidapi)
+dep_hidapi = dependency(hidapi, required : false)
+if not dep_hidapi.found()
+	proj_hidapi = subproject('hidapi')
+	dep_hidapi = proj_hidapi.get_variable('hidapi_dep')
+endif
 dep_threads = dependency('threads')
 
 deps = [
@@ -52,6 +56,13 @@ else
 	sources += 'src/platform-posix.c'
 endif
 c_args = []
+if get_option('default_library') == 'shared'
+	if host_machine.system() == 'windows'
+		c_args += '-DDLL_EXPORT'
+	else
+		c_args += '-fvisibility=hidden'
+	endif
+endif
 
 _drivers = get_option('drivers')
 if _drivers.contains('rift')
