@@ -255,7 +255,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	desc->driver_ptr = driver;
 
 	desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
-	desc->device_class = OHMD_DEVICE_CLASS_HMD | OHMD_DEVICE_CLASS_CONTROLLER;
+	desc->device_class = OHMD_DEVICE_CLASS_HMD;
 
 	desc->id = id++;
 	hid_free_enumeration(cur_dev);
