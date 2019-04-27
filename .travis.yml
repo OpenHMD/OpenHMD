@@ -1,10 +1,22 @@
 # This is the project file for the automated build system travis (travis-ci.com).
 matrix:
   include:
-    - os: linux
+    - name: "Linux Meson"
+      os: linux
       sudo: false
       dist: trusty
-    - os: osx
+      env: BUILD=meson
+    - name: "Linux CMake"
+      os: linux
+      sudo: false
+      dist: trusty
+      env: BUILD=cmake
+    - name: "macOS Meson"
+      os: osx
+      env: BUILD=meson
+    - name: "macOS CMake"
+      os: osx
+      env: BUILD=cmake
 
 language: c
 
@@ -17,11 +29,29 @@ addons:
       - libglew-dev
       - libhidapi-dev
       - libsdl2-dev
+      - ninja-build
+  homebrew:
+    packages:
+      - glew
+      - hidapi
+      - sdl2
+      - ninja
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glew hidapi sdl2; fi
-  - ./autogen.sh
+install:
+  - if [[ "$BUILD" == "meson" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+      curl -L https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip -o ninja.zip;
+      unzip ninja.zip;
+      pyenv global system 3.6;
+    fi
+  - if [[ "$BUILD" == "meson" ]]; then pip3 install meson; fi
 
-install: true # skip install step
+before_script:
+  - export PATH="$PWD:$PATH"
 
-script: ./configure --enable-openglexample && make
+script:
+  - mkdir build && cd build
+  - if [[ "$BUILD" == "meson" ]]; then
+      meson .. . -Dexamples=simple,opengl;
+    else
+      cmake -G Ninja .. -DOPENHMD_EXAMPLE_SDL=1;
+    fi && ninja
