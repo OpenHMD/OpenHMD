@@ -173,6 +173,9 @@ static void close_device(ohmd_device* device)
 {
 	psvr_priv* priv = (psvr_priv*)device;
 
+	// set cinematic mode for the hmd
+	hid_write(priv->hmd_control, psvr_cinematicmode_on, sizeof(psvr_cinematicmode_on));
+
 	LOGD("Closing Sony PSVR device.");
 
 	hid_close(priv->hmd_handle);
