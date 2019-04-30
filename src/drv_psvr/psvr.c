@@ -205,12 +205,12 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	hid_device* ret = NULL;
 
 	while (cur_dev) {
-		LOGI("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
+		LOGI("%04x:%04x %s", manufacturer, product, cur_dev->path);
 
 		if (cur_dev->interface_number == iface) {
 			if(idx == device_index){
+				LOGI("\topening '%s'", cur_dev->path);
 				ret = hid_open_path(cur_dev->path);
-				LOGI("opening\n");
 				break;
 			}
 
