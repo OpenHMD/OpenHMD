@@ -112,6 +112,19 @@ static void handle_tracker_sensor_msg(psvr_priv* priv, unsigned char* buffer, in
 	priv->buttons = s->buttons;
 }
 
+static void teardown(psvr_priv* priv)
+{
+	if (priv->hmd_handle != NULL) {
+		hid_close(priv->hmd_handle);
+		priv->hmd_handle = NULL;
+	}
+
+	if (priv->hmd_control != NULL) {
+		hid_close(priv->hmd_control);
+		priv->hmd_control = NULL;
+	}
+}
+
 static void update_device(ohmd_device* device)
 {
 	psvr_priv* priv = (psvr_priv*)device;
@@ -178,8 +191,7 @@ static void close_device(ohmd_device* device)
 
 	LOGD("Closing Sony PSVR device.");
 
-	hid_close(priv->hmd_handle);
-	hid_close(priv->hmd_control);
+	teardown(priv);
 
 	free(device);
 }
@@ -296,8 +308,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	return (ohmd_device*)priv;
 
 cleanup:
-	if(priv)
+	if (priv) {
+		teardown(priv);
 		free(priv);
+	}
 
 	return NULL;
 }
