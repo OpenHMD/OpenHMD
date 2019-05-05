@@ -1,2 +1,51 @@
-option('examples', type : 'array', choices : ['simple', 'opengl', ''], value : ['simple'])
-option('drivers', type : 'array', choices : ['rift', 'deepoon', 'psvr', 'vive', 'nolo', 'wmr', 'xgvr', 'lgr', 'external', 'android'], value : ['rift', 'deepoon', 'psvr', 'vive', 'nolo', 'wmr', 'xgvr', 'lgr', 'external'])
+option(
+	'examples',
+	type: 'array',
+	choices: [
+		'simple',
+		'opengl',
+		'',
+	],
+	value: [
+		'simple',
+	],
+)
+
+option(
+	'drivers',
+	type: 'array',
+	choices: [
+		'rift',
+		'deepoon',
+		'psvr',
+		'vive',
+		'nolo',
+		'wmr',
+		'xgvr',
+		'lgr',
+		'external',
+		'android',
+	],
+	value: [
+		'rift',
+		'deepoon',
+		'psvr',
+		'vive',
+		'nolo',
+		'wmr',
+		'xgvr',
+		'lgr',
+		'external',
+	],
+)
+
+option(
+	'hidapi',
+	type: 'combo',
+	choices: [
+		'auto',
+		'libusb',
+		'hidraw'
+	],
+	value: 'auto',
+)

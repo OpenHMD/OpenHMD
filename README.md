@@ -25,6 +25,8 @@ For a full list of supported devices please check https://github.com/OpenHMD/Ope
     * https://github.com/signal11/hidapi/
 
 ## Language Bindings
+  * GO bindings by Marko (Apfel)
+    * https://github.com/Apfel/OpenHMD-GO
   * Java bindings by Joey Ferwerda and Koen Mertens
     * https://github.com/OpenHMD/OpenHMD-Java
   * .NET bindings by Jurrien Fakkeldij
@@ -64,8 +66,11 @@ With CMake, you can enable and disable drivers to compile OpenHMD with.
 Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT, OPENHMD_DRIVER_DEEPOON, OPENHMD_DRIVER_WMR, OPENHMD_DRIVER_PSVR, OPENHMD_DRIVER_HTC_VIVE, OPENHMD_DRIVER_NOLO, OPENHMD_DRIVER_EXTERNAL and OPENHMD_DRIVER_ANDROID.
 These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake command (or using cmake-gui).
 
-    cmake .
+    mkdir build
+    cd build
+    cmake ..
     make
+    sudo make install
 
 ### Configuring udev on Linux
 To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).

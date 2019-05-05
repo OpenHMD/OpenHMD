@@ -12,7 +12,7 @@ set(LIB_VERSION_STRING ${LIB_VERSION_MAJOR}.${LIB_VERSION_MINOR}.${LIB_VERSION_P
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-option(BUILD_BOTH_STATIC_SHARED_LIB OFF)
+option(BUILD_BOTH_STATIC_SHARED_LIBS OFF)
 
 #source files set just for Android
 set(openhmd_source_files
@@ -195,8 +195,11 @@ foreach(target ${TARGETS})
 	set_target_properties(${target} PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
 	target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 	target_link_libraries(${target} ${LIBS})
+	if (UNIX AND NOT APPLE)
+		target_link_libraries(${target} rt)
+	endif()
 	if (UNIX)
-		target_link_libraries(${target} rt pthread)
+		target_link_libraries(${target} pthread)
 	endif (UNIX)
 
 	get_target_property(target_type ${target} TYPE)

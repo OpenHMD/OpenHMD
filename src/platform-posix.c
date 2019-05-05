@@ -89,7 +89,7 @@ uint64_t ohmd_monotonic_get(ohmd_context* ctx)
 
 #endif
 
-void ohmd_sleep(double seconds)
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_sleep(double seconds)
 {
 	struct timespec sleepfor;
 
