@@ -75,7 +75,7 @@ static void update_device(ohmd_device* device)
 
 	// Read all the messages from the device.
 	while(true){
-		int size = hid_read_timeout(priv->handle, buffer, FEATURE_BUFFER_SIZE, 20);
+		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
 		if(size < 0){
 			LOGE("error reading from device");
 			return;
@@ -106,7 +106,7 @@ static void update_device(ohmd_device* device)
 				buffer[0] == LGR100_IRQ_DEBUG_SEQ2)
 		{
 			//*buffer += 1;
-			//printf("%s", buffer);
+			//printf("%s\n", buffer);
 		}
 		else if(buffer[0] == LGR100_IRQ_SENSORS) {
 			handle_tracker_sensor_msg(priv, buffer, size);
@@ -128,6 +128,7 @@ static void update_device(ohmd_device* device)
 			// 65:20:28:30:29:0A:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
+			//printf("%s", buffer);
 		}
 	}
 }
@@ -190,10 +191,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	//Start the headset with the 'vr start app' command
 	hid_write(priv->handle, start_device, sizeof(start_device));
-
-	hid_write(priv->handle, start_accel, sizeof(start_accel));
-	hid_write(priv->handle, start_gyro, sizeof(start_gyro));
-
+	hid_write(priv->handle, keep_alive, sizeof(keep_alive));
+	//hid_write(priv->handle, start_accel, sizeof(start_accel));
+	//hid_write(priv->handle, start_gyro, sizeof(start_gyro));
+		
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
 
@@ -206,7 +207,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_sep = 0.063500f;
 	priv->base.properties.lens_vpos = 0.020000f;
 	priv->base.properties.fov = DEG_TO_RAD(80.0f); //based on website information, probably not perfect
-	priv->base.properties.ratio = (1920.0f / 720.0f) / 2.0f;
+	priv->base.properties.ratio = (1920.0f / 720.0f) / 2.0f; //calculate ratio based on flipped actual resolution
 	
 	// Some buttons and axes
 	priv->base.properties.control_count = 2;
@@ -217,6 +218,16 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
+
+	// Correct matrices for correct physical projection
+	mat4x4f flip;
+	omat4x4f_init_ident(&flip);
+
+	flip.m[0][0] = 0.0f; flip.m[0][1] = -1.0f; flip.m[1][0] = 1.0f; flip.m[1][1] = 0.0f;
+
+	omat4x4f_mult(&priv->base.properties.proj_right, &flip, &priv->base.properties.proj_right);
+	flip.m[0][1] = 1.0f; flip.m[1][0] = -1.0f;
+	omat4x4f_mult(&priv->base.properties.proj_left, &flip, &priv->base.properties.proj_left);
 
 	// set up device callbacks
 	priv->base.update = update_device;
