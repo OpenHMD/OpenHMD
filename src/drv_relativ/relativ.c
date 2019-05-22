@@ -1,109 +1,98 @@
 /*
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
- * Copyright (C) 2018 Bernd Lehmann.
+ * Copyright (C) 2019 Anorak.
  * Distributed under the Boost 1.0 licence, see LICENSE for full text.
  */
 
 /* Relativ HMD Driver */
 
+//Note: Code only supported on the STM32 tracker
+//Using as code base: https://github.com/der-b/OpenHMD/tree/master/src/drv_sparkfun_9dof
+
 #include <stdio.h>
 #include <string.h>
-#include <string>
-#include <unistd.h>
-#include <errno.h> 	   //Used for reporting errors
-#include <hidapi/hidapi.h> //Used for communication with USB devices
-#include <openhmdi.h>	
+#include <errno.h>
+#include <hidapi/hidapi.h>
+#include <openhmdi.h>
+#define VENDOR_ID 0x0483                // STMicroelectronics VID
+#define PRODUCT_ID 0x5740 // STMicroelectronics Virtual COM Port PID
+//Taked from Justin's code
+#define DEVICE_NAME "Relativ HMD"
 
-#define VENDOR_ID 1E3
-#define PRODUCT_ID 1676
-#define DEVICE_NAME "Relativ"
-
-struct data 
+struct quater
 {
-        float w;
-        float x;
-        float y;
-        float z;
+    float w;
+    float x;
+    float y;
+    float z;
 };
 
-typedef struct 
+typedef struct
 {
-	ohmd_device base;
-        hid_device *handle;
+    ohmd_device base;
+    hid_device *handle;
 } relativ_priv;
 
-static void update_device(ohmd_device* device)
+static void update_device(ohmd_device *device)
 {
-	relativ_priv* priv = (relativ_priv*)device;
-        int size;
-        struct data Vector;
+//Defining the previous var as the Relativ HMD
+    relativ_priv *priv = (relativ_priv *)device;
+    int size;
+    struct quater data;
 
-        if(!priv->handle) 
-	{
-                return;
-        }
+    if (!priv->handle)
+    {
+        return;
+    }
 
-	//Read the values from the device and save them 
-	//The _data var, is the same declared on the Arduino code for x,y,z,w.
-	//We need to change the name variable for the one that it is in the STM32 code
-        while(0 < (size = hid_read(priv->handle, (void *)&Vector, sizeof(Vector)))) 
-	{
-                priv->base.rotation.x = Vector.x;
-                priv->base.rotation.y = Vector.y;
-                priv->base.rotation.z = Vector.z;
-                priv->base.rotation.w = Vector.w;
-        }
+    while (0 < (size = hid_read(priv->handle, (void *)&data, sizeof(data))))
+    {
+        priv->base.rotation.x = data.x;
+        priv->base.rotation.y = data.y;
+        priv->base.rotation.z = data.z;
+        priv->base.rotation.w = data.w;
+    }
+    printf(" %f %f %f %f\n", data.x, data.y, data.z, data.w);
 
-     	//printf("%f %f %f %f\n", _data.x, _data.y, _data.z, _data.w);
+}
+static int getf(ohmd_device *device, ohmd_float_value type, float *out)
+{
+    relativ_priv *priv = (relativ_priv *)device;
+
+    switch (type)
+    {
+    case OHMD_ROTATION_QUAT:
+        *(quatf *)out = priv->base.rotation;
+        break;
+    case OHMD_POSITION_VECTOR:
+        out[0] = out[1] = out[2] = 0;
+        break;
+    case  OHMD_DISTORTION_K:
+        memset(out, 0, sizeof(float) * 6);
+        break;
+    case OHMD_CONTROLS_STATE:
+        out[0] = .1f;
+        out[1] = 1.0f;
+        break;
+    default:
+        ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
+        return OHMD_S_INVALID_PARAMETER;
+        break;
+    }
+    return OHMD_S_OK;
 }
 
-static int getf(ohmd_device* device, ohmd_float_value type, float* out)
+static void close_device(ohmd_device *device)
 {
-	relativ_priv* priv = (relativ_priv*)device;
+    relativ_priv *priv = (relativ_priv *)device;
+    LOGD("closing relativ device");
+    if (!priv->handle)
+    {
+        hid_close(priv->handle);
+        priv->handle = NULL;
+    }
 
-	switch(type){
-	case OHMD_ROTATION_QUAT:
-                *(quatf*)out = priv->base.rotation;
-		//out[0] = out[1] = out[2] = 0;
-		//out[3] = 1.0f;
-		break;
-
-	case OHMD_POSITION_VECTOR:
-                out[0] = out[1] = out[2] = 0;
-		break;
-
-	case OHMD_DISTORTION_K:
-		// TODO this should be set to the equivalent of no distortion
-		memset(out, 0, sizeof(float) * 6);
-		break;
-	
-	case OHMD_CONTROLS_STATE:
-		out[0] = .1f;
-		out[1] = 1.0f;
-		break;
-
-	default:
-		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
-		return OHMD_S_INVALID_PARAMETER;
-		break;
-	}
-
-	return OHMD_S_OK;
-}
-
-static void close_device(ohmd_device* device)
-{
-	relativ_priv* priv = (relativ_priv*)device;
-        
-	LOGD("closing relativ device");
-
-        if (priv->handle) 
-	{
-                hid_close(priv->handle);
-                priv->handle = NULL;
-        }
-
-	free(device);
+    free(device);
 }
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
@@ -132,7 +121,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.vsize = 0.070940f;
 	priv->base.properties.hres = 1440;
 	priv->base.properties.vres = 2560;
-	priv->base.properties.lens_sep = 0.0163500f;
+	priv->base.properties.lens_sep = 0.063500f;
 	priv->base.properties.lens_vpos = 0.070940f / 2;
 	priv->base.properties.fov = DEG_TO_RAD(103.0f);
 	priv->base.properties.ratio = (2560.0f / 1440.0f) / 2.0f;
@@ -162,14 +151,13 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	ohmd_device_desc* desc;
 
 	// HMD
-        while(cur_dev) 
-	{
+        while(cur_dev) {
                 printf("id: %d\n", id);
                 desc = &list->devices[list->num_devices++];
 
-                strcpy(desc->driver, "Relativ HMD Driver");
-                strcpy(desc->vendor, "STMicroelectronics");
-                strcpy(desc->product, "Relativ HMD");
+                strcpy(desc->driver, "Relativty Driver");
+                strcpy(desc->vendor, "Relativty");
+                strcpy(desc->product, "Relativty Device");
 
                 strncpy(desc->path, cur_dev->path, OHMD_STR_SIZE);
 
@@ -191,7 +179,7 @@ static void destroy_driver(ohmd_driver* drv)
 	free(drv);
 }
 
-ohmd_driver* ohmd_create_relativ_drv(ohmd_context* ctx)
+ohmd_driver* ohmd_create_relativty6dof_drv(ohmd_context* ctx)
 {
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 	if(!drv)
@@ -203,3 +191,11 @@ ohmd_driver* ohmd_create_relativ_drv(ohmd_context* ctx)
 
 	return drv;
 }
+
+
+
+
+
+
+
+

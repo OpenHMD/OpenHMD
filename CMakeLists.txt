@@ -12,7 +12,7 @@ set(LIB_VERSION_STRING ${LIB_VERSION_MAJOR}.${LIB_VERSION_MINOR}.${LIB_VERSION_P
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-option(BUILD_BOTH_STATIC_SHARED_LIB OFF)
+option(BUILD_BOTH_STATIC_SHARED_LIBS OFF)
 
 #source files set just for Android
 set(openhmd_source_files
@@ -26,13 +26,13 @@ set(openhmd_source_files
 )
 
 option(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
-option(OPENHMD_DRIVER_DEEPOON "Deepoon E2" OFF)
-option(OPENHMD_DRIVER_WMR "Windows Mixed Reality" OFF)
-option(OPENHMD_DRIVER_PSVR "Sony PSVR" OFF)
-option(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" OFF)
-option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" OFF)
-option(OPENHMD_DRIVER_XGVR "3Glasses HMD" OFF)
-option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" OFF)
+option(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
+option(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
+option(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
+option(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
+option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
+option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
+option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 option(OPENHMD_DRIVER_COMMUNITY_RELATIV "General Community Relativ driver" ON)
 
@@ -138,18 +138,14 @@ if (OPENHMD_DRIVER_ANDROID)
 	)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
-
-if (OPENHMD_DRIVER_COMMUNITY_RELATIV)
+if(OPENHMD_DRIVER_COMMUNITY_RELATIV)
 	set(openhmd_source_files ${openhmd_source_files}
-        ${CMAKE_CURRENT_LIST_DIR}/src/drv_relativ/relativStm32.c
-	)
-        add_definitions(-DDRIVER_COMMUNITY_RELATIV)
-	find_package(HIDAPI REQUIRED)
+		${CMAKE_CURRENT_LIST_DIR}/src/drv_relativ/relativ.c
+		)
+	add_definitions(-DDRIVER_COMMUNITY_RELATIV)
+	SET(CMAKE_CXX_FLAGS "-lusb-1.0")
 	include_directories("${PROJECT_SOURCE_DIR}/src/")
-	include_directories(${HIDAPI_INCLUDE_DIRS})
-	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_COMMUNITY_RELATIV)
-
 if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)
 endif(OPENHMD_EXAMPLE_SIMPLE)
@@ -194,8 +190,11 @@ foreach(target ${TARGETS})
 	set_target_properties(${target} PROPERTIES VERSION ${LIB_VERSION_STRING} SOVERSION ${LIB_VERSION_MAJOR})
 	target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 	target_link_libraries(${target} ${LIBS})
+	if (UNIX AND NOT APPLE)
+		target_link_libraries(${target} rt)
+	endif()
 	if (UNIX)
-		target_link_libraries(${target} rt pthread)
+		target_link_libraries(${target} pthread)
 	endif (UNIX)
 
 	get_target_property(target_type ${target} TYPE)
@@ -205,5 +204,12 @@ foreach(target ${TARGETS})
 
 endforeach(target)
 
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/pkg-config/openhmd.pc.cmakein"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
+
 install(TARGETS ${TARGETS} DESTINATION lib)
 install(FILES include/openhmd.h DESTINATION include)
+install(FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc"
+        DESTINATION lib/pkgconfig)
