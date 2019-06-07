@@ -18,9 +18,6 @@
 #include "nolo.h"
 #include "../hid.h"
 
-#define NOLO_ID					0x0483 //ST microcontroller
-#define NOLO_HMD				0x5750
-
 static const int controllerLength = 3 + (3+4)*2 + 2 + 2 + 1;
 static devices_t* nolo_devices;
 
@@ -273,20 +270,45 @@ cleanup:
 	return NULL;
 }
 
+typedef struct {
+	const char* name;
+	int vendor;
+	int product;
+} nolo_verions;
+
+int is_nolo_device(struct hid_device_info* device) {
+	if (wcscmp(device->manufacturer_string, L"LYRobotix") != 0) {
+		return 0;
+	}
+	if (wcscmp(device->product_string, L"NOLO") == 0) { //Old Firmware
+		return 1;
+	}
+	if (wcscmp(device->product_string, L"NOLO HMD") == 0) { //New Firmware
+		return 2;
+	}
+
+	return 0;
+}
+
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-	struct hid_device_info* devs = hid_enumerate(NOLO_ID, NOLO_HMD);
-	struct hid_device_info* cur_dev = devs;
+	// enumerate HID devices and add any NOLO's found to the device list
+	nolo_verions rd[2] = {
+		{ "NOLO CV1 (Kickstarter)", 0x0483, 0x5750},
+		{ "NOLO CV1 (Production)", 0x28e9, 0x028a}
+	};
 
-	int id = 0;
-	while (cur_dev) {
-		if (wcscmp(cur_dev->manufacturer_string, L"LYRobotix")==0 &&
-			wcscmp(cur_dev->product_string, L"NOLO")==0) {
+	for(int i = 0; i < 2; i++) {
+		struct hid_device_info* devs = hid_enumerate(rd[i].vendor, rd[i].product);
+		struct hid_device_info* cur_dev = devs;
+
+		int id = 0;
+		while (cur_dev && is_nolo_device(cur_dev)) {
 			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
 			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
 			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, "NOLO CV1");
+			strcpy(desc->product, rd[i].name);
 
 			desc->revision = 0;
 
@@ -335,10 +357,11 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			desc->driver_ptr = driver;
 			desc->id = id++;
+
+			cur_dev = cur_dev->next;
 		}
-		cur_dev = cur_dev->next;
+		hid_free_enumeration(devs);
 	}
-	hid_free_enumeration(devs);
 }
 
 static void destroy_driver(ohmd_driver* drv)

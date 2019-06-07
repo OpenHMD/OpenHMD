@@ -104,16 +104,6 @@ void nolo_decode_controller(drv_priv* priv, unsigned char* data)
 {
 	uint8_t bit, buttonstate;
 
-	if (data[0] != 2 || data[1] != 1) {
-	// Unknown version
-	/* Happens when controllers aren't on.
-	std::cout << "Nolo: Unknown controller "
-	  << " version " << (int)data[0] << " " << (int)data[1]
-	  << std::endl;
-	*/
-		return;
-	}
-
 	vec3f position;
 	quatf orientation;
 
@@ -134,16 +124,6 @@ void nolo_decode_controller(drv_priv* priv, unsigned char* data)
 
 void nolo_decode_hmd_marker(drv_priv* priv, unsigned char* data)
 {
-	if (data[0] != 2 || data[1] != 1) {
-		/* Happens with corrupt packages (mixed with controller data)
-		std::cout << "Nolo: Unknown headset marker"
-		  << " version " << (int)data[0] << " " << (int)data[1]
-		  << std::endl;
-		*/
-		// Unknown version
-		return;
-	}
-
 	vec3f homepos;
 	vec3f position;
 	quatf orientation;
