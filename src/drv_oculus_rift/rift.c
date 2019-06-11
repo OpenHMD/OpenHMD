@@ -110,12 +110,11 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 
 static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
 {
-	if (buffer[0] == RIFT_IRQ_SENSORS
-	  && !decode_tracker_sensor_msg(&priv->sensor, buffer, size)){
+	if (buffer[0] == RIFT_IRQ_SENSORS_DK1
+	  && !decode_tracker_sensor_msg_dk1(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
-
-	if (buffer[0] == RIFT_IRQ_SENSORS_DK2
+	else if (buffer[0] == RIFT_IRQ_SENSORS_DK2 /* DK2 and CV1 variant */
 	  && !decode_tracker_sensor_msg_dk2(&priv->sensor, buffer, size)){
 		LOGE("couldn't decode tracker sensor message");
 	}
@@ -175,7 +174,7 @@ static void update_device(ohmd_device* device)
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == RIFT_IRQ_SENSORS || buffer[0] == RIFT_IRQ_SENSORS_DK2) {
+		if(buffer[0] == RIFT_IRQ_SENSORS_DK1 || buffer[0] == RIFT_IRQ_SENSORS_DK2) {
 			handle_tracker_sensor_msg(priv, buffer, size);
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);

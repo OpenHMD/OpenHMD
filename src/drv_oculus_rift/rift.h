@@ -30,7 +30,7 @@ typedef enum {
 } rift_coordinate_frame;
 
 typedef enum {
-	RIFT_IRQ_SENSORS = 1,
+	RIFT_IRQ_SENSORS_DK1 = 1,
 	RIFT_IRQ_SENSORS_DK2 = 11
 } rift_irq_cmd;
 
@@ -131,7 +131,7 @@ typedef struct {
 bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
 bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
 bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
-bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
+bool decode_tracker_sensor_msg_dk1(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size);
 bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int size);
 

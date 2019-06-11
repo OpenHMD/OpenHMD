@@ -127,7 +127,7 @@ static void decode_sample(const unsigned char* buffer, int32_t* smp)
 	smp[2] = z >> 11;
 }
 
-bool decode_tracker_sensor_msg(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
+bool decode_tracker_sensor_msg_dk1(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
 {
 	if(!(size == 62 || size == 64)){
 		LOGE("invalid packet size (expected 62 or 64 but got %d)", size);
