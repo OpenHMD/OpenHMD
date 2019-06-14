@@ -1,7 +1,10 @@
-// Copyright 2013, Fredrik Hultin.
-// Copyright 2013, Jakob Bornecrantz.
-// SPDX-License-Identifier: BSL-1.0
 /*
+ * Copyright 2013, Fredrik Hultin.
+ * Copyright 2013, Jakob Bornecrantz.
+ * Copyright 2016 Philipp Zabel
+ * Copyright 2019 Jan Schmidt
+ * SPDX-License-Identifier: BSL-1.0
+ *
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
  */
 
@@ -155,7 +158,7 @@ static void update_device(ohmd_device* device)
 	if(t - priv->last_keep_alive >= (double)priv->sensor_config.keep_alive_interval / 1000.0 - .2){
 		// send keep alive message
 		pkt_keep_alive keep_alive = { 0, priv->sensor_config.keep_alive_interval };
-		int ka_size = encode_keep_alive(buffer, &keep_alive);
+		int ka_size = encode_dk1_keep_alive(buffer, &keep_alive);
 		if (send_feature_report(priv, buffer, ka_size) == -1)
 			LOGE("error sending keepalive");
 
@@ -216,11 +219,50 @@ static void close_device(ohmd_device* device)
 {
 	LOGD("closing device");
 	rift_priv* priv = rift_priv_get(device);
+
+	if (priv->leds)
+		free (priv->leds);
+
 	hid_close(priv->handle);
 	free(priv);
 }
 
 #define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
+
+/*
+ * Sends a tracking report to enable the IR tracking LEDs.
+ */
+static int rift_send_tracking_config(rift_priv *rift, bool blink,
+    uint16_t exposure_us, uint16_t period_us)
+{
+	pkt_tracking_config tracking_config = { 0, };
+	unsigned char buf[FEATURE_BUFFER_SIZE];
+	int size;
+
+	tracking_config.vsync_offset = RIFT_TRACKING_VSYNC_OFFSET;
+	tracking_config.duty_cycle = RIFT_TRACKING_DUTY_CYCLE;
+	tracking_config.exposure_us = exposure_us;
+	tracking_config.period_us = period_us;
+
+	if (blink) {
+		tracking_config.pattern = 0;
+		tracking_config.flags = RIFT_TRACKING_ENABLE |
+		                        RIFT_TRACKING_USE_CARRIER |
+		                        RIFT_TRACKING_AUTO_INCREMENT;
+	} else {
+		tracking_config.pattern = 0xff;
+		tracking_config.flags = RIFT_TRACKING_ENABLE |
+		                        RIFT_TRACKING_USE_CARRIER;
+	}
+
+	size = encode_tracking_config(buf, &tracking_config);
+	if (send_feature_report(rift, buf, size) == -1) {
+		LOGE("Error sending LED tracking config");
+	  return -1;
+	}
+
+	return 0;
+}
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
@@ -285,11 +327,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		if (send_feature_report(priv, buf, size) == -1)
 			LOGE("error turning the screens on");
 
-		hid_write(priv->handle, rift_enable_leds_cv1, sizeof(rift_enable_leds_cv1));
+		rift_send_tracking_config (priv, false, RIFT_TRACKING_EXPOSURE_US_CV1,
+				RIFT_TRACKING_PERIOD_US_CV1);
 	}
 	else if (desc->revision == REV_DK2)
 	{
-		hid_write(priv->handle, rift_enable_leds_dk2, sizeof(rift_enable_leds_dk2));
+		rift_send_tracking_config (priv, false, RIFT_TRACKING_EXPOSURE_US_DK2,
+				RIFT_TRACKING_PERIOD_US_DK2);
 	}
 
 	pkt_position_info pos;
@@ -326,7 +370,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// set keep alive interval to n seconds
 	pkt_keep_alive keep_alive = { 0, KEEP_ALIVE_VALUE };
-	size = encode_keep_alive(buf, &keep_alive);
+	size = encode_dk1_keep_alive(buf, &keep_alive);
 	if (send_feature_report(priv, buf, size) == -1)
 		LOGE("error setting up keepalive");
 
