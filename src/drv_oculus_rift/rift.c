@@ -43,6 +43,7 @@ typedef struct {
 		vec3f pos;
 	} imu;
 
+	uint8_t radio_address[5];
 	rift_led *leds;
 	uint8_t num_leds;
  } rift_priv;
@@ -184,6 +185,53 @@ static void update_device(ohmd_device* device)
 			LOGE("unknown message type: %u", buffer[0]);
 		}
 	}
+}
+
+static bool rift_radio_send_cmd(rift_priv *priv, uint8_t a, uint8_t b, uint8_t c)
+{
+	unsigned char buffer[FEATURE_BUFFER_SIZE];
+	int cmd_size = encode_radio_control_cmd(buffer, a, b, c);
+	int ret_size;
+
+	if (send_feature_report(priv, buffer, cmd_size) == -1) {
+		LOGE("error sending HMD radio command 0x%02x/%02x/%02x", a, b, c);
+		return false;
+	}
+
+	do {
+		ret_size = get_feature_report(priv, RIFT_CMD_RADIO_CONTROL, buffer);
+		if (ret_size < 1) {
+			LOGE("HMD radio command 0x%02x/%02x/%02x failed - response too small", a, b, c);
+			return false;
+		}
+	} while (buffer[3] & 0x80);
+
+	if (buffer[3] & 0x08) {
+		LOGE("HMD radio command 0x%02x/%02x/%02x failed", a, b, c);
+		return false;
+	}
+
+	return true;
+}
+
+static bool rift_radio_get_address(rift_priv* priv, uint8_t address[5])
+{
+	unsigned char buf[FEATURE_BUFFER_SIZE];
+	int ret_size;
+
+	if (!rift_radio_send_cmd (priv, 0x05, 0x03, 0x05))
+		return false;
+
+	ret_size = get_feature_report(priv, RIFT_CMD_RADIO_DATA, buf);
+	if (ret_size < 0)
+		return false;
+
+	if (!decode_radio_address (priv->radio_address, buf, ret_size)) {
+		LOGE("Failed to decode received radio address");
+		return false;
+	}
+
+	return true;
 }
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -438,6 +486,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 		rift_send_tracking_config (priv, false, RIFT_TRACKING_EXPOSURE_US_CV1,
 				RIFT_TRACKING_PERIOD_US_CV1);
+
+		/* Read the radio ID for CV1 to enable camera sensor sync */
+		rift_radio_get_address(priv, priv->radio_address);
 	}
 	else if (desc->revision == REV_DK2)
 	{
