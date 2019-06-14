@@ -165,6 +165,8 @@ typedef struct {
 	vec3f pos;
 	// Normal
 	vec3f dir;
+	// Blink pattern
+	uint16_t pattern;
 } rift_led;
 
 bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
