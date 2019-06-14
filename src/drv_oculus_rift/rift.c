@@ -44,7 +44,8 @@ typedef struct {
 	} imu;
 
 	rift_led *leds;
-} rift_priv;
+	uint8_t num_leds;
+ } rift_priv;
 
 typedef enum {
 	REV_DK1,
@@ -230,6 +231,114 @@ static void close_device(ohmd_device* device)
 #define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
 
 /*
+ * Obtains the positions and blinking patterns of the IR LEDs from the Rift.
+ */
+static int rift_get_led_info(rift_priv *priv)
+{
+	int first_index = -1;
+	unsigned char buf[FEATURE_BUFFER_SIZE];
+	int size;
+	int num_leds = 0;
+
+	//Get LED positions
+	while (true) {
+		pkt_position_info pos;
+
+		size = get_feature_report(priv, RIFT_CMD_POSITION_INFO, buf);
+		if (size <= 0 || !decode_position_info(&pos, buf, size) ||
+		    first_index == pos.index) {
+			break;
+		}
+
+		if (first_index < 0) {
+			first_index = pos.index;
+			priv->leds = calloc(pos.num, sizeof(rift_led));
+		}
+
+		if (pos.flags == 1) { //reports 0's
+			priv->imu.pos.x = (float)pos.pos_x;
+			priv->imu.pos.y = (float)pos.pos_y;
+			priv->imu.pos.z = (float)pos.pos_z;
+			LOGV ("IMU index %d pos x/y/x %d/%d/%d\n", pos.index, pos.pos_x, pos.pos_y, pos.pos_z);
+		} else if (pos.flags == 2) {
+			rift_led *led = &priv->leds[pos.index];
+			led->pos.x = (float)pos.pos_x;
+			led->pos.y = (float)pos.pos_y;
+			led->pos.z = (float)pos.pos_z;
+			led->dir.x = (float)pos.dir_x;
+			led->dir.y = (float)pos.dir_y;
+			led->dir.z = (float)pos.dir_z;
+			ovec3f_normalize_me(&led->dir);
+			if (pos.index >= num_leds)
+				num_leds = pos.index + 1;
+			LOGV ("LED index %d pos x/y/x %d/%d/%d\n", pos.index, pos.pos_x, pos.pos_y, pos.pos_z);
+		}
+	}
+	priv->num_leds = num_leds;
+
+	// Get LED patterns
+	first_index = -1;
+	while (true) {
+		pkt_led_pattern_report pkt;
+		int8_t pattern_length;
+		int32_t pattern;
+
+		size = get_feature_report(priv, RIFT_CMD_PATTERN_INFO, buf);
+		if (size <= 0 || !decode_led_pattern_info(&pkt, buf, size) ||
+		    first_index == pkt.index) {
+			break;
+		}
+
+		if (first_index < 0) {
+			first_index = pkt.index;
+			if (priv->num_leds != pkt.num) {
+				LOGE("LED positions count doesn't match pattern count - got %d patterns for %d LEDs", pkt.num, priv->num_leds);
+				return -1;
+			}
+		}
+		if (pkt.index >= priv->num_leds) {
+			LOGE("Invalid LED pattern index %d (%d LEDs)", pkt.index, priv->num_leds);
+			return -1;
+		}
+
+		pattern_length = pkt.pattern_length;
+		pattern = pkt.pattern;
+
+		/* pattern_length should be 10 */
+		if (pattern_length != 10) {
+			LOGE("Rift: Unexpected LED pattern length: %d\n",
+				pattern_length);
+			return -1;
+		}
+
+		LOGV ("LED index %d pattern 0x%08x\n", pkt.index, pkt.pattern);
+		/*
+		 * pattern should consist of 10 2-bit values that are either
+		 * 1 (dark) or 3 (bright).
+		 */
+		if ((pattern & ~0xaaaaa) != 0x55555) {
+			LOGE("Rift: Unexpected pattern: 0x%x", pattern);
+			return -1;
+		}
+
+		/* Convert into 10 single-bit values 1 -> 0, 3 -> 1 */
+		pattern &= 0xaaaaa;
+		pattern |= pattern >> 1;
+		pattern &= 0x66666;
+		pattern |= pattern >> 2;
+		pattern &= 0xe1e1e;
+		pattern |= pattern >> 4;
+		pattern &= 0xe01fe;
+		pattern |= pattern >> 8;
+		pattern = (pattern >> 1) & 0x3ff;
+
+		priv->leds[pkt.index].pattern = pattern;
+	}
+
+	return 0;
+}
+
+/*
  * Sends a tracking report to enable the IR tracking LEDs.
  */
 static int rift_send_tracking_config(rift_priv *rift, bool blink,
@@ -336,36 +445,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 				RIFT_TRACKING_PERIOD_US_DK2);
 	}
 
-	pkt_position_info pos;
-	int first_index = -1;
-
-	//Get LED positions
-	while (true) {
-		size = get_feature_report(priv, RIFT_CMD_POSITION_INFO, buf);
-		if (size <= 0 || !decode_position_info(&pos, buf, size) ||
-		    first_index == pos.index) {
-			break;
-		}
-
-		if (first_index < 0) {
-			first_index = pos.index;
-			priv->leds = calloc(pos.num, sizeof(rift_led));
-		}
-
-		if (pos.flags == 1) { //reports 0's
-			priv->imu.pos.x = (float)pos.pos_x;
-			priv->imu.pos.y = (float)pos.pos_y;
-			priv->imu.pos.z = (float)pos.pos_z;
-		} else if (pos.flags == 2) {
-			rift_led *led = &priv->leds[pos.index];
-			led->pos.x = (float)pos.pos_x;
-			led->pos.y = (float)pos.pos_y;
-			led->pos.z = (float)pos.pos_z;
-			led->dir.x = (float)pos.dir_x;
-			led->dir.y = (float)pos.dir_y;
-			led->dir.z = (float)pos.dir_z;
-			ovec3f_normalize_me(&led->dir);
-		}
+	/* We only need the LED info if we have a sensor to observe them with,
+	   so we could skip this */
+	if (rift_get_led_info (priv) < 0) {
+		ohmd_set_error(driver->ctx, "failed to read LED info from device");
+		goto cleanup;
 	}
 
 	// set keep alive interval to n seconds
@@ -452,8 +536,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	return &priv->base;
 
 cleanup:
-	if(priv)
+	if(priv) {
+		if (priv->leds)
+			free (priv->leds);
 		free(priv);
+	}
 
 	return NULL;
 }
