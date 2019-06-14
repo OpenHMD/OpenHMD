@@ -1,7 +1,10 @@
-// Copyright 2013, Fredrik Hultin.
-// Copyright 2013, Jakob Bornecrantz.
-// SPDX-License-Identifier: BSL-1.0
 /*
+ * Copyright 2013, Fredrik Hultin.
+ * Copyright 2013, Jakob Bornecrantz.
+ * Copyright 2016 Philipp Zabel
+ * Copyright 2019 Jan Schmidt
+ * SPDX-License-Identifier: BSL-1.0
+ *
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
  */
 
@@ -9,6 +12,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 #include "rift.h"
 
 #define SKIP8 (buffer++)
@@ -46,6 +50,23 @@ bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int
 	p->num = READ8;
 	SKIP8;
 	p->type = READ8;
+
+	return true;
+}
+
+bool decode_led_pattern_info(pkt_led_pattern_report * p, const unsigned char* buffer, int size)
+{
+	if(size != 12) {
+		LOGE("invalid packet size (expected 12 but got %d)", size);
+		return false;
+	}
+
+	SKIP_CMD;
+	SKIP16;
+	p->pattern_length = READ8;
+	p->pattern = READ32;
+	p->index = READ16;
+	p->num = READ16;
 
 	return true;
 }
@@ -136,9 +157,10 @@ bool decode_tracker_sensor_msg_dk1(pkt_tracker_sensor* msg, const unsigned char*
 
 	SKIP_CMD;
 	msg->num_samples = READ8;
+	msg->total_sample_count = 0; /* No sample count in DK1 */
 	msg->timestamp = READ16;
 	msg->timestamp *= 1000; // DK1 timestamps are in milliseconds
-	msg->last_command_id = READ16;
+	buffer += 2; /* Skip unused last_command_id */
 	msg->temperature = READ16;
 
 	msg->num_samples = OHMD_MIN(msg->num_samples, 3);
@@ -156,6 +178,14 @@ bool decode_tracker_sensor_msg_dk1(pkt_tracker_sensor* msg, const unsigned char*
 		msg->mag[i] = READ16;
 	}
 
+	// positional tracking data and frame data - do these exist on DK1?
+	msg->frame_count = 0;
+	msg->frame_timestamp = 0;
+	msg->frame_id = 0;
+	msg->led_pattern_phase = 0;
+	msg->exposure_count = 0;
+	msg->exposure_timestamp = 0;
+
 	return true;
 }
 
@@ -167,11 +197,11 @@ bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char*
 	}
 
 	SKIP_CMD;
-	msg->last_command_id = READ16;
+	SKIP16;
 	msg->num_samples = READ8;
 	/* Next is the number of samples since start, excluding the samples
 	contained in this packet */
-	buffer += 2; // unused: nb_samples_since_start
+	msg->total_sample_count = READ16;
 	msg->temperature = READ16;
 	msg->timestamp = READ32;
 
@@ -193,7 +223,27 @@ bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char*
 		msg->mag[i] = READ16;
 	}
 
-	// TODO: positional tracking data and frame data
+	// positional tracking data and frame data
+	msg->frame_count = READ16;
+	msg->frame_timestamp = READ32;
+	msg->frame_id = READ8;
+	msg->led_pattern_phase = READ8;
+	msg->exposure_count = READ16;
+	msg->exposure_timestamp = READ32;
+
+	return true;
+}
+
+bool decode_radio_address(uint8_t radio_address[5], const unsigned char* buffer, int size)
+{
+	if (size < 8)
+		return false;
+
+	/* Ignore the command and echo bytes, then 5 bytes of radio address payload */
+	SKIP_CMD;
+	SKIP16;
+
+	memcpy (radio_address, buffer, 5);
 
 	return true;
 }
@@ -216,9 +266,24 @@ int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config)
 	return 7; // sensor config packet size
 }
 
-int encode_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
+int encode_tracking_config(unsigned char* buffer, const pkt_tracking_config* tracking)
 {
-	WRITE8(RIFT_CMD_KEEP_ALIVE);
+	WRITE8(RIFT_CMD_TRACKING_CONFIG);
+	WRITE16(tracking->command_id);
+	WRITE8(tracking->pattern);
+	WRITE8(tracking->flags);
+	WRITE8(tracking->reserved);
+	WRITE16(tracking->exposure_us);
+	WRITE16(tracking->period_us);
+	WRITE16(tracking->vsync_offset);
+	WRITE8 (tracking->duty_cycle);
+
+	return 13;
+}
+
+int encode_dk1_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive)
+{
+	WRITE8(RIFT_CMD_DK1_KEEP_ALIVE);
 	WRITE16(keep_alive->command_id);
 	WRITE16(keep_alive->keep_alive_interval);
 	return 5; // keep alive packet size
@@ -239,6 +304,17 @@ int encode_enable_components(unsigned char* buffer, bool display, bool audio, bo
 		flags |= RIFT_COMPONENT_LEDS;
 	WRITE8(flags);
 	return 4; // component flags packet size
+}
+
+int encode_radio_control_cmd(unsigned char* buffer, uint8_t a, uint8_t b, uint8_t c)
+{
+	WRITE8(RIFT_CMD_RADIO_CONTROL);
+	WRITE16(0); // last command ID
+	WRITE8(a);
+	WRITE8(b);
+	WRITE8(c);
+
+	return 6;
 }
 
 void dump_packet_sensor_range(const pkt_sensor_range* range)
@@ -292,7 +368,7 @@ void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor)
 	(void)sensor;
 
 	LOGD("tracker sensor:");
-	LOGD("  last command id: %u", sensor->last_command_id);
+	LOGD("  total sample count: %u", sensor->total_sample_count);
 	LOGD("  timestamp:       %u", sensor->timestamp);
 	LOGD("  temperature:     %d", sensor->temperature);
 	LOGD("  num samples:     %u", sensor->num_samples);
@@ -302,4 +378,9 @@ void dump_packet_tracker_sensor(const pkt_tracker_sensor* sensor)
 		LOGD("    accel: %d %d %d", sensor->samples[i].accel[0], sensor->samples[i].accel[1], sensor->samples[i].accel[2]);
 		LOGD("    gyro:  %d %d %d", sensor->samples[i].gyro[0], sensor->samples[i].gyro[1], sensor->samples[i].gyro[2]);
 	}
+	LOGD("frame_id %u frame count %u timestamp %u led pattern %u exposure_count %u exposure time %u",
+		sensor->frame_id,
+		sensor->frame_count, sensor->frame_timestamp,
+		sensor->led_pattern_phase, sensor->exposure_count,
+		sensor->exposure_timestamp);
 }
