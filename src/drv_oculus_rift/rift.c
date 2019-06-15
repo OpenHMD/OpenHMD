@@ -24,9 +24,19 @@
 #define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
+typedef struct rift_hmd_s rift_hmd_t;
+typedef struct rift_device_priv_s rift_device_priv;
 
-typedef struct {
+struct rift_device_priv_s {
 	ohmd_device base;
+
+	int id;
+	rift_hmd_t *hmd;
+};
+
+struct rift_hmd_s {
+	ohmd_context* ctx;
+	int use_count;
 
 	hid_device* handle;
 	pkt_sensor_range sensor_range;
@@ -46,7 +56,18 @@ typedef struct {
 	uint8_t radio_address[5];
 	rift_led *leds;
 	uint8_t num_leds;
- } rift_priv;
+
+	/* OpenHMD output devices */
+	rift_device_priv hmd_dev;
+};
+
+typedef struct device_list_s device_list_t;
+struct device_list_s {
+	char path[OHMD_STR_SIZE];
+	rift_hmd_t *hmd;
+
+	device_list_t* next;
+};
 
 typedef enum {
 	REV_DK1,
@@ -64,24 +85,82 @@ typedef struct {
 	rift_revision rev;
 } rift_devices;
 
-static rift_priv* rift_priv_get(ohmd_device* device)
+/* Global list of (probably 1) active HMD devices */
+static device_list_t* rift_hmds;
+
+static void close_hmd (rift_hmd_t *hmd);
+
+static rift_hmd_t *find_hmd(char *hid_path)
 {
-	return (rift_priv*)device;
+	device_list_t* current = rift_hmds;
+
+	while (current != NULL) {
+		if (strcmp(current->path, hid_path)==0)
+			return current->hmd;
+		current = current->next;
+	}
+	return NULL;
 }
 
-static int get_feature_report(rift_priv* priv, rift_sensor_feature_cmd cmd, unsigned char* buf)
+static void push_hmd(rift_hmd_t *hmd, char *hid_path)
+{
+	device_list_t* d = calloc(1, sizeof(device_list_t));
+	d->hmd = hmd;
+	strcpy (d->path, hid_path);
+
+	d->next = rift_hmds;
+	rift_hmds = d;
+}
+
+static void release_hmd(rift_hmd_t *hmd)
+{
+	device_list_t* current, *prev;
+
+	if (hmd->use_count > 1) {
+		hmd->use_count--;
+		return;
+	}
+
+	/* Use count on the HMD device hit 0, release it
+	 * and remove from the list */
+	current = rift_hmds;
+	prev = NULL;
+	while (current != NULL) {
+		if (current->hmd == hmd) {
+			close_hmd (current->hmd);
+
+			if (prev == NULL)
+				rift_hmds = current->next;
+			else
+				prev->next = current->next;
+			free (current);
+			return;
+		}
+		prev = current;
+		current = current->next;
+	}
+
+	LOGE("Failed to find HMD in the active device list");
+}
+
+static rift_device_priv* rift_device_priv_get(ohmd_device* device)
+{
+	return (rift_device_priv*)device;
+}
+
+static int get_feature_report(rift_hmd_t* priv, rift_sensor_feature_cmd cmd, unsigned char* buf)
 {
 	memset(buf, 0, FEATURE_BUFFER_SIZE);
 	buf[0] = (unsigned char)cmd;
 	return hid_get_feature_report(priv->handle, buf, FEATURE_BUFFER_SIZE);
 }
 
-static int send_feature_report(rift_priv* priv, const unsigned char *data, size_t length)
+static int send_feature_report(rift_hmd_t* priv, const unsigned char *data, size_t length)
 {
 	return hid_send_feature_report(priv->handle, data, length);
 }
 
-static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordframe)
+static void set_coordinate_frame(rift_hmd_t* priv, rift_coordinate_frame coordframe)
 {
 	priv->coordinate_frame = coordframe;
 
@@ -92,7 +171,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 	int size = encode_sensor_config(buf, &priv->sensor_config);
 	if(send_feature_report(priv, buf, size) == -1){
-		ohmd_set_error(priv->base.ctx, "send_feature_report failed in set_coordinate frame");
+		ohmd_set_error(priv->ctx, "send_feature_report failed in set_coordinate frame");
 		return;
 	}
 
@@ -113,7 +192,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	}
 }
 
-static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, int size)
+static void handle_tracker_sensor_msg(rift_hmd_t* priv, unsigned char* buffer, int size)
 {
 	if (buffer[0] == RIFT_IRQ_SENSORS_DK1
 	  && !decode_tracker_sensor_msg_dk1(&priv->sensor, buffer, size)){
@@ -150,9 +229,8 @@ static void handle_tracker_sensor_msg(rift_priv* priv, unsigned char* buffer, in
 	priv->last_imu_timestamp = s->timestamp;
 }
 
-static void update_device(ohmd_device* device)
+static void update_hmd(rift_hmd_t *priv)
 {
-	rift_priv* priv = rift_priv_get(device);
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
 	// Handle keep alive messages
@@ -187,7 +265,17 @@ static void update_device(ohmd_device* device)
 	}
 }
 
-static bool rift_radio_send_cmd(rift_priv *priv, uint8_t a, uint8_t b, uint8_t c)
+static void update_device(ohmd_device* device)
+{
+	rift_device_priv* dev_priv = rift_device_priv_get(device);
+	/* Only update if this is the primary (HMD) device. */
+	if (dev_priv->id != 0)
+		return;
+
+	update_hmd (dev_priv->hmd);
+}
+
+static bool rift_radio_send_cmd(rift_hmd_t *priv, uint8_t a, uint8_t b, uint8_t c)
 {
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 	int cmd_size = encode_radio_control_cmd(buffer, a, b, c);
@@ -214,7 +302,7 @@ static bool rift_radio_send_cmd(rift_priv *priv, uint8_t a, uint8_t b, uint8_t c
 	return true;
 }
 
-static bool rift_radio_get_address(rift_priv* priv, uint8_t address[5])
+static bool rift_radio_get_address(rift_hmd_t* priv, uint8_t address[5])
 {
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 	int ret_size;
@@ -236,7 +324,8 @@ static bool rift_radio_get_address(rift_priv* priv, uint8_t address[5])
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
-	rift_priv* priv = rift_priv_get(device);
+	rift_device_priv* dev_priv = rift_device_priv_get(device);
+	rift_hmd_t *priv = dev_priv->hmd;
 
 	switch(type){
 	case OHMD_DISTORTION_K: {
@@ -256,7 +345,7 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		break;
 
 	default:
-		ohmd_set_error(priv->base.ctx, "invalid type given to getf (%ud)", type);
+		ohmd_set_error(priv->ctx, "invalid type given to getf (%ud)", type);
 		return -1;
 		break;
 	}
@@ -267,13 +356,8 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 static void close_device(ohmd_device* device)
 {
 	LOGD("closing device");
-	rift_priv* priv = rift_priv_get(device);
-
-	if (priv->leds)
-		free (priv->leds);
-
-	hid_close(priv->handle);
-	free(priv);
+	rift_device_priv* dev_priv = rift_device_priv_get(device);
+	release_hmd (dev_priv->hmd);
 }
 
 #define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
@@ -281,7 +365,7 @@ static void close_device(ohmd_device* device)
 /*
  * Obtains the positions and blinking patterns of the IR LEDs from the Rift.
  */
-static int rift_get_led_info(rift_priv *priv)
+static int rift_get_led_info(rift_hmd_t *priv)
 {
 	int first_index = -1;
 	unsigned char buf[FEATURE_BUFFER_SIZE];
@@ -389,7 +473,7 @@ static int rift_get_led_info(rift_priv *priv)
 /*
  * Sends a tracking report to enable the IR tracking LEDs.
  */
-static int rift_send_tracking_config(rift_priv *rift, bool blink,
+static int rift_send_tracking_config(rift_hmd_t *rift, bool blink,
     uint16_t exposure_us, uint16_t period_us)
 {
 	pkt_tracking_config tracking_config = { 0, };
@@ -421,15 +505,19 @@ static int rift_send_tracking_config(rift_priv *rift, bool blink,
 	return 0;
 }
 
-static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 {
-	rift_priv* priv = ohmd_alloc(driver->ctx, sizeof(rift_priv));
+	rift_hmd_t* priv = ohmd_alloc(driver->ctx, sizeof(rift_hmd_t));
+	rift_device_priv *hmd_dev;
 	if(!priv)
 		goto cleanup;
 
-	priv->last_imu_timestamp = -1;
+	hmd_dev = &priv->hmd_dev;
 
-	priv->base.ctx = driver->ctx;
+	priv->use_count = 1;
+	priv->ctx = driver->ctx;
+
+	priv->last_imu_timestamp = -1;
 
 	// Open the HID device
 	priv->handle = hid_open_path(desc->path);
@@ -519,39 +607,39 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	dump_packet_sensor_config(&priv->sensor_config);
 
 	// Set default device properties
-	ohmd_set_default_device_properties(&priv->base.properties);
+	ohmd_set_default_device_properties(&hmd_dev->base.properties);
 
 	// Set device properties
-	priv->base.properties.hsize = priv->display_info.h_screen_size;
-	priv->base.properties.vsize = priv->display_info.v_screen_size;
-	priv->base.properties.hres = priv->display_info.h_resolution;
-	priv->base.properties.vres = priv->display_info.v_resolution;
-	priv->base.properties.lens_sep = priv->display_info.lens_separation;
-	priv->base.properties.lens_vpos = priv->display_info.v_center;
-	priv->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
+	hmd_dev->base.properties.hsize = priv->display_info.h_screen_size;
+	hmd_dev->base.properties.vsize = priv->display_info.v_screen_size;
+	hmd_dev->base.properties.hres = priv->display_info.h_resolution;
+	hmd_dev->base.properties.vres = priv->display_info.v_resolution;
+	hmd_dev->base.properties.lens_sep = priv->display_info.lens_separation;
+	hmd_dev->base.properties.lens_vpos = priv->display_info.v_center;
+	hmd_dev->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
 
 	//setup generic distortion coeffs, from hand-calibration
 	switch (desc->revision) {
 		case REV_DK2:
-			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.247, -0.145, 0.103, 0.795);
-			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
+			ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 0.247, -0.145, 0.103, 0.795);
+			ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.985, 1.000, 1.015);
 			break;
 		case REV_DK1:
-			ohmd_set_universal_distortion_k(&(priv->base.properties), 1.003, -1.005, 0.403, 0.599);
-			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.985, 1.000, 1.015);
+			ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 1.003, -1.005, 0.403, 0.599);
+			ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.985, 1.000, 1.015);
 			break;
 		case REV_CV1:
-			ohmd_set_universal_distortion_k(&(priv->base.properties), 0.098, .324, -0.241, 0.819);
-			ohmd_set_universal_aberration_k(&(priv->base.properties), 0.9952420, 1.0, 1.0008074);
+			ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 0.098, .324, -0.241, 0.819);
+			ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.9952420, 1.0, 1.0008074);
 			/* CV1 reports IPD, but not lens center, at least not anywhere I could find, so use the manually measured value of 0.054 */
 			priv->display_info.lens_separation = 0.054;
-			priv->base.properties.lens_sep = priv->display_info.lens_separation;
+			hmd_dev->base.properties.lens_sep = priv->display_info.lens_separation;
 		default:
 			break;
 	}
 
 	// calculate projection eye projection matrices from the device properties
-	//ohmd_calc_default_proj_matrices(&priv->base.properties);
+	//ohmd_calc_default_proj_matrices(&hmd_dev->base.properties);
 	float l,r,t,b,n,f;
 	// left eye screen bounds
 	l = -1.0f * (priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2);
@@ -562,7 +650,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	f = n*10e6;
 	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
 	/* eye separation is handled by IPD in the Modelview matrix */
-	omat4x4f_init_frustum(&priv->base.properties.proj_left, l, r, b, t, n, f);
+	omat4x4f_init_frustum(&hmd_dev->base.properties.proj_left, l, r, b, t, n, f);
 	//right eye screen bounds
 	l = -1.0f * priv->display_info.lens_separation/2;
 	r = priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2;
@@ -570,30 +658,55 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	f = n*10e6;
 	//LOGD("l: %0.3f, r: %0.3f, b: %0.3f, t: %0.3f, n: %0.3f, f: %0.3f", l,r,b,t,n,f);
 	/* eye separation is handled by IPD in the Modelview matrix */
-	omat4x4f_init_frustum(&priv->base.properties.proj_right, l, r, b, t, n, f);
+	omat4x4f_init_frustum(&hmd_dev->base.properties.proj_right, l, r, b, t, n, f);
 
-	priv->base.properties.fov = 2 * atan2f(
+	hmd_dev->base.properties.fov = 2 * atan2f(
 			priv->display_info.h_screen_size/2 - priv->display_info.lens_separation/2,
 			priv->display_info.eye_to_screen_distance[0]);
-
-	// set up device callbacks
-	priv->base.update = update_device;
-	priv->base.close = close_device;
-	priv->base.getf = getf;
+	hmd_dev->id = 0;
+	hmd_dev->hmd = priv;
 
 	// initialize sensor fusion
 	ofusion_init(&priv->sensor_fusion);
 
-	return &priv->base;
+	return priv;
 
 cleanup:
-	if(priv) {
-		if (priv->leds)
-			free (priv->leds);
-		free(priv);
+	if (priv)
+		close_hmd (priv);
+	return NULL;
+}
+
+static void close_hmd(rift_hmd_t *hmd)
+{
+	if (hmd->leds)
+		free (hmd->leds);
+
+	hid_close(hmd->handle);
+	free(hmd);
+}
+
+static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
+{
+	rift_device_priv *dev = NULL;
+	rift_hmd_t *hmd = find_hmd(desc->path);
+
+	if (hmd == NULL) {
+		hmd = open_hmd (driver, desc);
+		if (hmd == NULL)
+			return NULL;
+		push_hmd (hmd, desc->path);
 	}
 
-	return NULL;
+	if (desc->id == 0)
+		dev = &hmd->hmd_dev;
+
+	// set up device callbacks
+	dev->base.update = update_device;
+	dev->base.close = close_device;
+	dev->base.getf = getf;
+
+	return &dev->base;
 }
 
 #define OCULUS_VR_INC_ID 0x2833
@@ -622,6 +735,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 		while (cur_dev) {
 			if(rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface){
+				int id = 0;
 				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
 				strcpy(desc->driver, "OpenHMD Rift Driver");
@@ -636,8 +750,8 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 				strcpy(desc->path, cur_dev->path);
 
 				desc->driver_ptr = driver;
+				desc->id = id++;
 			}
-
 			cur_dev = cur_dev->next;
 		}
 
