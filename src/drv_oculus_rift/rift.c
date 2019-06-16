@@ -63,6 +63,8 @@ struct rift_hmd_s {
 	rift_led *leds;
 	uint8_t num_leds;
 
+	uint16_t remote_buttons_state;
+
 	/* OpenHMD output devices */
 	rift_device_priv hmd_dev;
 };
@@ -236,6 +238,36 @@ static void handle_tracker_sensor_msg(rift_hmd_t* priv, unsigned char* buffer, i
 	priv->last_imu_timestamp = s->timestamp;
 }
 
+static void handle_rift_radio_message(rift_hmd_t *hmd, pkt_rift_radio_message *msg)
+{
+	switch (msg->device_type) {
+		case RIFT_REMOTE:
+			if (hmd->remote_buttons_state != msg->remote.buttons)
+				LOGV ("Remote buttons state 0x%02x", msg->remote.buttons);
+			hmd->remote_buttons_state = msg->remote.buttons;
+			break;
+		case RIFT_TOUCH_CONTROLLER_LEFT:
+			//printf ("Left Touch buttons state 0x%02x\n", msg->remote.buttons);
+			break;
+		case RIFT_TOUCH_CONTROLLER_RIGHT:
+			//printf ("Right Touch buttons state 0x%02x\n", msg->remote.buttons);
+			break;
+	}
+}
+
+static void handle_rift_radio_report(rift_hmd_t* hmd, unsigned char* buffer, int size)
+{
+	pkt_rift_radio_report r;
+
+	if (!decode_rift_radio_report(&r, buffer, size))
+		return;
+
+	if (r.message[0].valid)
+		handle_rift_radio_message(hmd, &r.message[0]);
+	if (r.message[1].valid)
+		handle_rift_radio_message(hmd, &r.message[1]);
+}
+
 static void update_hmd(rift_hmd_t *priv)
 {
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
@@ -258,9 +290,9 @@ static void update_hmd(rift_hmd_t *priv)
 		int size = hid_read(priv->handle, buffer, FEATURE_BUFFER_SIZE);
 		if(size < 0){
 			LOGE("error reading from device");
-			return;
+			break;
 		} else if(size == 0) {
-			return; // No more messages, return.
+			break; // No more messages, return.
 		}
 
 		// currently the only message type the hardware supports (I think)
@@ -269,6 +301,23 @@ static void update_hmd(rift_hmd_t *priv)
 		}else{
 			LOGE("unknown message type: %u", buffer[0]);
 		}
+	}
+
+	if (priv->radio_handle == NULL)
+		return;
+
+	// Read all the controller messages from the radio device.
+	while(true){
+		int size = hid_read(priv->radio_handle, buffer, FEATURE_BUFFER_SIZE);
+		if(size < 0){
+			LOGE("error reading from device");
+			break;
+		} else if(size == 0) {
+			break; // No more messages, return.
+		}
+
+		if (buffer[0] == RIFT_RADIO_REPORT_ID)
+			handle_rift_radio_report (priv, buffer, size);
 	}
 }
 
@@ -329,21 +378,18 @@ static bool rift_radio_get_address(rift_hmd_t* priv, uint8_t address[5])
 	return true;
 }
 
-static int getf(ohmd_device* device, ohmd_float_value type, float* out)
+static int getf_hmd(rift_hmd_t *hmd, ohmd_float_value type, float* out)
 {
-	rift_device_priv* dev_priv = rift_device_priv_get(device);
-	rift_hmd_t *priv = dev_priv->hmd;
-
 	switch(type){
 	case OHMD_DISTORTION_K: {
 			for (int i = 0; i < 6; i++) {
-				out[i] = priv->display_info.distortion_k[i];
+				out[i] = hmd->display_info.distortion_k[i];
 			}
 			break;
 		}
 
 	case OHMD_ROTATION_QUAT: {
-			*(quatf*)out = priv->sensor_fusion.orient;
+			*(quatf*)out = hmd->sensor_fusion.orient;
 			break;
 		}
 
@@ -351,13 +397,34 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 		out[0] = out[1] = out[2] = 0;
 		break;
 
+	case OHMD_CONTROLS_STATE:
+		out[0] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_UP) != 0;
+		out[1] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_DOWN) != 0;
+		out[2] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_LEFT) != 0;
+		out[3] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_RIGHT) != 0;
+		out[4] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_OK) != 0;
+		out[5] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_PLUS) != 0;
+		out[6] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_MINUS) != 0;
+		out[7] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_OCULUS) != 0;
+		out[8] = (hmd->remote_buttons_state & RIFT_REMOTE_BUTTON_BACK) != 0;
+		break;
+
 	default:
-		ohmd_set_error(priv->ctx, "invalid type given to getf (%ud)", type);
+		ohmd_set_error(hmd->ctx, "invalid type given to getf (%ud)", type);
 		return -1;
 		break;
 	}
 
 	return 0;
+}
+
+static int getf(ohmd_device* device, ohmd_float_value type, float* out)
+{
+	rift_device_priv* dev_priv = rift_device_priv_get(device);
+	if (dev_priv->id == 0)
+		return getf_hmd (dev_priv->hmd, type, out);
+
+	return -1;
 }
 
 static void close_device(ohmd_device* device)
@@ -633,6 +700,30 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 	hmd_dev->base.properties.lens_sep = priv->display_info.lens_separation;
 	hmd_dev->base.properties.lens_vpos = priv->display_info.v_center;
 	hmd_dev->base.properties.ratio = ((float)priv->display_info.h_resolution / (float)priv->display_info.v_resolution) / 2.0f;
+
+	if (desc->revision == REV_CV1) {
+		/* On the CV1, add some control mappings for the simple Oculus remote control buttons */
+		hmd_dev->base.properties.control_count = 9;
+		hmd_dev->base.properties.controls_hints[0] = OHMD_BUTTON_Y; // UP
+		hmd_dev->base.properties.controls_hints[1] = OHMD_BUTTON_A; // DOWN
+		hmd_dev->base.properties.controls_hints[2] = OHMD_BUTTON_X; // LEFT
+		hmd_dev->base.properties.controls_hints[3] = OHMD_BUTTON_B; // RIGHT
+		hmd_dev->base.properties.controls_hints[4] = OHMD_GENERIC; // OK button
+		hmd_dev->base.properties.controls_hints[5] = OHMD_VOLUME_PLUS;
+		hmd_dev->base.properties.controls_hints[6] = OHMD_VOLUME_MINUS;
+		hmd_dev->base.properties.controls_hints[7] = OHMD_MENU; // OCULUS button
+		hmd_dev->base.properties.controls_hints[8] = OHMD_HOME; // Back button
+
+		hmd_dev->base.properties.controls_types[0] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[1] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[2] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[3] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[4] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[5] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[6] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[7] = OHMD_DIGITAL;
+		hmd_dev->base.properties.controls_types[8] = OHMD_DIGITAL;
+	}
 
 	//setup generic distortion coeffs, from hand-calibration
 	switch (desc->revision) {

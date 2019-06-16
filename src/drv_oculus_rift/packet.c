@@ -192,7 +192,7 @@ bool decode_tracker_sensor_msg_dk1(pkt_tracker_sensor* msg, const unsigned char*
 bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char* buffer, int size)
 {
 	if(!(size == 64)){
-		LOGE("invalid packet size (expected 62 or 64 but got %d)", size);
+		LOGE("invalid packet size (expected 64 but got %d)", size);
 		return false;
 	}
 
@@ -244,6 +244,74 @@ bool decode_radio_address(uint8_t radio_address[5], const unsigned char* buffer,
 	SKIP16;
 
 	memcpy (radio_address, buffer, 5);
+
+	return true;
+}
+
+static bool decode_rift_radio_message(pkt_rift_radio_message *m, const unsigned char* buffer)
+{
+	int i;
+
+	m->flags = READ16;
+	m->device_type = READ8;
+
+	/* 2019-6 All the valid messages I've seen have 0x1c or 0x5 in these 16 bits - JS */
+	/* 0x5 always seems to be the rift remote, and there are 2 other cases I've seen:
+	 * device type 0x22 flags 0x0000 and device type 0x04 flags 0x7600 */
+	m->valid = (m->flags == 0x1c || m->flags == 0x05);
+
+	if (!m->valid) {
+		LOGV ("Invalid radio report from unknown remote device type 0x%02x flags 0x%04x",
+				m->device_type, m->flags);
+		return true;
+	}
+
+	switch (m->device_type) {
+		case RIFT_REMOTE:
+			m->remote.buttons = READ16;
+			break;
+		case RIFT_TOUCH_CONTROLLER_LEFT:
+		case RIFT_TOUCH_CONTROLLER_RIGHT:
+			m->touch.timestamp = READ32;
+			for (i = 0; i < 3; i++)
+				m->touch.accel[i] = READ16;
+			for (i = 0; i < 3; i++)
+				m->touch.gyro[i] = READ16;
+			m->touch.buttons = READ8;
+			for (i = 0; i < 5; i++)
+				m->touch.trigger_grip_stick[i] = READ8;
+			m->touch.adc_channel = READ8;
+			m->touch.adc_value = READ16;
+			break;
+		default:
+			LOGE ("Radio report from unknown remote device type 0x%02x flags 0x%04x",
+					m->device_type, m->flags);
+			return false;
+	}
+
+	return true;
+}
+
+bool decode_rift_radio_report(pkt_rift_radio_report *r, const unsigned char* buffer, int size)
+{
+	if (size != RIFT_RADIO_REPORT_SIZE) {
+		LOGE("invalid packet size (expected 64 but got %d)", size);
+		return false;
+	}
+
+	if (buffer[0] != RIFT_RADIO_REPORT_ID) {
+		LOGE("Unknown radio report id 0x%02x\n", buffer[0]);
+		return false;
+	}
+
+	r->id = READ8;
+	SKIP16; // Ignore the echo
+
+	for (int i = 0; i < 2; i++) {
+		if (!decode_rift_radio_message (&r->message[i], buffer))
+			return false;
+		buffer += 28;
+	}
 
 	return true;
 }
