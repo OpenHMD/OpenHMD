@@ -1,5 +1,6 @@
 // Copyright 2013, Fredrik Hultin.
 // Copyright 2013, Jakob Bornecrantz.
+// Copyright 2015-2016 Philipp Zabel
 // SPDX-License-Identifier: BSL-1.0
 /*
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
@@ -169,6 +170,82 @@ typedef struct {
 	uint16_t pattern;
 } rift_led;
 
+#define RIFT_RADIO_REPORT_ID			0x0c
+#define RIFT_RADIO_REPORT_SIZE			64
+
+#define RIFT_REMOTE				1
+#define RIFT_TOUCH_CONTROLLER_LEFT		2
+#define RIFT_TOUCH_CONTROLLER_RIGHT		3
+
+#define RIFT_REMOTE_BUTTON_UP			0x001
+#define RIFT_REMOTE_BUTTON_DOWN			0x002
+#define RIFT_REMOTE_BUTTON_LEFT			0x004
+#define RIFT_REMOTE_BUTTON_RIGHT		0x008
+#define RIFT_REMOTE_BUTTON_OK			0x010
+#define RIFT_REMOTE_BUTTON_PLUS			0x020
+#define RIFT_REMOTE_BUTTON_MINUS		0x040
+#define RIFT_REMOTE_BUTTON_OCULUS		0x080
+#define RIFT_REMOTE_BUTTON_BACK			0x100
+
+typedef struct {
+	uint16_t buttons;
+} pkt_rift_remote_message;
+
+#define RIFT_TOUCH_CONTROLLER_BUTTON_A		0x01
+#define RIFT_TOUCH_CONTROLLER_BUTTON_X		0x01
+#define RIFT_TOUCH_CONTROLLER_BUTTON_B		0x02
+#define RIFT_TOUCH_CONTROLLER_BUTTON_Y		0x02
+#define RIFT_TOUCH_CONTROLLER_BUTTON_MENU	0x04
+#define RIFT_TOUCH_CONTROLLER_BUTTON_OCULUS	0x04
+#define RIFT_TOUCH_CONTROLLER_BUTTON_STICK	0x08
+
+#define RIFT_TOUCH_CONTROLLER_ADC_STICK		0x01
+#define RIFT_TOUCH_CONTROLLER_ADC_B_Y		0x02
+#define RIFT_TOUCH_CONTROLLER_ADC_TRIGGER	0x03
+#define RIFT_TOUCH_CONTROLLER_ADC_A_X		0x04
+#define RIFT_TOUCH_CONTROLLER_ADC_REST		0x08
+
+#define RIFT_TOUCH_CONTROLLER_HAPTIC_COUNTER	0x23
+
+typedef struct {
+	uint32_t timestamp;
+	uint16_t accel[3];
+	uint16_t gyro[3];
+	uint8_t buttons;
+	uint8_t trigger_grip_stick[5];
+	uint8_t adc_channel;
+	uint16_t adc_value;
+} pkt_rift_touch_message;
+
+/* Not actually implemented yet
+typedef struct rift_pairing_message {
+	uint8_t unknown_1;
+	uint8_t maybe_rssi;
+	uint8_t buttons;
+	uint8_t device_type;
+	uint32_t id[2];
+	uint8_t unknown[2];
+	uint8_t firmware[8];
+	uint8_t padding[3];
+} pkt_rift_pairing_message;
+*/
+
+typedef struct {
+  bool valid;
+	uint16_t flags;
+	uint8_t device_type;
+	union {
+		pkt_rift_remote_message remote;
+		pkt_rift_touch_message touch;
+		/* struct rift_pairing_message pairing; */
+	};
+} pkt_rift_radio_message;
+
+typedef struct {
+	uint8_t id;
+	pkt_rift_radio_message message[2];
+} pkt_rift_radio_report;
+
 bool decode_sensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size);
 bool decode_sensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size);
 bool decode_sensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size);
@@ -177,6 +254,8 @@ bool decode_tracker_sensor_msg_dk2(pkt_tracker_sensor* msg, const unsigned char*
 bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int size);
 bool decode_led_pattern_info(pkt_led_pattern_report * p, const unsigned char* buffer, int size);
 bool decode_radio_address(uint8_t radio_address[5], const unsigned char* buffer, int size);
+
+bool decode_rift_radio_report(pkt_rift_radio_report *r, const unsigned char* buffer, int size);
 
 void vec3f_from_rift_vec(const int32_t* smp, vec3f* out_vec);
 
