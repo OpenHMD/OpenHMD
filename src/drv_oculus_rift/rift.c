@@ -31,12 +31,23 @@
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
 typedef struct rift_hmd_s rift_hmd_t;
 typedef struct rift_device_priv_s rift_device_priv;
+typedef struct rift_touch_controller_s rift_touch_controller_t;
 
 struct rift_device_priv_s {
 	ohmd_device base;
 
 	int id;
 	rift_hmd_t *hmd;
+	bool opened;
+};
+
+struct rift_touch_controller_s {
+	rift_device_priv base;
+
+	uint8_t buttons;
+	uint16_t trigger;
+	uint16_t grip;
+	uint16_t stick[2];
 };
 
 struct rift_hmd_s {
@@ -67,6 +78,7 @@ struct rift_hmd_s {
 
 	/* OpenHMD output devices */
 	rift_device_priv hmd_dev;
+	rift_touch_controller_t touch_dev[2];
 };
 
 typedef struct device_list_s device_list_t;
@@ -238,19 +250,39 @@ static void handle_tracker_sensor_msg(rift_hmd_t* priv, unsigned char* buffer, i
 	priv->last_imu_timestamp = s->timestamp;
 }
 
+static void handle_touch_controller_message(rift_hmd_t *hmd,
+		rift_touch_controller_t *touch, pkt_rift_radio_message *msg)
+{
+	// The top bits are carrying something unknown. Ignore them
+	uint8_t buttons = msg->touch.buttons & 0xf;
+
+	if (touch->buttons != buttons) {
+		LOGV ("touch controller %d buttons now %x",
+				touch->base.id, buttons);
+	}
+	touch->buttons = buttons;
+	/*
+	touch->trigger;
+	touch->grip;
+	touch->stick[0] = msg->touch->stick[0];
+	touch->stick[1] = msg->touch->stick[1];
+	*/
+}
+
 static void handle_rift_radio_message(rift_hmd_t *hmd, pkt_rift_radio_message *msg)
 {
 	switch (msg->device_type) {
 		case RIFT_REMOTE:
-			if (hmd->remote_buttons_state != msg->remote.buttons)
+			if (hmd->remote_buttons_state != msg->remote.buttons) {
 				LOGV ("Remote buttons state 0x%02x", msg->remote.buttons);
+			}
 			hmd->remote_buttons_state = msg->remote.buttons;
 			break;
-		case RIFT_TOUCH_CONTROLLER_LEFT:
-			//printf ("Left Touch buttons state 0x%02x\n", msg->remote.buttons);
-			break;
 		case RIFT_TOUCH_CONTROLLER_RIGHT:
-			//printf ("Right Touch buttons state 0x%02x\n", msg->remote.buttons);
+			handle_touch_controller_message (hmd, &hmd->touch_dev[0], msg);
+			break;
+		case RIFT_TOUCH_CONTROLLER_LEFT:
+			handle_touch_controller_message (hmd, &hmd->touch_dev[1], msg);
 			break;
 	}
 }
@@ -324,10 +356,19 @@ static void update_hmd(rift_hmd_t *priv)
 static void update_device(ohmd_device* device)
 {
 	rift_device_priv* dev_priv = rift_device_priv_get(device);
-	/* Only update if this is the primary (HMD) device. */
-	if (dev_priv->id != 0)
-		return;
+	rift_hmd_t *hmd = dev_priv->hmd;
 
+	/* Update on whichever is the lowest open id device */
+	if (dev_priv->id == 2) {
+		if (hmd->hmd_dev.opened)
+			return;
+		if (hmd->touch_dev[0].base.opened)
+			return;
+	}
+	else if (dev_priv->id == 1) {
+		if (hmd->hmd_dev.opened)
+			return;
+	}
 	update_hmd (dev_priv->hmd);
 }
 
@@ -418,11 +459,44 @@ static int getf_hmd(rift_hmd_t *hmd, ohmd_float_value type, float* out)
 	return 0;
 }
 
+static int getf_touch_controller(rift_device_priv* dev_priv, ohmd_float_value type, float* out)
+{
+	rift_touch_controller_t *touch = (rift_touch_controller_t *)(dev_priv);
+
+	switch(type){
+	case OHMD_ROTATION_QUAT:
+	case OHMD_POSITION_VECTOR:
+	case OHMD_DISTORTION_K:
+		return -1;
+	case OHMD_CONTROLS_STATE:
+		if (dev_priv->id == 1) { // right control
+			out[0] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_A) != 0;
+			out[1] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_B) != 0;
+			out[2] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_OCULUS) != 0;
+			out[3] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_STICK) != 0;
+		}
+		else { // left control, id == 2
+			out[0] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_X) != 0;
+			out[1] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_Y) != 0;
+			out[2] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_MENU) != 0;
+			out[3] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_STICK) != 0;
+		}
+		break;
+	default:
+		ohmd_set_error(dev_priv->hmd->ctx, "invalid type given to getf (%u)", type);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
 	rift_device_priv* dev_priv = rift_device_priv_get(device);
 	if (dev_priv->id == 0)
 		return getf_hmd (dev_priv->hmd, type, out);
+	else if (dev_priv->id == 1 || dev_priv->id == 2)
+		return getf_touch_controller (dev_priv, type, out);
 
 	return -1;
 }
@@ -431,6 +505,7 @@ static void close_device(ohmd_device* device)
 {
 	LOGD("closing device");
 	rift_device_priv* dev_priv = rift_device_priv_get(device);
+	dev_priv->opened = false;
 	release_hmd (dev_priv->hmd);
 }
 
@@ -575,6 +650,32 @@ static int rift_send_tracking_config(rift_hmd_t *rift, bool blink,
 	}
 
 	return 0;
+}
+
+static void init_touch_properties(rift_touch_controller_t *touch, int id)
+{
+	ohmd_device *ohmd_dev = &touch->base.base;
+
+	ohmd_set_default_device_properties(&ohmd_dev->properties);
+
+	ohmd_dev->properties.control_count = 4;
+
+	if (id == 0) {
+		ohmd_dev->properties.controls_hints[0] = OHMD_BUTTON_A;
+		ohmd_dev->properties.controls_hints[1] = OHMD_BUTTON_B;
+		ohmd_dev->properties.controls_hints[2] = OHMD_HOME; // Oculus button
+		ohmd_dev->properties.controls_hints[3] = OHMD_ANALOG_PRESS; // stick button
+	} else {
+		ohmd_dev->properties.controls_hints[0] = OHMD_BUTTON_X;
+		ohmd_dev->properties.controls_hints[1] = OHMD_BUTTON_Y;
+		ohmd_dev->properties.controls_hints[2] = OHMD_MENU;
+		ohmd_dev->properties.controls_hints[3] = OHMD_ANALOG_PRESS; // stick button
+	}
+
+	ohmd_dev->properties.controls_types[0] = OHMD_DIGITAL;
+	ohmd_dev->properties.controls_types[1] = OHMD_DIGITAL;
+	ohmd_dev->properties.controls_types[2] = OHMD_DIGITAL;
+	ohmd_dev->properties.controls_types[3] = OHMD_DIGITAL;
 }
 
 static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
@@ -723,6 +824,9 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 		hmd_dev->base.properties.controls_types[6] = OHMD_DIGITAL;
 		hmd_dev->base.properties.controls_types[7] = OHMD_DIGITAL;
 		hmd_dev->base.properties.controls_types[8] = OHMD_DIGITAL;
+
+		init_touch_properties (&priv->touch_dev[0], 0);
+		init_touch_properties (&priv->touch_dev[1], 1);
 	}
 
 	//setup generic distortion coeffs, from hand-calibration
@@ -843,8 +947,20 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	if (desc->id == 0)
 		dev = &hmd->hmd_dev;
+	else if (desc->id == 1)
+		dev = &hmd->touch_dev[0].base;
+	else if (desc->id == 2)
+		dev = &hmd->touch_dev[1].base;
+	else {
+		LOGE ("Invalid device description passed to open_device()");
+		return NULL;
+	}
 
 	// set up device callbacks
+	dev->hmd = hmd;
+	dev->id = desc->id;
+	dev->opened = true;
+
 	dev->base.update = update_device;
 	dev->base.close = close_device;
 	dev->base.getf = getf;
@@ -892,6 +1008,47 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 				desc->driver_ptr = driver;
 				desc->id = id++;
+
+				/* For CV1, publish touch controllers */
+				if (desc->revision == REV_CV1) {
+					//Controller 0 (right)
+					desc = &list->devices[list->num_devices++];
+					desc->revision = rd[i].rev;
+
+					strcpy(desc->driver, "OpenHMD Rift Driver");
+					strcpy(desc->vendor, "Oculus VR, Inc.");
+					sprintf(desc->product, "%s: Right Controller", rd[i].name);
+
+					strcpy(desc->path, cur_dev->path);
+
+					desc->device_flags =
+						//OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+						//OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+						OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
+
+					desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+					desc->driver_ptr = driver;
+					desc->id = id++;
+
+					// Controller 1 (left)
+					desc = &list->devices[list->num_devices++];
+					desc->revision = rd[i].rev;
+
+					strcpy(desc->driver, "OpenHMD Rift Driver");
+					strcpy(desc->vendor, "Oculus VR, Inc.");
+					sprintf(desc->product, "%s: Left Controller", rd[i].name);
+
+					strcpy(desc->path, cur_dev->path);
+
+					desc->device_flags =
+						//OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+						//OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+						OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
+
+					desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+					desc->driver_ptr = driver;
+					desc->id = id++;
+				}
 			}
 			cur_dev = cur_dev->next;
 		}

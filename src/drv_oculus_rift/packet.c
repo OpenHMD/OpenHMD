@@ -271,18 +271,32 @@ static bool decode_rift_radio_message(pkt_rift_radio_message *m, const unsigned 
 			m->remote.buttons = READ16;
 			break;
 		case RIFT_TOUCH_CONTROLLER_LEFT:
-		case RIFT_TOUCH_CONTROLLER_RIGHT:
+		case RIFT_TOUCH_CONTROLLER_RIGHT: {
+			uint8_t tgs[5];
+
 			m->touch.timestamp = READ32;
-			for (i = 0; i < 3; i++)
+			for (i = 0; i < 3; i++) {
 				m->touch.accel[i] = READ16;
-			for (i = 0; i < 3; i++)
+			}
+			for (i = 0; i < 3; i++) {
 				m->touch.gyro[i] = READ16;
+			}
+
 			m->touch.buttons = READ8;
-			for (i = 0; i < 5; i++)
-				m->touch.trigger_grip_stick[i] = READ8;
+
+			for (i = 0; i < 5; i++) {
+				tgs[i] = READ8;
+			}
+
+			m->touch.trigger = tgs[0] | ((tgs[1] & 0x03) << 8);
+			m->touch.grip = ((tgs[1] & 0xfc) >> 2) | ((tgs[2] & 0x0f) << 6);
+			m->touch.stick[0] = ((tgs[2] & 0xf0) >> 4) | ((tgs[3] & 0x3f) << 4);
+			m->touch.stick[1] = ((tgs[3] & 0xc0) >> 6) | ((tgs[4] & 0xff) << 2);
+
 			m->touch.adc_channel = READ8;
 			m->touch.adc_value = READ16;
 			break;
+		}
 		default:
 			LOGE ("Radio report from unknown remote device type 0x%02x flags 0x%04x",
 					m->device_type, m->flags);

@@ -212,7 +212,9 @@ typedef struct {
 	uint16_t accel[3];
 	uint16_t gyro[3];
 	uint8_t buttons;
-	uint8_t trigger_grip_stick[5];
+	uint16_t trigger;
+	uint16_t grip;
+	uint16_t stick[2];
 	uint8_t adc_channel;
 	uint16_t adc_value;
 } pkt_rift_touch_message;
