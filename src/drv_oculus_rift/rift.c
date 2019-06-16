@@ -21,6 +21,11 @@
 #include "rift.h"
 #include "../hid.h"
 
+#define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
+#define OCULUS_VR_INC_ID 0x2833
+#define SAMSUNG_ELECTRONICS_CO_ID 0x04e8
+#define RIFT_CV1_PID 0x0031
+
 #define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
@@ -39,6 +44,7 @@ struct rift_hmd_s {
 	int use_count;
 
 	hid_device* handle;
+	hid_device* radio_handle;
 	pkt_sensor_range sensor_range;
 	pkt_sensor_display_info display_info;
 	rift_coordinate_frame coordinate_frame, hw_coordinate_frame;
@@ -88,6 +94,7 @@ typedef struct {
 /* Global list of (probably 1) active HMD devices */
 static device_list_t* rift_hmds;
 
+static hid_device* open_hid_dev (ohmd_context* ctx, int vid, int pid, int iface_num);
 static void close_hmd (rift_hmd_t *hmd);
 
 static rift_hmd_t *find_hmd(char *hid_path)
@@ -360,8 +367,6 @@ static void close_device(ohmd_device* device)
 	release_hmd (dev_priv->hmd);
 }
 
-#define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
-
 /*
  * Obtains the positions and blinking patterns of the IR LEDs from the Rift.
  */
@@ -536,6 +541,17 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 	}
 
+	/* For the CV1, try and open the radio HID device */
+	if (desc->revision == REV_CV1) {
+		priv->radio_handle = open_hid_dev (driver->ctx, OCULUS_VR_INC_ID, RIFT_CV1_PID, 1);
+		if (priv->radio_handle == NULL)
+			goto cleanup;
+		if(hid_set_nonblocking(priv->radio_handle, 1) == -1){
+			ohmd_set_error(driver->ctx, "Failed to set non-blocking on radio device");
+			goto cleanup;
+		}
+	}
+
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 
 	int size;
@@ -682,8 +698,44 @@ static void close_hmd(rift_hmd_t *hmd)
 	if (hmd->leds)
 		free (hmd->leds);
 
+	if (hmd->radio_handle)
+		hid_close(hmd->radio_handle);
 	hid_close(hmd->handle);
 	free(hmd);
+}
+
+/* FIXME: This opens the first device that matches the
+ * requested VID/PID/interface, which works fine if there's
+ * 1 rift attached. To support multiple rift, we need to
+ * match parent USB devices like ouvrt does */
+static hid_device* open_hid_dev(ohmd_context* ctx,
+		int vid, int pid, int iface_num)
+{
+	struct hid_device_info* devs = hid_enumerate(vid, pid);
+	struct hid_device_info* cur_dev = devs;
+	hid_device *handle = NULL;
+
+	if(devs == NULL)
+		return NULL;
+
+	while (cur_dev) {
+		if (cur_dev->interface_number == iface_num) {
+			handle = hid_open_path(cur_dev->path);
+			if (handle)
+				break;
+			else {
+				char* path = _hid_to_unix_path(cur_dev->path);
+				ohmd_set_error(ctx, "Could not open %s.\n"
+				               "Check your permissions: "
+				               UDEV_WIKI_URL, path);
+				free(path);
+			}
+		}
+		cur_dev = cur_dev->next;
+	}
+
+	hid_free_enumeration(devs);
+	return handle;
 }
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
@@ -709,8 +761,6 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	return &dev->base;
 }
 
-#define OCULUS_VR_INC_ID 0x2833
-#define SAMSUNG_ELECTRONICS_CO_ID 0x04e8
 #define RIFT_ID_COUNT 5
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
@@ -721,7 +771,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		{ "Rift (DK1)", OCULUS_VR_INC_ID, 0x0001,	-1, REV_DK1 },
 		{ "Rift (DK2)", OCULUS_VR_INC_ID, 0x0021,	-1, REV_DK2 },
 		{ "Rift (DK2)", OCULUS_VR_INC_ID, 0x2021,	-1, REV_DK2 },
-		{ "Rift (CV1)", OCULUS_VR_INC_ID, 0x0031,	 0, REV_CV1 },
+		{ "Rift (CV1)", OCULUS_VR_INC_ID, RIFT_CV1_PID,	 0, REV_CV1 },
 
 		{ "GearVR (Gen1)", SAMSUNG_ELECTRONICS_CO_ID, 0xa500,	 0, REV_GEARVR_GEN1 },
 	};
