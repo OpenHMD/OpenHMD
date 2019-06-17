@@ -258,9 +258,59 @@ static void handle_touch_controller_message(rift_hmd_t *hmd,
 			return;
 		touch->have_calibration = true;
 	}
-	// time in microseconds
 
+	// time in microseconds
+	int32_t dt;
+	if (touch->time_valid)
+		dt = msg->touch.timestamp - touch->last_timestamp;
+	else
+		dt = 0;
+
+	const double dt_s = 1e-6 * dt;
+	double a[3] = {
+		OHMD_GRAVITY_EARTH / 2048 * msg->touch.accel[0],
+		OHMD_GRAVITY_EARTH / 2048 * msg->touch.accel[1],
+		OHMD_GRAVITY_EARTH / 2048 * msg->touch.accel[2],
+	};
+	double g[3] = {
+		2.0 / 2048 * msg->touch.gyro[0],
+		2.0 / 2048 * msg->touch.gyro[1],
+		2.0 / 2048 * msg->touch.gyro[2],
+	};
+	vec3f mag = {{0.0f, 0.0f, 0.0f}};
+	vec3f gyro;
+	vec3f accel;
+
+	/* Apply correction offsets first - bottom row of the
+	 * calibration 3x4 matrix */
+	int i;
+	for (i = 0; i < 3; i++) {
+		a[i] -= c->acc_calibration[9 + i];
+		g[i] -= c->gyro_calibration[9 + i];
+	}
+	/* Then the 3x3 rotation matrix in row-major order */
+	accel.x = c->acc_calibration[0] * a[0] +
+			  c->acc_calibration[1] * a[1] +
+			  c->acc_calibration[2] * a[2];
+	accel.y = c->acc_calibration[3] * a[0] +
+			  c->acc_calibration[4] * a[1] +
+			  c->acc_calibration[5] * a[2];
+	accel.z = c->acc_calibration[6] * a[0] +
+			  c->acc_calibration[7] * a[1] +
+			  c->acc_calibration[8] * a[2];
+	gyro.x = c->gyro_calibration[0] * g[0] +
+			  c->gyro_calibration[1] * g[1] +
+			  c->gyro_calibration[2] * g[2];
+	gyro.y = c->gyro_calibration[3] * g[0] +
+			  c->gyro_calibration[4] * g[1] +
+			  c->gyro_calibration[5] * g[2];
+	gyro.z = c->gyro_calibration[6] * g[0] +
+			  c->gyro_calibration[7] * g[1] +
+			  c->gyro_calibration[8] * g[2];
+
+	ofusion_update(&touch->imu_fusion, dt_s, &gyro, &accel, &mag);
 	touch->last_timestamp = msg->touch.timestamp;
+	touch->time_valid = true;
 
 	float t;
 	if (msg->touch.trigger < c->trigger_mid_range) {
@@ -477,8 +527,13 @@ static int getf_touch_controller(rift_device_priv* dev_priv, ohmd_float_value ty
 	rift_touch_controller_t *touch = (rift_touch_controller_t *)(dev_priv);
 
 	switch(type){
-	case OHMD_ROTATION_QUAT:
+	case OHMD_ROTATION_QUAT: {
+			*(quatf*)out = touch->imu_fusion.orient;
+			break;
+		}
 	case OHMD_POSITION_VECTOR:
+		out[0] = out[1] = out[2] = 0;
+		break;
 	case OHMD_DISTORTION_K:
 		return -1;
 	case OHMD_CONTROLS_STATE:
@@ -669,11 +724,13 @@ static int rift_send_tracking_config(rift_hmd_t *rift, bool blink,
 	return 0;
 }
 
-static void init_touch_properties(rift_touch_controller_t *touch, int id, int device_num)
+static void init_touch_device(rift_touch_controller_t *touch, int id, int device_num)
 {
 	ohmd_device *ohmd_dev = &touch->base.base;
 
 	touch->device_num = device_num;
+	ofusion_init(&touch->imu_fusion);
+	touch->time_valid = false;
 
 	ohmd_set_default_device_properties(&ohmd_dev->properties);
 
@@ -852,8 +909,9 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 		hmd_dev->base.properties.controls_types[7] = OHMD_DIGITAL;
 		hmd_dev->base.properties.controls_types[8] = OHMD_DIGITAL;
 
-		init_touch_properties (&priv->touch_dev[0], 0, RIFT_TOUCH_CONTROLLER_RIGHT);
-		init_touch_properties (&priv->touch_dev[1], 1, RIFT_TOUCH_CONTROLLER_LEFT);
+		/* And initialise state trackers for the 2 touch controllers */
+		init_touch_device (&priv->touch_dev[0], 0, RIFT_TOUCH_CONTROLLER_RIGHT);
+		init_touch_device (&priv->touch_dev[1], 1, RIFT_TOUCH_CONTROLLER_LEFT);
 	}
 
 	//setup generic distortion coeffs, from hand-calibration
@@ -1050,7 +1108,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 					desc->device_flags =
 						//OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
-						//OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+						OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
 						OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
 					desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
@@ -1069,7 +1127,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 					desc->device_flags =
 						//OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
-						//OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+						OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
 						OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
 
 					desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
