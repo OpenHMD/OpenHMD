@@ -4,7 +4,6 @@
  * Copyright 2019 Jan Schmidt
  * SPDX-License-Identifier:	BSL-1.0
  */
-#include <errno.h>
 #include <stdint.h>
 #include <string.h>
 
