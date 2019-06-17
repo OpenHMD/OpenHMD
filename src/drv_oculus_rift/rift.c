@@ -22,6 +22,8 @@
 #include "rift-hmd-radio.h"
 #include "../hid.h"
 
+#define OHMD_GRAVITY_EARTH 9.80665 // m/s²
+
 #define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
 #define OCULUS_VR_INC_ID 0x2833
 #define SAMSUNG_ELECTRONICS_CO_ID 0x04e8
@@ -236,12 +238,18 @@ static void handle_touch_controller_message(rift_hmd_t *hmd,
 {
 	// The top bits are carrying something unknown. Ignore them
 	uint8_t buttons = msg->touch.buttons & 0xf;
+	rift_touch_calibration *c = &touch->calibration;
 
 	if (touch->buttons != buttons) {
 		LOGV ("touch controller %d buttons now %x",
 				touch->base.id, buttons);
 	}
 	touch->buttons = buttons;
+
+	if (!(msg->touch.timestamp ||
+	      msg->touch.accel[0] || msg->touch.accel[1] || msg->touch.accel[2] ||
+	      msg->touch.gyro[0] || msg->touch.gyro[1] || msg->touch.gyro[2]))
+		return;
 
 	if (!touch->have_calibration) {
 		/* We need calibration data to do any more */
@@ -250,12 +258,75 @@ static void handle_touch_controller_message(rift_hmd_t *hmd,
 			return;
 		touch->have_calibration = true;
 	}
+	// time in microseconds
+
+	touch->last_timestamp = msg->touch.timestamp;
+
+	float t;
+	if (msg->touch.trigger < c->trigger_mid_range) {
+		t = 1.0f - ((float)msg->touch.trigger - c->trigger_min_range) /
+		    (c->trigger_mid_range - c->trigger_min_range) * 0.5f;
+	} else {
+		t = 0.5f - ((float)msg->touch.trigger - c->trigger_mid_range) /
+		    (c->trigger_max_range - c->trigger_mid_range) * 0.5f;
+	}
+	touch->trigger = t;
+
+	float gr;
+	if (msg->touch.grip < c->middle_mid_range) {
+		gr = 1.0f - ((float)msg->touch.grip - c->middle_min_range) /
+		     (c->middle_mid_range - c->middle_min_range) * 0.5f;
+	} else {
+		gr = 0.5f - ((float)msg->touch.grip - c->middle_mid_range) /
+		     (c->middle_max_range - c->middle_mid_range) * 0.5f;
+	}
+	touch->grip = gr;
+
+	float joy[2];
+	if (msg->touch.stick[0] >= c->joy_x_dead_min && msg->touch.stick[0] <= c->joy_x_dead_max &&
+	    msg->touch.stick[1] >= c->joy_y_dead_min && msg->touch.stick[1] <= c->joy_y_dead_max) {
+		joy[0] = 0.0f;
+		joy[1] = 0.0f;
+	} else {
+		joy[0] = ((float)msg->touch.stick[0] - c->joy_x_range_min) /
+			 (c->joy_x_range_max - c->joy_x_range_min) * 2.0f - 1.0f;
+		joy[1] = ((float)msg->touch.stick[1] - c->joy_y_range_min) /
+			 (c->joy_y_range_max - c->joy_y_range_min) * 2.0f - 1.0f;
+	}
+	touch->stick[0] = joy[0];
+	touch->stick[1] = joy[1];
+
+	switch (msg->touch.adc_channel) {
+	case RIFT_TOUCH_CONTROLLER_HAPTIC_COUNTER:
 		/*
-	touch->trigger;
-	touch->grip;
-	touch->stick[0] = msg->touch->stick[0];
-	touch->stick[1] = msg->touch->stick[1];
-	*/
+		 * The haptic counter seems to be used as read pointer into a
+		 * 256-byte ringbuffer. It is incremented 320 times per second:
+		 *
+		 * https://developer.oculus.com/documentation/pcsdk/latest/concepts/dg-input-touch-haptic/
+		 */
+		touch->haptic_counter = msg->touch.adc_value;
+		break;
+	case RIFT_TOUCH_CONTROLLER_ADC_STICK:
+		touch->cap_stick = ((float)msg->touch.adc_value - c->cap_sense_min[0]) /
+				   (c->cap_sense_touch[0] - c->cap_sense_min[0]);
+		break;
+	case RIFT_TOUCH_CONTROLLER_ADC_B_Y:
+		touch->cap_b_y = ((float)msg->touch.adc_value - c->cap_sense_min[1]) /
+				 (c->cap_sense_touch[1] - c->cap_sense_min[1]);
+		break;
+	case RIFT_TOUCH_CONTROLLER_ADC_TRIGGER:
+		touch->cap_trigger = ((float)msg->touch.adc_value - c->cap_sense_min[2]) /
+				     (c->cap_sense_touch[2] - c->cap_sense_min[2]);
+		break;
+	case RIFT_TOUCH_CONTROLLER_ADC_A_X:
+		touch->cap_a_x = ((float)msg->touch.adc_value - c->cap_sense_min[3]) /
+				 (c->cap_sense_touch[3] - c->cap_sense_min[3]);
+		break;
+	case RIFT_TOUCH_CONTROLLER_ADC_REST:
+		touch->cap_rest = ((float)msg->touch.adc_value - c->cap_sense_min[7]) /
+				  (c->cap_sense_touch[7] - c->cap_sense_min[7]);
+		break;
+	}
 }
 
 static void handle_rift_radio_message(rift_hmd_t *hmd, pkt_rift_radio_message *msg)
@@ -423,6 +494,10 @@ static int getf_touch_controller(rift_device_priv* dev_priv, ohmd_float_value ty
 			out[2] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_MENU) != 0;
 			out[3] = (touch->buttons & RIFT_TOUCH_CONTROLLER_BUTTON_STICK) != 0;
 		}
+		out[4] = touch->trigger;
+		out[5] = touch->grip;
+		out[6] = touch->stick[0];
+		out[7] = touch->stick[1];
 		break;
 	default:
 		ohmd_set_error(dev_priv->hmd->ctx, "invalid type given to getf (%u)", type);
@@ -602,7 +677,7 @@ static void init_touch_properties(rift_touch_controller_t *touch, int id, int de
 
 	ohmd_set_default_device_properties(&ohmd_dev->properties);
 
-	ohmd_dev->properties.control_count = 4;
+	ohmd_dev->properties.control_count = 8;
 
 	if (id == 0) {
 		ohmd_dev->properties.controls_hints[0] = OHMD_BUTTON_A;
@@ -615,11 +690,19 @@ static void init_touch_properties(rift_touch_controller_t *touch, int id, int de
 		ohmd_dev->properties.controls_hints[2] = OHMD_MENU;
 		ohmd_dev->properties.controls_hints[3] = OHMD_ANALOG_PRESS; // stick button
 	}
-
 	ohmd_dev->properties.controls_types[0] = OHMD_DIGITAL;
 	ohmd_dev->properties.controls_types[1] = OHMD_DIGITAL;
 	ohmd_dev->properties.controls_types[2] = OHMD_DIGITAL;
 	ohmd_dev->properties.controls_types[3] = OHMD_DIGITAL;
+
+	ohmd_dev->properties.controls_hints[4] = OHMD_TRIGGER;
+	ohmd_dev->properties.controls_hints[5] = OHMD_SQUEEZE;
+	ohmd_dev->properties.controls_hints[6] = OHMD_ANALOG_X;
+	ohmd_dev->properties.controls_hints[7] = OHMD_ANALOG_Y;
+	ohmd_dev->properties.controls_types[4] = OHMD_ANALOG;
+	ohmd_dev->properties.controls_types[5] = OHMD_ANALOG;
+	ohmd_dev->properties.controls_types[6] = OHMD_ANALOG;
+	ohmd_dev->properties.controls_types[7] = OHMD_ANALOG;
 }
 
 static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)

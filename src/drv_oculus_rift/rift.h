@@ -217,10 +217,18 @@ struct rift_touch_controller_s {
 	bool have_calibration;
 	rift_touch_calibration calibration;
 
+	uint32_t last_timestamp;
 	uint8_t buttons;
-	uint16_t trigger;
-	uint16_t grip;
-	uint16_t stick[2];
+
+	float trigger;
+	float grip;
+	float stick[2];
+	float cap_a_x;
+	float cap_b_y;
+	float cap_rest;
+	float cap_stick;
+	float cap_trigger;
+	uint8_t haptic_counter;
 };
 
 #define RIFT_RADIO_REPORT_ID			0x0c
