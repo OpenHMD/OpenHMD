@@ -19,6 +19,7 @@
 #include <assert.h>
 
 #include "rift.h"
+#include "rift-hmd-radio.h"
 #include "../hid.h"
 
 #define UDEV_WIKI_URL "https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list"
@@ -29,26 +30,6 @@
 #define TICK_LEN (1.0f / 1000.0f) // 1000 Hz ticks
 #define KEEP_ALIVE_VALUE (10 * 1000)
 #define SETFLAG(_s, _flag, _val) (_s) = ((_s) & ~(_flag)) | ((_val) ? (_flag) : 0)
-typedef struct rift_hmd_s rift_hmd_t;
-typedef struct rift_device_priv_s rift_device_priv;
-typedef struct rift_touch_controller_s rift_touch_controller_t;
-
-struct rift_device_priv_s {
-	ohmd_device base;
-
-	int id;
-	rift_hmd_t *hmd;
-	bool opened;
-};
-
-struct rift_touch_controller_s {
-	rift_device_priv base;
-
-	uint8_t buttons;
-	uint16_t trigger;
-	uint16_t grip;
-	uint16_t stick[2];
-};
 
 struct rift_hmd_s {
 	ohmd_context* ctx;
@@ -261,7 +242,15 @@ static void handle_touch_controller_message(rift_hmd_t *hmd,
 				touch->base.id, buttons);
 	}
 	touch->buttons = buttons;
-	/*
+
+	if (!touch->have_calibration) {
+		/* We need calibration data to do any more */
+		if (rift_touch_get_calibration (hmd->radio_handle, touch->device_num,
+				&touch->calibration) < 0)
+			return;
+		touch->have_calibration = true;
+	}
+		/*
 	touch->trigger;
 	touch->grip;
 	touch->stick[0] = msg->touch->stick[0];
@@ -370,53 +359,6 @@ static void update_device(ohmd_device* device)
 			return;
 	}
 	update_hmd (dev_priv->hmd);
-}
-
-static bool rift_radio_send_cmd(rift_hmd_t *priv, uint8_t a, uint8_t b, uint8_t c)
-{
-	unsigned char buffer[FEATURE_BUFFER_SIZE];
-	int cmd_size = encode_radio_control_cmd(buffer, a, b, c);
-	int ret_size;
-
-	if (send_feature_report(priv, buffer, cmd_size) == -1) {
-		LOGE("error sending HMD radio command 0x%02x/%02x/%02x", a, b, c);
-		return false;
-	}
-
-	do {
-		ret_size = get_feature_report(priv, RIFT_CMD_RADIO_CONTROL, buffer);
-		if (ret_size < 1) {
-			LOGE("HMD radio command 0x%02x/%02x/%02x failed - response too small", a, b, c);
-			return false;
-		}
-	} while (buffer[3] & 0x80);
-
-	if (buffer[3] & 0x08) {
-		LOGE("HMD radio command 0x%02x/%02x/%02x failed", a, b, c);
-		return false;
-	}
-
-	return true;
-}
-
-static bool rift_radio_get_address(rift_hmd_t* priv, uint8_t address[5])
-{
-	unsigned char buf[FEATURE_BUFFER_SIZE];
-	int ret_size;
-
-	if (!rift_radio_send_cmd (priv, 0x05, 0x03, 0x05))
-		return false;
-
-	ret_size = get_feature_report(priv, RIFT_CMD_RADIO_DATA, buf);
-	if (ret_size < 0)
-		return false;
-
-	if (!decode_radio_address (priv->radio_address, buf, ret_size)) {
-		LOGE("Failed to decode received radio address");
-		return false;
-	}
-
-	return true;
 }
 
 static int getf_hmd(rift_hmd_t *hmd, ohmd_float_value type, float* out)
@@ -652,9 +594,11 @@ static int rift_send_tracking_config(rift_hmd_t *rift, bool blink,
 	return 0;
 }
 
-static void init_touch_properties(rift_touch_controller_t *touch, int id)
+static void init_touch_properties(rift_touch_controller_t *touch, int id, int device_num)
 {
 	ohmd_device *ohmd_dev = &touch->base.base;
+
+	touch->device_num = device_num;
 
 	ohmd_set_default_device_properties(&ohmd_dev->properties);
 
@@ -760,7 +704,7 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 				RIFT_TRACKING_PERIOD_US_CV1);
 
 		/* Read the radio ID for CV1 to enable camera sensor sync */
-		rift_radio_get_address(priv, priv->radio_address);
+		rift_hmd_radio_get_address(priv->handle, priv->radio_address);
 	}
 	else if (desc->revision == REV_DK2)
 	{
@@ -825,8 +769,8 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 		hmd_dev->base.properties.controls_types[7] = OHMD_DIGITAL;
 		hmd_dev->base.properties.controls_types[8] = OHMD_DIGITAL;
 
-		init_touch_properties (&priv->touch_dev[0], 0);
-		init_touch_properties (&priv->touch_dev[1], 1);
+		init_touch_properties (&priv->touch_dev[0], 0, RIFT_TOUCH_CONTROLLER_RIGHT);
+		init_touch_properties (&priv->touch_dev[1], 1, RIFT_TOUCH_CONTROLLER_LEFT);
 	}
 
 	//setup generic distortion coeffs, from hand-calibration

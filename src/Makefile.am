@@ -19,6 +19,7 @@ if BUILD_DRIVER_OCULUS_RIFT
 
 libopenhmd_la_SOURCES += \
 	drv_oculus_rift/rift.c \
+	drv_oculus_rift/rift-hmd-radio.c \
 	drv_oculus_rift/packet.c
 
 libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_OCULUS_RIFT
