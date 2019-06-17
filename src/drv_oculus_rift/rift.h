@@ -213,11 +213,14 @@ struct rift_touch_controller_s {
 	rift_device_priv base;
 
 	int device_num;
+	fusion imu_fusion;
 
 	bool have_calibration;
 	rift_touch_calibration calibration;
 
+	bool time_valid;
 	uint32_t last_timestamp;
+
 	uint8_t buttons;
 
 	float trigger;
@@ -270,8 +273,8 @@ typedef struct {
 
 typedef struct {
 	uint32_t timestamp;
-	uint16_t accel[3];
-	uint16_t gyro[3];
+	int16_t accel[3];
+	int16_t gyro[3];
 	uint8_t buttons;
 	uint16_t trigger;
 	uint16_t grip;
