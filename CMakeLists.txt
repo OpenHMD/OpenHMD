@@ -41,6 +41,7 @@ option(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
 if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(openhmd_source_files ${openhmd_source_files}
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/rift.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/rift-hmd-radio.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift/packet.c
 	)
 	add_definitions(-DDRIVER_OCULUS_RIFT)

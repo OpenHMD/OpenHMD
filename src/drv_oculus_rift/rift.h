@@ -27,9 +27,13 @@ typedef enum {
 	RIFT_CMD_PATTERN_INFO = 0x10,
 	RIFT_CMD_CV1_KEEP_ALIVE = 0x11,
 	RIFT_CMD_RADIO_CONTROL = 0x1a,
-	RIFT_CMD_RADIO_DATA = 0x1b,
+	RIFT_CMD_RADIO_READ_DATA = 0x1b,
 	RIFT_CMD_ENABLE_COMPONENTS = 0x1d,
 } rift_sensor_feature_cmd;
+
+typedef enum {
+	RIFT_HMD_RADIO_READ_FLASH_CONTROL =	0x0a
+} rift_hmd_radio_read_cmd;
 
 typedef enum {
 	RIFT_CF_SENSOR,
@@ -170,6 +174,55 @@ typedef struct {
 	uint16_t pattern;
 } rift_led;
 
+typedef struct {
+	vec3f imu_position;
+	float gyro_calibration[12];
+	float acc_calibration[12];
+	uint16_t joy_x_range_min;
+	uint16_t joy_x_range_max;
+	uint16_t joy_x_dead_min;
+	uint16_t joy_x_dead_max;
+	uint16_t joy_y_range_min;
+	uint16_t joy_y_range_max;
+	uint16_t joy_y_dead_min;
+	uint16_t joy_y_dead_max;
+	uint16_t trigger_min_range;
+	uint16_t trigger_mid_range;
+	uint16_t trigger_max_range;
+	uint16_t middle_min_range;
+	uint16_t middle_mid_range;
+	uint16_t middle_max_range;
+	bool middle_flipped;
+	uint16_t cap_sense_min[8];
+	uint16_t cap_sense_touch[8];
+} rift_touch_calibration;
+
+typedef struct rift_hmd_s rift_hmd_t;
+typedef struct rift_device_priv_s rift_device_priv;
+typedef struct rift_touch_controller_s rift_touch_controller_t;
+
+struct rift_device_priv_s {
+	ohmd_device base;
+	int id;
+	bool opened;
+
+	rift_hmd_t *hmd;
+};
+
+struct rift_touch_controller_s {
+	rift_device_priv base;
+
+	int device_num;
+
+	bool have_calibration;
+	rift_touch_calibration calibration;
+
+	uint8_t buttons;
+	uint16_t trigger;
+	uint16_t grip;
+	uint16_t stick[2];
+};
+
 #define RIFT_RADIO_REPORT_ID			0x0c
 #define RIFT_RADIO_REPORT_SIZE			64
 
@@ -266,6 +319,7 @@ int encode_sensor_config(unsigned char* buffer, const pkt_sensor_config* config)
 int encode_dk1_keep_alive(unsigned char* buffer, const pkt_keep_alive* keep_alive);
 int encode_enable_components(unsigned char* buffer, bool display, bool audio, bool leds);
 int encode_radio_control_cmd(unsigned char* buffer, uint8_t a, uint8_t b, uint8_t c);
+int encode_radio_data_read_cmd (unsigned char *buffer, uint16_t offset, uint16_t length);
 
 void dump_packet_sensor_range(const pkt_sensor_range* range);
 void dump_packet_sensor_config(const pkt_sensor_config* config);

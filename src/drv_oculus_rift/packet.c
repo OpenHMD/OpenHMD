@@ -399,6 +399,21 @@ int encode_radio_control_cmd(unsigned char* buffer, uint8_t a, uint8_t b, uint8_
 	return 6;
 }
 
+int encode_radio_data_read_cmd(unsigned char *buffer, uint16_t offset, uint16_t length)
+{
+	int i;
+	WRITE8(RIFT_CMD_RADIO_READ_DATA);
+	WRITE16(0); // last command ID
+	WRITE16(offset);
+	WRITE16(length);
+
+	for (i = 0; i < 28; i++) {
+		WRITE8(0);
+	}
+
+	return 31;
+}
+
 void dump_packet_sensor_range(const pkt_sensor_range* range)
 {
 	(void)range;
