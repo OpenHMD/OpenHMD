@@ -12,6 +12,7 @@
 #include "rift.h"
 
 #define SKIP8 (buffer++)
+#define SKIP16 (buffer+=2)
 #define SKIP_CMD (buffer++)
 #define READ8 *(buffer++);
 #define READ16 *buffer | (*(buffer + 1) << 8); buffer += 2;
@@ -31,8 +32,7 @@ bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int
 	}
 
 	SKIP_CMD;
-	SKIP8;
-	SKIP8;
+	SKIP16;
 	p->flags = READ8;
 	p->pos_x = READ32;
 	p->pos_y = READ32;
@@ -40,8 +40,7 @@ bool decode_position_info(pkt_position_info* p, const unsigned char* buffer, int
 	p->dir_x = READ16;
 	p->dir_y = READ16;
 	p->dir_z = READ16;
-	SKIP8;
-	SKIP8;
+	SKIP16;
 	p->index = READ8;
 	SKIP8;
 	p->num = READ8;
