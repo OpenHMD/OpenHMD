@@ -22,6 +22,7 @@ option(
 		'nolo',
 		'wmr',
 		'xgvr',
+		'vrtek',
 		'external',
 		'android',
 	],
@@ -33,6 +34,7 @@ option(
 		'nolo',
 		'wmr',
 		'xgvr',
+		'vrtek',
 		'external',
 	],
 )
