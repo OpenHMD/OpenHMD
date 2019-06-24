@@ -36,6 +36,7 @@ addons:
       - hidapi
       - sdl2
       - ninja
+    update: true
 
 install:
   - if [[ "$BUILD" == "meson" && "$TRAVIS_OS_NAME" == "linux" ]]; then
