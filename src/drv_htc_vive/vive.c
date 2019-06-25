@@ -555,13 +555,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_sep = 0.057863;
 	priv->base.properties.lens_vpos = 0.033896;
 
-	/* calculate projection eye projection matrices from the device properties */
-	ohmd_calc_default_proj_matrices(&priv->base.properties);
-
 	float eye_to_screen_distance = 0.023226876441867737;
 	priv->base.properties.fov = 2 * atan2f(
 		priv->base.properties.hsize / 2 - priv->base.properties.lens_sep / 2,
 		eye_to_screen_distance);
+
+	/* calculate projection eye projection matrices from the device properties */
+	ohmd_calc_default_proj_matrices(&priv->base.properties);
 
 	// set up device callbacks
 	priv->base.update = update_device;
