@@ -17,7 +17,7 @@ option(
 	choices: [
 		'rift',
 		'deepoon',
-		'psvr',
+		#'psvr', disabled for 0.3
 		'vive',
 		'nolo',
 		'wmr',
@@ -28,7 +28,7 @@ option(
 	value: [
 		'rift',
 		'deepoon',
-		'psvr',
+		#'psvr', disabled for 0.3
 		'vive',
 		'nolo',
 		'wmr',

@@ -84,12 +84,12 @@ AC_ARG_ENABLE([driver-wmr],
 
 AM_CONDITIONAL([BUILD_DRIVER_WMR], [test "x$driver_wmr_enabled" != "xno"])
 
-# Sony PSVR Driver
+# Sony PSVR Driver, disabled for 0.3
 AC_ARG_ENABLE([driver-psvr],
         [AS_HELP_STRING([--disable-driver-psvr],
-                [disable building of Sony PSVR driver [default=yes]])],
+                [disable building of Sony PSVR driver [default=no]])],
         [driver_psvr_enabled=$enableval],
-        [driver_psvr_enabled='yes'])
+        [driver_psvr_enabled='no'])
 
 AM_CONDITIONAL([BUILD_DRIVER_PSVR], [test "x$driver_psvr_enabled" != "xno"])
 

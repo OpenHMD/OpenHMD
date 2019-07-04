@@ -28,7 +28,7 @@ set(openhmd_source_files
 option(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
 option(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
 option(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
-option(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
+option(OPENHMD_DRIVER_PSVR "Sony PSVR" OFF)
 option(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
 option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
