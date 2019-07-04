@@ -18,12 +18,53 @@
 #include "nolo.h"
 #include "../hid.h"
 
+#define TICK_LEN (1.0f / 120000.0f) // 120 Hz ticks
+
 static const int controllerLength = 3 + (3+4)*2 + 2 + 2 + 1;
 static devices_t* nolo_devices;
 
 static drv_priv* drv_priv_get(ohmd_device* device)
 {
 	return (drv_priv*)device;
+}
+
+void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+{
+	out_vec->x = (float)smp[0];
+	out_vec->y = (float)smp[1];
+	out_vec->z = -(float)smp[2];
+}
+
+void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+{
+	out_vec->x = (float)smp[0];
+	out_vec->y = (float)smp[1];
+	out_vec->z = -(float)smp[2];
+}
+
+static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int size, int type)
+{
+	uint64_t last_sample_tick = priv->sample.tick;
+
+	//Type 0 is Head Tracker, type 1 is Controller
+	switch(type) {
+		case 0: nolo_decode_hmd_marker(priv, buffer); break;
+		case 1: nolo_decode_controller(priv, buffer); break;
+	}
+	
+	priv->sample.tick = ohmd_monotonic_get(priv->base.ctx);
+
+	// Startup correction, ignore last_sample_tick if zero.
+	uint64_t tick_delta = 0;
+	if(last_sample_tick > 0) //startup correction
+		tick_delta = priv->sample.tick - last_sample_tick;
+
+	float dt = tick_delta/1000000000000.0f;
+	//printf("DT = %1.50lf\n", dt);
+	vec3f mag = {{0.0f, 0.0f, 0.0f}};
+	accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro);
+	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel);
+	ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 }
 
 static void update_device(ohmd_device* device)
@@ -66,7 +107,7 @@ static void update_device(ohmd_device* device)
 
 		// currently the only message type the hardware supports
 		switch (buffer[0]) {
-			case 0xa5:  // Controllers packet
+			case NOLO_LEGACY_CONTROLLER_TRACKER: // Controllers packet
 			{
 				if (controller0)
 					nolo_decode_controller(controller0, buffer+1);
@@ -74,16 +115,30 @@ static void update_device(ohmd_device* device)
 					nolo_decode_controller(controller1, buffer+64-controllerLength);
 			break;
 			}
-			case 0xa6: // HMD packet
+			case NOLO_LEGACY_HMD_TRACKER: // HMD packet
 				nolo_decode_hmd_marker(priv, buffer+0x15);
 				nolo_decode_base_station(priv, buffer+0x36);
 			break;
+			case NOLO_CONTROLLER_0_HMD_SMP1:
+			{
+				if (controller0)
+					handle_tracker_sensor_msg(controller0, buffer, size, 1);
+
+				handle_tracker_sensor_msg(priv, buffer, size, 0);
+				break;
+			}
+			case NOLO_CONTROLLER_1_HMD_SMP2:
+			{
+				if (controller1)
+					handle_tracker_sensor_msg(controller1, buffer, size, 1);
+
+				handle_tracker_sensor_msg(priv, buffer, size, 0);
+				break;
+			}
 			default:
 				LOGE("unknown message type: %u", buffer[0]);
 		}
 	}
-
-
 	return;
 }
 
@@ -94,7 +149,10 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	switch(type){
 
 	case OHMD_ROTATION_QUAT: {
-			*(quatf*)out = priv->base.rotation;
+			if (priv->rev == 1) //old firmware
+				*(quatf*)out = priv->base.rotation;
+			else //new firmware
+				*(quatf*)out = priv->sensor_fusion.orient;
 			break;
 		}
 
@@ -166,6 +224,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		goto cleanup;
 
 	priv->id = desc->id;
+	priv->rev = desc->revision;
 	priv->base.ctx = driver->ctx;
 
 	// Open the HID device when physical device
@@ -261,6 +320,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.close = close_device;
 	priv->base.getf = getf;
 
+	ofusion_init(&priv->sensor_fusion);
+
 	return &priv->base;
 
 cleanup:
@@ -276,11 +337,13 @@ typedef struct {
 	int product;
 } nolo_verions;
 
-int is_nolo_device(struct hid_device_info* device) {
+int is_nolo_device(struct hid_device_info* device)
+{
 	if (wcscmp(device->manufacturer_string, L"LYRobotix") != 0) {
 		return 0;
 	}
 	if (wcscmp(device->product_string, L"NOLO") == 0) { //Old Firmware
+		LOGE("Detected firmware <2.0, for the best result please upgrade your NOLO firmware above 2.0");
 		return 1;
 	}
 	if (wcscmp(device->product_string, L"NOLO HMD") == 0) { //New Firmware
@@ -310,7 +373,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			strcpy(desc->vendor, "LYRobotix");
 			strcpy(desc->product, rd[i].name);
 
-			desc->revision = 0;
+			desc->revision = is_nolo_device(cur_dev);
 
 			strcpy(desc->path, cur_dev->path);
 
