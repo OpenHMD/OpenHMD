@@ -205,8 +205,10 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
                                    = 1.0f;  /* (2880.0f / 1440.0f) / 2.0f */
 
             /* FIXME: work out the real values */
-            ohmd_set_universal_distortion_k(&(priv->device.properties), 0, 0, 0, 1);
-            ohmd_set_universal_aberration_k(&(priv->device.properties), 1.0, 1.0, 1.0);
+            ohmd_set_universal_distortion_k(&(priv->device.properties),
+                                            0, 0, 0, 1);
+            ohmd_set_universal_aberration_k(&(priv->device.properties),
+                                            1.0, 1.0, 1.0);
             break;
         case 5:
             /* WVR2 has one 5.5" 1440x2560 LCD rotated left*/
@@ -226,8 +228,10 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
                                                / priv->device.properties.vres;
 
             /* FIXME: work out the real values */
-            ohmd_set_universal_distortion_k(&(priv->device.properties), 0, 0, 0, 1);
-            ohmd_set_universal_aberration_k(&(priv->device.properties), 1.0, 1.0, 1.0);
+            ohmd_set_universal_distortion_k(&(priv->device.properties),
+                                            0, 0, 0, 1);
+            ohmd_set_universal_aberration_k(&(priv->device.properties),
+                                            1.0, 1.0, 1.0);
             break;
         default:
             priv->display_type = VRTEK_DISP_UNKNOWN;
