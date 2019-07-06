@@ -15,8 +15,9 @@
 #include "vrtek.h"
 #include "../hid.h"
 
-#define VRTEK_ID       0x2833
-#define VRTEK_WVR_HMD  0x0001
+/* VR-Tek reuses the Oculus Vendor ID */
+#define OCULUS_VR_INC_ID       0x2833
+#define VRTEK_WVR_HMD          0x0001
 
 typedef enum {
     VRTEK_SKU_WVR_UNKNOWN,
@@ -500,12 +501,15 @@ cleanup:
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-    /* Enumerate HID devices and add any VR-Tek HMDs found to the device list */
-    struct hid_device_info* devs = hid_enumerate(VRTEK_ID, VRTEK_WVR_HMD);
+    /* Enumerate HID devices and add any VR-Tek HMDs found to the device list.
+     * VR-Tek reuses the Oculus Vendor ID, but the manufacturer string is
+     * "STMicroelectronics" rather than "Oculus VR, Inc." and the product
+     * string is "HID". */
+    struct hid_device_info* devs = hid_enumerate(OCULUS_VR_INC_ID,
+                                                 VRTEK_WVR_HMD);
     struct hid_device_info* cur_dev = devs;
 
     while (cur_dev) {
-        /* This is needed because VR-Tek uses the Oculus DK1 USB ID */
         if (wcscmp(cur_dev->manufacturer_string, L"STMicroelectronics")==0 &&
                         wcscmp(cur_dev->product_string, L"HID")==0) {
             ohmd_device_desc* desc = &list->devices[list->num_devices++];
