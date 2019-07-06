@@ -58,7 +58,7 @@ By default all drivers except android are enabled.
 Using CMake:
 
 With CMake, you can enable and disable drivers to compile OpenHMD with.
-Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT, OPENHMD_DRIVER_DEEPOON, OPENHMD_DRIVER_WMR, OPENHMD_DRIVER_PSVR, OPENHMD_DRIVER_HTC_VIVE, OPENHMD_DRIVER_NOLO, OPENHMD_DRIVER_EXTERNAL and OPENHMD_DRIVER_ANDROID.
+Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT, OPENHMD_DRIVER_DEEPOON, OPENHMD_DRIVER_PSVR, OPENHMD_DRIVER_HTC_VIVE, OPENHMD_DRIVER_NOLO, OPENHMD_DRIVER_WMR, OPENHMD_DRIVER_XGVR, OPENHMD_DRIVER_VRTEK, OPENHMD_DRIVER_EXTERNAL and OPENHMD_DRIVER_ANDROID.
 These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake command (or using cmake-gui).
 
     mkdir build
