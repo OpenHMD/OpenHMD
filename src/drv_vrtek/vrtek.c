@@ -261,6 +261,15 @@ static void vrtek_update_hmd_software_version(vrtek_priv* priv,
 
     LOGI("HMD software version is 0x%4x", hmd_soft_ver);
 
+    /* This driver does not work with HMD software versions greater than
+     * 0x30010100 because the HMD packet format is different */
+    const uint32_t max_supported_hmd_soft_ver = 0x30010100;
+    if (hmd_soft_ver > max_supported_hmd_soft_ver) {
+        LOGE("HMD software version 0x%4x incompatible, expected <= 0x%4x",
+             max_supported_hmd_soft_ver, hmd_soft_ver);
+        assert(hmd_soft_ver <= 0x30010100);
+    }
+
     priv->hmd_software_version = hmd_soft_ver;
 }
 
