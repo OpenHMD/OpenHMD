@@ -104,8 +104,8 @@ int vrtek_decode_command_packet(const uint8_t* comm_packet,
 
 static inline void hmd_quat_rotate(float* out, float* in)
 {
-    double pos_val = 0.707099999999999950794915548613;
-    double neg_val = -0.707099999999999950794915548613;
+    double pos_val = sin(M_PI/4);
+    double neg_val = pos_val * -1;
 
     /* out[x] = (in[w] * 0.7071) - (in[x] * 0.7071) */
     out[0] = (in[3] * pos_val) - (in[0] * pos_val);
