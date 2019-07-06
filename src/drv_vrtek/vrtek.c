@@ -28,7 +28,7 @@ typedef enum {
 
 typedef enum {
     VRTEK_DISP_LCD2880X1440 = 4,
-    VRTEK_DISP_LCD1440X2560_SHARP = 5,
+    VRTEK_DISP_LCD1440X2560_ROTATED = 5,
     VRTEK_DISP_UNKNOWN = 0xFF
 } vrtek_display_type;
 
@@ -177,8 +177,8 @@ static const char* vrtek_get_display_type_string(vrtek_display_type display)
     switch(display) {
         case VRTEK_DISP_LCD2880X1440:
             return "2880x1440 (dual 2.89\" 1440x1440 Sharp panels)";
-        case VRTEK_DISP_LCD1440X2560_SHARP:
-            return "1440x2560 (single 5.5\" 1440x2560 Sharp panel)";
+        case VRTEK_DISP_LCD1440X2560_ROTATED:
+            return "2560x1440 (single 5.5\" 1440x2560 Sharp panel rotated)";
         case VRTEK_DISP_UNKNOWN:
             return "Unknown";
         default:
@@ -203,14 +203,20 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
             priv->device.properties.fov = DEG_TO_RAD(100.0f);
             priv->device.properties.ratio
                                    = 1.0f;  /* (2880.0f / 1440.0f) / 2.0f */
+
+            /* FIXME: work out the real values */
+            ohmd_set_universal_distortion_k(&(priv->device.properties), 0, 0, 0, 1);
+            ohmd_set_universal_aberration_k(&(priv->device.properties), 1.0, 1.0, 1.0);
             break;
         case 5:
-            /* WVR2 has one 5.5" 1440x2560 LCD */
-            priv->display_type = VRTEK_DISP_LCD1440X2560_SHARP;
-            priv->device.properties.hsize = 0.068040f;  /* FIXME */
-            priv->device.properties.vsize = 0.120960f;  /* FIXME */
-            priv->device.properties.hres = 1440;
-            priv->device.properties.vres = 2560;
+            /* WVR2 has one 5.5" 1440x2560 LCD rotated left*/
+            /* NOTE: The user is expected to have rotated the display with:
+             *   xrandr --output HDMI-A-1 --rotate left */
+            priv->display_type = VRTEK_DISP_LCD1440X2560_ROTATED;
+            priv->device.properties.hsize = 0.120960f;  /* FIXME */
+            priv->device.properties.vsize = 0.068040f;  /* FIXME */
+            priv->device.properties.hres = 2560;
+            priv->device.properties.vres = 1440;
             priv->device.properties.lens_sep = 0.063f;  /* FIXME */
             priv->device.properties.lens_vpos
                                    = priv->device.properties.vsize / 2;
@@ -218,6 +224,10 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
             priv->device.properties.ratio
                                    = (priv->device.properties.hres / 2.0f)
                                                / priv->device.properties.vres;
+
+            /* FIXME: work out the real values */
+            ohmd_set_universal_distortion_k(&(priv->device.properties), 0, 0, 0, 1);
+            ohmd_set_universal_aberration_k(&(priv->device.properties), 1.0, 1.0, 1.0);
             break;
         default:
             priv->display_type = VRTEK_DISP_UNKNOWN;
@@ -226,9 +236,6 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
     LOGI("HMD display type is %s",
          vrtek_get_display_type_string(priv->display_type));
 
-    /* FIXME: work out the real values */
-    ohmd_set_universal_distortion_k(&(priv->device.properties), 0, 0, 0, 1);
-    ohmd_set_universal_aberration_k(&(priv->device.properties), 1.0, 1.0, 1.0);
 }
 
 static void vrtek_update_hmd_software_version(vrtek_priv* priv,
@@ -487,7 +494,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
     while (cur_dev) {
         /* This is needed because VR-Tek uses the Oculus DK1 USB ID */
         if (wcscmp(cur_dev->manufacturer_string, L"STMicroelectronics")==0 &&
-			wcscmp(cur_dev->product_string, L"HID")==0) {
+                        wcscmp(cur_dev->product_string, L"HID")==0) {
             ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
             strcpy(desc->driver, "OpenHMD VR-Tek Driver");
