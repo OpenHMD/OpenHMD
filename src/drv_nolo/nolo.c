@@ -59,8 +59,8 @@ static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int
 	if(last_sample_tick > 0) //startup correction
 		tick_delta = priv->sample.tick - last_sample_tick;
 
-	float dt = tick_delta/1000000000000.0f;
-	//printf("DT = %1.50lf\n", dt);
+	float dt = (tick_delta/(float)priv->base.ctx->monotonic_ticks_per_sec)/1000.0f;
+
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 	accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro);
 	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel);
