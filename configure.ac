@@ -129,6 +129,15 @@ AC_ARG_ENABLE([driver-android],
 
 AM_CONDITIONAL([BUILD_DRIVER_ANDROID], [test "x$driver_android_enabled" != "xno"])
 
+# Nxtvr Driver
+AC_ARG_ENABLE([driver-nxtvr],
+        [AS_HELP_STRING([--disable-driver-nxtvr],
+                [disable building of Nxtvr driver [default=yes]])],
+        [driver_nxtvr_enabled=$enableval],
+        [driver_nxtvr_enabled='yes'])
+
+AM_CONDITIONAL([BUILD_DRIVER_NXTVR], [test "x$driver_nxtvr_enabled" != "xno"])
+
 # Libs required by Oculus Rift Driver
 AS_IF([test "x$driver_oculus_rift_enabled" != "xno"],
 	[PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
@@ -151,6 +160,10 @@ AS_IF([test "x$driver_nolo_enabled" != "xno"],
 
 # Libs required by 3Glasses HMD Driver
 AS_IF([test "x$driver_xgvr_enabled" != "xno"],
+        [PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
+
+# Libs required by Nxtvr Driver
+AS_IF([test "x$driver_nxtvr_enabled" != "xno"],
         [PKG_CHECK_MODULES([hidapi], [$hidapi] >= 0.0.5)])
 
 # Do we build OpenGL example?

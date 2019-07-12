@@ -155,6 +155,7 @@ ohmd_driver* ohmd_create_nolo_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_xgvr_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_external_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_android_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_relativty_hmd_drv(ohmd_context* ctx);
 
 #include "log.h"
 #include "omath.h"

@@ -143,6 +143,13 @@ if _drivers.contains('android')
 	c_args += '-DDRIVER_ANDROID'
 endif
 
+if _drivers.contains('nxtvr')
+	sources += [
+		'src/drv_nxtvr/nxtvr.c',
+	]
+	c_args += '-DDRIVER_COMMUNITY_VIS3R'
+endif
+
 openhmd_lib = library(
 	'openhmd',
 	sources,

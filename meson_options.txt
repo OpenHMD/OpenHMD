@@ -24,6 +24,7 @@ option(
 		'xgvr',
 		'external',
 		'android',
+		'nxtvr',
 	],
 	value: [
 		'rift',
@@ -34,6 +35,7 @@ option(
 		'wmr',
 		'xgvr',
 		'external',
+		'nxtvr',
 	],
 )
 
