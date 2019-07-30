@@ -16,40 +16,13 @@
 #include "../hid.h"
 
 /* VR-Tek reuses the Oculus Vendor ID */
-#define OCULUS_VR_INC_ID       0x2833
-#define VRTEK_WVR_HMD          0x0001
+#define OCULUS_VR_INC_ID        0x2833
+#define VRTEK_WVR_HMD           0x0001
 
-typedef enum {
-    VRTEK_SKU_WVR_UNKNOWN,
-    VRTEK_SKU_WVR1,
-    VRTEK_SKU_WVR2,
-    VRTEK_SKU_WVR3,
-    VRTEK_SKU_UNKNOWN_UNKNOWN
-} vrtek_hmd_sku;
+#define REPORT_BUFFER_SIZE      128
+#define RESPONSE_DATA_SIZE      64
 
-typedef enum {
-    VRTEK_DISP_LCD2880X1440 = 4,
-    VRTEK_DISP_LCD1440X2560_ROTATED = 5,
-    VRTEK_DISP_UNKNOWN = 0xFF
-} vrtek_display_type;
-
-typedef enum {
-    VRTEK_COMMAND_CONFIGURE_HMD = 2,
-    VRTEK_COMMAND_QUERY_HMD = 3
-} vrtek_command_num;
-
-typedef enum {
-    VRTEK_CONFIG_ARG_HMD_IMU = 4
-} vrtek_config_command_arg;
-
-typedef enum {
-    VRTEK_QUERY_ARG_HMD_CONFIG = 5,
-    VRTEK_QUERY_ARG_HMD_MODEL = 7
-} vrtek_query_command_arg;
-
-#define REPORT_BUFFER_SIZE          128
-#define RESPONSE_DATA_SIZE          64
-#define MODEL_STRING_LENGTH         12
+#define MODEL_STRING_LENGTH     12
 
 typedef struct {
     ohmd_device device;
