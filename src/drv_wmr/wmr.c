@@ -78,7 +78,7 @@ static void handle_tracker_sensor_msg(wmr_priv* priv, unsigned char* buffer, int
 {
 	uint64_t last_sample_tick = priv->sensor.gyro_timestamp[3];
 
-	if(!hololens_sensors_decode_packet(&priv->sensor, buffer, size)){
+	if (!hololens_sensors_decode_packet(&priv->sensor, buffer, size)) {
 		LOGE("couldn't decode tracker sensor message");
 	}
 
@@ -87,10 +87,12 @@ static void handle_tracker_sensor_msg(wmr_priv* priv, unsigned char* buffer, int
 
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
 
-	for(int i = 0; i < 4; i++){
+	for (int i = 0; i < 4; i++) {
 		uint64_t tick_delta = 1000;
-		if(last_sample_tick > 0) //startup correction
+		if (last_sample_tick > 0) {
+			// startup correction
 			tick_delta = s->gyro_timestamp[i] - last_sample_tick;
+		}
 
 		float dt = tick_delta * TICK_LEN;
 
@@ -110,24 +112,24 @@ static void update_device(ohmd_device* device)
 	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
-	while(true){
+	while (true) {
 		int size = hid_read(priv->hmd_imu, buffer, FEATURE_BUFFER_SIZE);
-		if(size < 0){
+		if(size < 0) {
 			LOGE("error reading from device");
 			return;
-		} else if(size == 0) {
+		} else if (size == 0) {
 			return; // No more messages, return.
 		}
 
 		// currently the only message type the hardware supports (I think)
-		if(buffer[0] == HOLOLENS_IRQ_SENSORS){
+		if (buffer[0] == HOLOLENS_IRQ_SENSORS) {
 			handle_tracker_sensor_msg(priv, buffer, size);
-		}else if(buffer[0] != HOLOLENS_IRQ_DEBUG){
+		} else if (buffer[0] != HOLOLENS_IRQ_DEBUG) {
 			LOGE("unknown message type: %u", buffer[0]);
 		}
 	}
 
-	if(size < 0){
+	if (size < 0) {
 		LOGE("error reading from device");
 	}
 }
@@ -136,9 +138,9 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 {
 	wmr_priv* priv = (wmr_priv*)device;
 
-	switch(type){
+	switch (type) {
 	case OHMD_ROTATION_QUAT:
-		*(quatf*)out = priv->sensor_fusion.orient;
+		*(quatf *)out = priv->sensor_fusion.orient;
 		break;
 
 	case OHMD_POSITION_VECTOR:
@@ -163,7 +165,7 @@ static void close_device(ohmd_device* device)
 {
 	wmr_priv* priv = (wmr_priv*)device;
 
-	LOGD("closing Microsoft HoloLens Sensors device");
+	LOGD("Closing Microsoft HoloLens Sensors device");
 
 	hid_close(priv->hmd_imu);
 
@@ -180,18 +182,18 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface, int
 	hid_device* ret = NULL;
 
 	while (cur_dev) {
-		LOGI("%04x:%04x %s\n", manufacturer, product, cur_dev->path);
+		LOGI("%04x:%04x %s", manufacturer, product, cur_dev->path);
 
-		if(idx == device_index && iface == iface_cur){
+		if (idx == device_index && iface == iface_cur){
 			ret = hid_open_path(cur_dev->path);
-			LOGI("opening\n");
+			LOGI("Opening");
 		}
 
 		cur_dev = cur_dev->next;
 
 		iface_cur++;
 
-		if(iface_cur >= iface_tot){
+		if (iface_cur >= iface_tot) {
 			idx++;
 			iface_cur = 0;
 		}
@@ -210,10 +212,12 @@ static int config_command_sync(hid_device* hmd_imu, unsigned char type,
 	hid_write(hmd_imu, cmd, sizeof(cmd));
 	do {
 		int size = hid_read(hmd_imu, buf, len);
-		if (size == -1)
+		if (size == -1) {
 			return -1;
-		if (buf[0] == HOLOLENS_IRQ_CONTROL)
+		}
+		if (buf[0] == HOLOLENS_IRQ_CONTROL) {
 			return size;
+		}
 	} while (buf[0] == HOLOLENS_IRQ_SENSORS || buf[0] == HOLOLENS_IRQ_DEBUG);
 
 	return -1;
@@ -229,27 +233,30 @@ int read_config_part(wmr_priv *priv, unsigned char type,
 	size = config_command_sync(priv->hmd_imu, 0x0b, buf, sizeof(buf));
 
 	if (size != 33 || buf[0] != 0x02) {
-		LOGE("Failed to issue command 0b: %02x %02x %02x\n",
-		       buf[0], buf[1], buf[2]);
+		LOGE("Failed to issue command 0b: %02x %02x %02x", buf[0],
+		     buf[1], buf[2]);
 		return -1;
 	}
+
 	size = config_command_sync(priv->hmd_imu, type, buf, sizeof(buf));
 	if (size != 33 || buf[0] != 0x02) {
-		LOGE("Failed to issue command %02x: %02x %02x %02x\n", type,
-		       buf[0], buf[1], buf[2]);
+		LOGE("Failed to issue command %02x: %02x %02x %02x", type,
+		     buf[0], buf[1], buf[2]);
 		return -1;
 	}
+
 	for (;;) {
 		size = config_command_sync(priv->hmd_imu, 0x08, buf, sizeof(buf));
 		if (size != 33 || (buf[1] != 0x01 && buf[1] != 0x02)) {
-			LOGE("Failed to issue command 08: %02x %02x %02x\n",
-			       buf[0], buf[1], buf[2]);
+			LOGE("Failed to issue command 08: %02x %02x %02x",
+			     buf[0], buf[1], buf[2]);
 			return -1;
 		}
-		if (buf[1] != 0x01)
+		if (buf[1] != 0x01) {
 			break;
+		}
 		if (buf[2] > len || offset + buf[2] > len) {
-			LOGE("Getting more information then requested\n");
+			LOGE("Getting more information then requested");
 			return -1;
 		}
 		memcpy(data + offset, buf + 3, buf[2]);
@@ -279,8 +286,7 @@ static int read_config_part_retry(wmr_priv *priv, unsigned char type,
 void decrypt_config(unsigned char* config)
 {
 	wmr_config_header* hdr = (wmr_config_header*)config;
-	for (int i = 0; i < hdr->json_size - sizeof(uint16_t); i++)
-	{
+	for (int i = 0; i < hdr->json_size - sizeof(uint16_t); i++) {
 		config[hdr->json_start + sizeof(uint16_t) + i] ^= wmr_config_key[i % sizeof(wmr_config_key)];
 	}
 }
@@ -302,8 +308,9 @@ unsigned char *read_config(wmr_priv *priv)
 	 */
 	data_size = meta[0] | (meta[1] << 8);
 	data = calloc(1, data_size);
-	if (!data)
-                return NULL;
+	if (!data) {
+		return NULL;
+	}
 
 	size = read_config_part_retry(priv, 0x04, data, data_size);
 	if (size == -1) {
@@ -313,7 +320,7 @@ unsigned char *read_config(wmr_priv *priv)
 
 	decrypt_config(data);
 
-	LOGI("Read %d-byte config data\n", data_size);
+	LOGI("Read %d-byte config data", data_size);
 
 	return data;
 }
@@ -321,21 +328,21 @@ unsigned char *read_config(wmr_priv *priv)
 
 void process_nxjson_obj(const nx_json* node, const nx_json* (*list)[32], char* match)
 {
-	if (!node)
+	if (!node) {
 		return;
+	}
 
-	if (node->key)
-		if (strcmp(match,node->key) == 0) 
-		{
+	if (node->key) {
+		if (strcmp(match,node->key) == 0) {
 			//LOGE("Found key %s\n", node->key);
-			for (int i = 0; i < 32; i++)
-			{
+			for (int i = 0; i < 32; i++) {
 				if (!list[0][i]) {
 					list[0][i] = node;
 					break;
 				}
 			}
 		}
+	}
 
 	process_nxjson_obj(node->next, list, match);
 	process_nxjson_obj(node->child, list, match);
@@ -352,8 +359,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	unsigned char *config;
 	bool samsung = false;
 
-	if(!priv)
+	if(!priv) {
 		return NULL;
+	}
 
 	priv->base.ctx = driver->ctx;
 
@@ -362,33 +370,34 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	// Open the HMD device
 	priv->hmd_imu = open_device_idx(MICROSOFT_VID, HOLOLENS_SENSORS_PID, 0, 1, idx);
 
-	if(!priv->hmd_imu)
+	if (!priv->hmd_imu) {
 		goto cleanup;
+	}
 
 	//Bunch of temp variables to set to the display configs
-	int resolution_h, resolution_v; 
+	int resolution_h = 0, resolution_v = 0;
 
 	config = read_config(priv);
 	if (config) {
 		wmr_config_header* hdr = (wmr_config_header*)config;
-		LOGI("Model name: %.64s\n", hdr->name);
+		LOGI("Model name: %.64s", hdr->name);
 		if (strncmp(hdr->name,
 			    "Samsung Windows Mixed Reality 800ZAA", 64) == 0) {
 			samsung = true;
 		}
 
 		char *json_data = (char*)config + hdr->json_start + sizeof(uint16_t);
+		LOGE("%s", json_data);
 		const nx_json* json = nx_json_parse(json_data, 0);
 
-		if (json->type != NX_JSON_NULL) 
-		{
+		if (json->type != NX_JSON_NULL) {
 			//list to save found nodes with matching name
 			const nx_json* returnlist[32] = {0};
 			resetList(&returnlist); process_nxjson_obj(json, &returnlist, "DisplayHeight");
-			LOGE("Found display height %lli\n", returnlist[0]->int_value); //taking the first element since it does not matter if you take display 0 or 1
+			LOGE("Found display height %lli", returnlist[0]->int_value); //taking the first element since it does not matter if you take display 0 or 1
 			resolution_v = returnlist[0]->int_value;
 			resetList(&returnlist); process_nxjson_obj(json, &returnlist, "DisplayWidth");
-			LOGE("Found display width %lli\n", returnlist[0]->int_value); //taking the first element since it does not matter if you take display 0 or 1
+			LOGE("Found display width %lli", returnlist[0]->int_value); //taking the first element since it does not matter if you take display 0 or 1
 			resolution_h = returnlist[0]->int_value;
 			
 			//Left in for debugging until we confirmed most variables working
@@ -408,10 +417,8 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		 		}
 		 	}*/
 
-		}
-		else 
-		{
-			LOGE("Could not parse json\n");
+		} else {
+			LOGE("Could not parse json");
 		}
 
 		//TODO: use new config data
@@ -419,12 +426,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		nx_json_free(json);
 
 		free(config);
-	}
-	else {
-		LOGE("Could not read config from the firmware\n");
+	} else {
+		LOGE("Could not read config from the firmware");
 	}
 
-	if(hid_set_nonblocking(priv->hmd_imu, 1) == -1){
+	if (hid_set_nonblocking(priv->hmd_imu, 1) == -1) {
 		ohmd_set_error(driver->ctx, "failed to set non-blocking on device");
 		goto cleanup;
 	}
@@ -471,8 +477,9 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	return (ohmd_device*)priv;
 
 cleanup:
-	if(priv)
+	if (priv) {
 		free(priv);
+	}
 
 	return NULL;
 }
@@ -516,8 +523,9 @@ ohmd_driver* ohmd_create_wmr_drv(ohmd_context* ctx)
 {
 	ohmd_driver* drv = ohmd_alloc(ctx, sizeof(ohmd_driver));
 
-	if(!drv)
+	if (!drv) {
 		return NULL;
+	}
 
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
