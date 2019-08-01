@@ -259,6 +259,23 @@ int read_config_part(wmr_priv *priv, unsigned char type,
 	return offset;
 }
 
+static int read_config_part_retry(wmr_priv *priv, unsigned char type,
+				  unsigned char *data, int len)
+{
+	int size = 0;
+
+	for (int retry = 1; retry < 5; retry++) {
+		size = read_config_part(priv, type, data, len);
+		if (size > 0) {
+			return size;
+		}
+
+		LOGE("Failed to read data, attempt #%i", retry);
+	}
+
+	return size;
+}
+
 void decrypt_config(unsigned char* config)
 {
 	wmr_config_header* hdr = (wmr_config_header*)config;
@@ -274,10 +291,10 @@ unsigned char *read_config(wmr_priv *priv)
 	unsigned char *data;
 	int size, data_size;
 
-	size = read_config_part(priv, 0x06, meta, sizeof(meta));
-
-	if (size == -1)
+	size = read_config_part_retry(priv, 0x06, meta, sizeof(meta));
+	if (size != sizeof(meta)) {
 		return NULL;
+	}
 
 	/*
 	 * No idea what the other 64 bytes of metadata are, but the first two
@@ -288,7 +305,7 @@ unsigned char *read_config(wmr_priv *priv)
 	if (!data)
                 return NULL;
 
-	size = read_config_part(priv, 0x04, data, data_size);
+	size = read_config_part_retry(priv, 0x04, data, data_size);
 	if (size == -1) {
 		free(data);
 		return NULL;
