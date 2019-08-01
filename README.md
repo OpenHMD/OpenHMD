@@ -53,13 +53,6 @@ By default all drivers except android are enabled.
     ninja -C ./build
     sudo ninja -C ./build install
 
-Using make:
-
-    ./autogen.sh # (if you're building from the git repository)
-    ./configure [--enable-openglexample]
-    make
-    sudo make install
-
 Using CMake:
 
 With CMake, you can enable and disable drivers to compile OpenHMD with.
@@ -91,14 +84,6 @@ This will generate a project file for Visual Studio 2013 for 64 bit systems.
 Open the project file and compile as you usually would do.
 
 ### Cross compiling for windows using mingw
-Using Make:
-
-    export PREFIX=/usr/i686-w64-mingw32/ (or whatever your mingw path is)
-    PKG_CONFIG_LIBDIR=$PREFIX/lib/pkgconfig ./configure --build=`gcc -dumpmachine` --host=i686-w64-mingw32 --prefix=$PREFIX
-    make
-    
-the library will end up in the .lib directory, you can use microsoft's lib.exe to make a .lib file for it
-
 Using CMake:
 
 For MinGW cross compiling, toolchain files tend to be the best solution.
