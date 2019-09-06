@@ -27,6 +27,7 @@
 typedef struct {
     ohmd_device device;
     hid_device* hid_handle;
+    vrtek_sensor_fusion_t* ofusion;
     vrtek_hmd_sku sku;
     char model_str[MODEL_STRING_LENGTH+1];
     uint32_t hmd_software_version;
@@ -91,8 +92,7 @@ static int receive_response_packet(vrtek_priv* priv, uint8_t* buf,
         if (ret == -1) {
             LOGE("%s: hid_read_timeout hit an error: %ls",
                  __func__, hid_error(priv->hid_handle));
-        }
-        else if (ret == 0) {
+        } else if (ret == 0) {
             LOGW("%s: hid_read_timeout received no packet", __func__);
         }
 
@@ -106,8 +106,7 @@ static int receive_response_packet(vrtek_priv* priv, uint8_t* buf,
             /* skip any extraneous sensor messages */
             LOGD("%s: skipping sensor message\n", __func__);
             continue;
-        }
-        else if (ret != read_length) {
+        } else if (ret != read_length) {
             LOGW("%s: received response packet with %d bytes, but expected %lu",
                  __func__, ret, read_length);
         }
@@ -213,7 +212,6 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
 
     LOGI("HMD display type is %s",
          vrtek_get_display_type_string(priv->display_type));
-
 }
 
 static void vrtek_update_hmd_software_version(vrtek_priv* priv,
@@ -265,6 +263,8 @@ static const char* vrtek_get_model_string(vrtek_hmd_sku model)
     }
 }
 
+#define OHMD_GRAVITY_EARTH 9.80665    /* m/s² */
+
 static void vrtek_update_hmd_model(vrtek_priv* priv, const char* model,
                                    uint8_t length)
 {
@@ -278,32 +278,76 @@ static void vrtek_update_hmd_model(vrtek_priv* priv, const char* model,
     memcpy(priv->model_str, model, MODEL_STRING_LENGTH);
     priv->model_str[12] = '\0';
 
+    vrtek_sensor_fusion_t* ofusion = priv->ofusion;
+
     /* HMD model number starts at the beginning of the response */
     if (strncmp(model, "WVR", 3) == 0) {
         switch(*(model + 3)) {
             case '1':
                 priv->sku = VRTEK_SKU_WVR1;
+                if (ofusion) {
+                    /* FIXME: add offset support for WVR1 */
+                    ofusion->gyro_offset[0] = 0;
+                    ofusion->gyro_offset[1] = 0;
+                    ofusion->gyro_offset[2] = 0;
+                }
                 break;
             case '2':
                 priv->sku = VRTEK_SKU_WVR2;
+                if (ofusion) {
+                    /* FIXME: Can we query the headset for these? */
+                    ofusion->gyro_offset[0] = 19;
+                    ofusion->gyro_offset[1] = 52;
+                    ofusion->gyro_offset[2] = 23;
+                }
                 break;
             case '3':
                 priv->sku = VRTEK_SKU_WVR3;
+                if (ofusion) {
+                    /* FIXME: Can we query the headset for these? */
+                    ofusion->gyro_offset[0] = 32;
+                    ofusion->gyro_offset[1] = 36;
+                    ofusion->gyro_offset[2] = -12;
+                }
                 break;
             default:
                 priv->sku = VRTEK_SKU_WVR_UNKNOWN;
                 LOGW("Unknown VR-Tek HMD model: %s\n", priv->model_str);
         }
-    }
-    else {
+    } else {
         priv->sku = VRTEK_SKU_UNKNOWN_UNKNOWN;
         LOGE("Unknown HMD model: %s\n", priv->model_str);
         return;
-
     }
 
     LOGI("HMD model is %s (%s)", vrtek_get_model_string(priv->sku),
          priv->model_str);
+
+    if (ofusion) {
+        /*
+         * The WVR3 and WVR2 IMUs are configured with a gyro full scale range
+         * of +/-2000°/s (the IMU itself can operate with +/-250°/s, +/-500°/s,
+         * +/-1000°/s, or +/-2000°/s). Convert this into rad/s.
+         * The accel full scale range is +/-4g (the IMU itself can operate with
+         * +/-2g, +/-4g, +/-8g, or +/-16g). Convert this to m/s².
+         *
+         * NOTE: Right now we assume that the WVR1 is the same. This is
+         * probably a fair assumption because the WVR1 looks like a WVR2 with
+         * a lower resolution panel.
+         */
+
+        /* FIXME: Can we query the headset for these? */
+        double gyro_range = M_PI / 180.0 * (250 << 3);
+        ofusion->gyro_range = (float) gyro_range;
+        double accel_range = OHMD_GRAVITY_EARTH * (2 << 1);
+        ofusion->accel_range = (float) accel_range;
+
+        LOGI("Using gyro offsets %hd, %hd, %hd", ofusion->gyro_offset[0],
+                                                 ofusion->gyro_offset[1],
+                                                 ofusion->gyro_offset[2]);
+        LOGI("Using gyro range %lf", gyro_range);
+        LOGI("Using accel range %lf", accel_range);
+    }
 }
 
 static void vrtek_set_imu_state(vrtek_priv* priv, bool state)
@@ -357,6 +401,82 @@ static void vrtek_read_model(vrtek_priv* priv)
     vrtek_update_hmd_model(priv, model, response_data_len);
 }
 
+static void gyro_from_hmd_data(const vrtek_sensor_fusion_t* ofusion,
+                               const int16_t* smp, vec3f* out_vec)
+{
+    float range = ofusion->gyro_range / 32768.0f;
+    out_vec->x = range * (float)(smp[0] - ofusion->gyro_offset[0]) * -1.0f;
+    out_vec->y = range * (float)(smp[1] - ofusion->gyro_offset[1]);
+    out_vec->z = range * (float)(smp[2] - ofusion->gyro_offset[2]) * -1.0f;
+}
+
+static void accel_from_hmd_data(const vrtek_sensor_fusion_t* ofusion,
+                                const int16_t* smp, vec3f* out_vec)
+{
+    float range = ofusion->accel_range / 32768.0f;
+    out_vec->x = range * (float)(smp[0]) * -1.0f;
+    out_vec->y = range * (float)smp[1];
+    out_vec->z = range * (float)(smp[2]) * -1.0f;
+}
+
+static void mag_from_hmd_data(const vrtek_sensor_fusion_t* ofusion,
+                              const int16_t* smp, vec3f* out_vec)
+{
+    /* FIXME: Update this when we start using magnetometer readings */
+    out_vec->x = (float)smp[0];
+    out_vec->y = (float)smp[1];
+    out_vec->z = (float)smp[2];
+}
+
+static uint16_t calc_delta_and_handle_rollover(uint16_t next, uint16_t last)
+{
+    uint16_t message_num_delta = next - last;
+
+    /* The 8-bit message number has rolled over,
+     * adjust the "negative" value to be positive. */
+    if (message_num_delta > 0xff) {
+        message_num_delta += 0x100;
+    }
+
+    return message_num_delta;
+}
+
+#define TICK_LEN (1.0f / 500.0f)    /* 500 Hz ticks */
+
+static void handle_hmd_data_packet(vrtek_priv* priv, uint8_t* buf, int size)
+{
+    vrtek_hmd_data_t* hmd_data = &priv->hmd_data;
+    uint16_t last_message_num = hmd_data->message_num;
+
+    int decode_res = vrtek_decode_hmd_data_packet(buf, size, hmd_data);
+    if (decode_res != 0) {
+        LOGE("couldn't decode HMD sensor data");
+    }
+
+    /* If we're not doing our own sensor fusion then we're done */
+    if (!priv->ofusion) {
+        return;
+    }
+
+    vrtek_sensor_fusion_t* ofusion = priv->ofusion;
+
+    float dt = TICK_LEN;
+
+    /* Startup correction */
+    if (last_message_num != 256) {
+        uint8_t delta = calc_delta_and_handle_rollover(hmd_data->message_num,
+                                                       last_message_num);
+        dt *= delta;
+    }
+
+    gyro_from_hmd_data(ofusion, hmd_data->gyroscope, &ofusion->raw_gyro);
+    accel_from_hmd_data(ofusion, hmd_data->acceleration, &ofusion->raw_accel);
+    mag_from_hmd_data(ofusion, hmd_data->magnetometer, &ofusion->raw_mag);
+
+    ofusion_update(&ofusion->sensor_fusion, dt,
+                   &ofusion->raw_gyro, &ofusion->raw_accel, &ofusion->raw_mag);
+}
+
 static void update_device(ohmd_device* device)
 {
     int size = 0;
@@ -365,7 +485,7 @@ static void update_device(ohmd_device* device)
 
     while ((size = hid_read(priv->hid_handle, buf, REPORT_BUFFER_SIZE)) > 0) {
         if (buf[0] == VRTEK_REPORT_SENSOR) {
-            vrtek_decode_hmd_data_packet(buf, size, &priv->hmd_data);
+            handle_hmd_data_packet(priv, buf, size);
         } else {
             LOGE("unknown message type: %u", buf[0]);
         }
@@ -382,7 +502,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
     switch (type) {
     case OHMD_ROTATION_QUAT:
-        *(quatf*)out = *(quatf*)&priv->hmd_data.quaternion;
+        if (priv->ofusion) {
+            *(quatf*)out = priv->ofusion->sensor_fusion.orient;
+        } else {
+            *(quatf*)out = *(quatf*)&priv->hmd_data.quaternion;
+        }
+
         break;
 
     case OHMD_POSITION_VECTOR:
@@ -409,6 +534,7 @@ static void close_device(ohmd_device* device)
     LOGD("closing device");
     vrtek_priv* priv = vrtek_priv_get(device);
     hid_close(priv->hid_handle);
+    free(priv->ofusion);
     free(priv);
 }
 
@@ -441,6 +567,21 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
     /* Set default device properties */
     ohmd_set_default_device_properties(&priv->device.properties);
 
+    /* Use the orientation quaternion provided directly by the headset
+     * if the user requested it */
+    const char* use_direct_quat = getenv("OHMD_VRTEK_USE_DIRECT_QUATERNION");
+    if (use_direct_quat && (strncmp(use_direct_quat, "true", 5) == 0)) {
+        LOGI("Using orientation quaternion directly from HMD");
+    } else {
+        priv->ofusion = ohmd_alloc(driver->ctx, sizeof(vrtek_sensor_fusion_t));
+        if (priv->ofusion) {
+            LOGI("Using OpenHMD sensor fusion for orientation quaternion");
+        } else {
+            LOGW("Alloc failed. Falling back to using orientation quaternion "
+                 "directly from HMD");
+        }
+    }
+
     vrtek_send_init(priv);
 
     /* Disable IMU */
@@ -462,6 +603,13 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
     /* calculate eye projection matrices from the device properties */
     ohmd_calc_default_proj_matrices(&priv->device.properties);
+
+    if (priv->ofusion) {
+        ofusion_init(&priv->ofusion->sensor_fusion);
+
+        /* Known initial value for startup correction */
+        priv->hmd_data.message_num = 256;
+    }
 
     return &priv->device;
 

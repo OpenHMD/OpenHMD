@@ -13,13 +13,24 @@
 #include "../openhmdi.h"
 
 typedef struct {
-    uint8_t  message_num;
+    uint16_t message_num;
     float    quaternion[4];
     double   euler[3];
-    uint16_t acceleration[3];
-    uint16_t gyroscope[3];
-    uint16_t magnetometer[3];
+    int16_t  acceleration[3];
+    int16_t  gyroscope[3];
+    int16_t  magnetometer[3];
 } vrtek_hmd_data_t;
+
+typedef struct {
+    /* sensor fusion working data */
+    vec3f raw_gyro, raw_accel, raw_mag;
+    fusion sensor_fusion;
+
+    /* IMU config */
+    float gyro_range;
+    int16_t gyro_offset[3];    /* x, y, z */
+    float accel_range;
+} vrtek_sensor_fusion_t;
 
 typedef enum {
     VRTEK_REPORT_CONTROL_OUTPUT = 0x01,    /* control to HMD */
