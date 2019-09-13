@@ -98,6 +98,7 @@ if BUILD_DRIVER_EXTERNAL
 libopenhmd_la_SOURCES += \
 	drv_external/external.c
 libopenhmd_la_CPPFLAGS += -DDRIVER_EXTERNAL
+
 endif
 
 if BUILD_DRIVER_ANDROID
@@ -107,6 +108,17 @@ libopenhmd_la_SOURCES += \
 
 libopenhmd_la_CPPFLAGS += -DDRIVER_ANDROID
 libopenhmd_la_LDFLAGS += -landroid
+
+endif
+
+if BUILD_DRIVER_NXTVR
+
+libopenhmd_la_SOURCES += \
+	drv_nxtvr/nxtvr.c
+
+libopenhmd_la_CPPFLAGS += $(hidapi_CFLAGS) -DDRIVER_COMMUNITY_VIS3R
+libopenhmd_la_LDFLAGS += $(hidapi_LIBS)
+
 endif
 
 libopenhmd_la_LDFLAGS += $(EXTRA_LD_FLAGS)

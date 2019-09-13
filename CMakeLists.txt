@@ -138,6 +138,7 @@ if (OPENHMD_DRIVER_ANDROID)
 	)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
+
 if(OPENHMD_DRIVER_COMMUNITY_NXTVR)
 	set(openhmd_source_files ${openhmd_source_files}
 		${CMAKE_CURRENT_LIST_DIR}/src/drv_nxtvr/nxtvr.c
@@ -148,6 +149,7 @@ if(OPENHMD_DRIVER_COMMUNITY_NXTVR)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_COMMUNITY_NXTVR)
+
 if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)
 endif(OPENHMD_EXAMPLE_SIMPLE)
