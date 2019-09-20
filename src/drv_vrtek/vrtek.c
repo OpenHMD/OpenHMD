@@ -170,7 +170,7 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
             priv->device.properties.vsize = 0.051905f;
             priv->device.properties.hres = 2880;
             priv->device.properties.vres = 1440;
-            priv->device.properties.lens_sep = 0.054;  /* FIXME */
+            priv->device.properties.lens_sep = 0.050;  /* FIXME */
             priv->device.properties.lens_vpos
                                    = priv->device.properties.vsize / 2;
             priv->device.properties.fov = DEG_TO_RAD(100.0f);
