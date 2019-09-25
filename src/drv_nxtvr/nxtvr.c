@@ -12,7 +12,6 @@
 #include <string.h>
 #include <errno.h>
 #include <hidapi/hidapi.h>
-#include <openhmdi.h>
 
 #include <omath.h>
 
