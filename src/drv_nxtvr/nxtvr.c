@@ -147,13 +147,13 @@ static ohmd_device *open_device(ohmd_driver *driver, ohmd_device_desc *desc)
     priv->handle = hid_open_path(desc->path);
     if (!priv->handle)
     {
-        LOGD("Clould not open directory '" DEVICE_NAME "'.");
+        LOGD("Could not open directory '" DEVICE_NAME "'.");
         goto err;
     }
 
     if (hid_set_nonblocking(priv->handle, 1) == -1)
     {
-        LOGD("Clould not set nonblocking on '" DEVICE_NAME "'.");
+        LOGD("Could not set nonblocking on '" DEVICE_NAME "'.");
         goto err_handle;
     }
 
