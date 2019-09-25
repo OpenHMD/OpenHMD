@@ -32,6 +32,7 @@ option(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
 option(OPENHMD_DRIVER_HTC_VIVE "HTC Vive" ON)
 option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
+option(OPENHMD_DRIVER_VRTEK "VR-Tek HMD" ON)
 option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
@@ -125,6 +126,18 @@ if(OPENHMD_DRIVER_XGVR)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_XGVR)
+
+if(OPENHMD_DRIVER_VRTEK)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_vrtek/vrtek.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_vrtek/packet.c
+	)
+	add_definitions(-DDRIVER_VRTEK)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_VRTEK)
 
 if (OPENHMD_DRIVER_EXTERNAL)
 	set(openhmd_source_files ${openhmd_source_files}
