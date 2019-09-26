@@ -170,7 +170,7 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
             priv->device.properties.vsize = 0.051905f;
             priv->device.properties.hres = 2880;
             priv->device.properties.vres = 1440;
-            priv->device.properties.lens_sep = 0.063f;  /* FIXME */
+            priv->device.properties.lens_sep = 0.054;  /* FIXME */
             priv->device.properties.lens_vpos
                                    = priv->device.properties.vsize / 2;
             priv->device.properties.fov = DEG_TO_RAD(100.0f);
@@ -179,9 +179,9 @@ static void vrtek_update_display_properties(vrtek_priv* priv,
 
             /* FIXME: work out the real values */
             ohmd_set_universal_distortion_k(&(priv->device.properties),
-                                            0, 0, 0, 1);
+                                            0.098, .324, -0.241, 0.819);
             ohmd_set_universal_aberration_k(&(priv->device.properties),
-                                            1.0, 1.0, 1.0);
+                                            0.9952420, 1.0, 1.0008074);
             break;
         case 5:
             /* WVR2 has one 5.5" 1440x2560 LCD rotated left*/
