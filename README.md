@@ -1,104 +1,119 @@
 # OpenHMD
-This project aims to provide a Free and Open Source API and drivers for immersive technology, such as head mounted displays with built in head tracking.
+OpenHMD aims to provide a free and open source API as well as drivers for immersive technology, such as Head-mounted displays with built-in head tracking. <br>
+OpenHMD supports Linux, Windows, macOS, Android and FreeBSD.
 
-## License
-OpenHMD is released under the permissive Boost Software License (see LICENSE for more information), to make sure it can be linked and distributed with both free and non-free software. While it doesn't require contribution from the users, it is still very appreciated.
+OpenHMD is released under the permissive [Boost Software License](https://www.boost.org/LICENSE_1_0.txt), to make sure it can be used and distributed with both free and non-free software. <br>
+Even though it doesn't require contribution any sort of from the users, it is still very appreciated.
 
-## Supported Devices
-For a full list of supported devices please check https://github.com/OpenHMD/OpenHMD/wiki/Support-List
-
-## Supported Platforms
-  * Linux
-  * Windows
-  * OS X
-  * Android
-  * FreeBSD
+For a full list of supported devices, please check [our wiki.](https://github.com/OpenHMD/OpenHMD/wiki/Support-List)
 
 ## Requirements
-  * Option 1: Meson + Ninja
-    * http://mesonbuild.com
-    * https://ninja-build.org
-  * Option 2: GNU Autotools (if you're building from the git repository)
-  * Option 3: CMake
-  * HIDAPI
-    * http://www.signal11.us/oss/hidapi/
-    * https://github.com/signal11/hidapi/
+You can either use [Ninja](https://ninja-build.org) in conjunction with [Meson](https://mesonbuild.com/) or [CMake](https://cmake.org). <br>
+You'll also need a copy of [hidapi](https://github.com/signal11/hidapi/).
 
-## Language Bindings
-  * GO bindings by Marko (Apfel)
-    * https://github.com/Apfel/OpenHMD-GO
-  * Java bindings by Joey Ferwerda and Koen Mertens
-    * https://github.com/OpenHMD/OpenHMD-Java
-  * .NET bindings by Jurrien Fakkeldij
-    * https://github.com/jurrien-fakkeldij/OpenHMD.NET
-  * Perl bindings by CandyAngel
-    * https://github.com/CandyAngel/perl-openhmd
-  * Python bindings by Lubosz Sarnecki
-    * https://github.com/lubosz/python-rift
-  * Rust bindings by The\_HellBox
-    * https://github.com/TheHellBox/openhmd-rs
+## Language bindings
+- [Go bindings](https://github.com/Apfel/OpenHMD-GO) by [Marko (Apfel)](https://github.com/Apfel)
+- [Java bindings](https://github.com/OpenHMD/OpenHMD-Java) by [Joey Ferwerda](https://github.com/TheOnlyJoey) and [Koen Mertens](https://github.com/KCMertens)
+- [.NET bindings](https://github.com/jurrien-fakkeldij/OpenHMD.NET) by [Jurrien Fakkeldij](https://github.com/jurrien-fakkeldij)
+- [Perl bindings](https://github.com/CandyAngel/perl-openhmd) by [CandyAngel](https://github.com/CandyAngel)
+- [Python bindings](https://github.com/lubosz/python-rift) by [Lubosz Sarnecki](https://github.com/lubosz)
+- [Rust bindings](https://github.com/TheHellBox/openhmd-rs) by [TheHellBox](https://github.com/TheHellBox)
   
 ## Other FOSS HMD Drivers
-  * libvr - http://hg.sitedethib.com/libvr
+- libvr[http://hg.sitedethib.com/libvr]
 
 ## Compiling and Installing
-Using Meson:
+### Meson
 
 With Meson, you can enable and disable drivers to compile OpenHMD with.
-Current available drivers are: rift, deepon, psvr, vive, nolo, wmr, xgvr, vrtek, external, and android.
-These can be enabled or disabled by adding -Ddrivers=... with a comma separated list after the meson command (or using meson configure ./build -Ddrivers=...).
-By default all drivers except android are enabled.
 
-    meson ./build [-Dexamples=simple,opengl]
-    ninja -C ./build
-    sudo ninja -C ./build install
+Currently, the available drivers are:
+- `rift`
+- `deepon`
+- `psvr`
+- `vive`
+- `nolo`
+- `wmr`
+- `xgvr`
+- `vrtek`
+- `external`
+- `android`
 
-Using CMake:
+These can be enabled or disabled by adding `-Ddrivers=...` with a comma separated list after the meson command, or using `meson configure ./build -Ddrivers=...` for an already existing build folder. <br>
+Replace the `...` with the previously mentioned list of drivers that you'd like to enable. <br>
+By default all drivers except `android` are enabled.
+
+```sh
+meson build [-Dexamples=simple,opengl] [-Ddrivers=rift,deepon,psvr,vive,nolo,wmr,xgvr,vrtek,external,android]
+ninja -C build
+sudo ninja -C build install
+```
+
+### CMake:
 
 With CMake, you can enable and disable drivers to compile OpenHMD with.
-Current Available drivers are: OPENHMD_DRIVER_OCULUS_RIFT, OPENHMD_DRIVER_DEEPOON, OPENHMD_DRIVER_PSVR, OPENHMD_DRIVER_HTC_VIVE, OPENHMD_DRIVER_NOLO, OPENHMD_DRIVER_WMR, OPENHMD_DRIVER_XGVR, OPENHMD_DRIVER_VRTEK, OPENHMD_DRIVER_EXTERNAL and OPENHMD_DRIVER_ANDROID.
-These can be enabled or disabled adding -DDRIVER_OF_CHOICE=ON after the cmake command (or using cmake-gui).
 
-    mkdir build
-    cd build
-    cmake ..
-    make
-    sudo make install
+Currently, the available drivers are:
+- `OPENHMD_DRIVER_OCULUS_RIFT`
+- `OPENHMD_DRIVER_DEEPOON`
+- `OPENHMD_DRIVER_PSVR`
+- `OPENHMD_DRIVER_HTC_VIVE`
+- `OPENHMD_DRIVER_NOLO`
+- `OPENHMD_DRIVER_WMR`
+- `OPENHMD_DRIVER_XGVR`
+- `OPENHMD_DRIVER_VRTEK`
+- `OPENHMD_DRIVER_EXTERNAL`
+- `OPENHMD_DRIVER_ANDROID.`
 
-### Configuring udev on Linux
-To avoid having to run your applications as root to access USB devices you have to add a udev rule (this will be included in .deb packages, etc).
+These can be enabled or disabled adding `-DDRIVER_OF_CHOICE=ON` *(obviously replacing `DRIVER_OF_CHOICE` with, well, your driver of choice™)* after the `cmake` command, or by using `cmake-gui`.
 
-A full list of known usb devices and instructions on how to add them can be found on:
-https://github.com/OpenHMD/OpenHMD/wiki/Udev-rules-list
+```sh
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+```
 
-After this you have to unplug your device and plug it back in. You should now be able to access the HMD as a normal user.
-
-### Compiling on Windows
-CMake has a lot of generators available for IDE's and build systems.
+#### Windows
+CMake has a lot of generators available for IDEs and build systems. <br>
 The easiest way to find one that fits your system is by checking the supported generators for you CMake version online.
-Example using VC2013.
 
-	cmake . -G "Visual Studio 12 2013 Win64"
+Example using Visual Studio 2012:
+```sh
+cmake . -G "Visual Studio 12 2013 Win64"
+```
 
-This will generate a project file for Visual Studio 2013 for 64 bit systems.
-Open the project file and compile as you usually would do.
+and Visual Studio 2019:
+```sh
+cmake -G "Visual Studio 16 2019" -A x64 -Thost=x64
+```
 
-### Cross compiling for windows using mingw
-Using CMake:
+Refer to the CMake instructions above for selecting drivers. <br>
+After CMake is done, you'll find a recently generated Solution for compiling OpenHMD.
 
-For MinGW cross compiling, toolchain files tend to be the best solution.
-Please check the CMake documentation on how to do this.
-A starting point might be the CMake wiki: http://www.vtk.org/Wiki/CmakeMingw
+However, you can also use Meson and Ninja to build on Windows. <br>
+To do this, execute the following in one of the developer command lines shipped with Visual Studio:
 
-### Static linking on windows
-If you're linking statically with OpenHMD using windows/mingw you have to make sure the macro OHMD_STATIC is set before including openhmd.h. In GCC this can be done by adding the compiler flag -DOHMD_STATIC, and with msvc it can be done using /DOHMD_STATIC.
+```sh
+meson --backend=ninja build -Dexamples=simple
+ninja -C build
+```
 
-Note that this is *only* if you're linking statically! If you're using the DLL then you *must not* define OHMD_STATIC. (If you're not sure then you're probably linking dynamically and won't have to worry about this).
+Once again, refer to the Meson instructions above for setting the build up.
+
+#### Cross compiling for windows using MinGW
+
+For cross compiling via MinGW, toolchain-based files tend to be the best solution. Therefore, please check the CMake documentation on how to do this. <br>
+A starting point might be the [CMake wiki](https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/cross_compiling/Mingw).
+
+#### Static linking on windows
+If you're linking against OpenHMD statically on Windows *(no matter if MinGW was used or not)*, you'll have to make sure that `OHMD_STATIC` is set before including `openhmd.h`. For GCC, this can be done by adding the compiler flag `-DOHMD_STATIC`, and with MSVC it can be done using `/DOHMD_STATIC`.
 
 ## Pre-built packages
-A list of pre-built backages can be found on http://www.openhmd.net/index.php/download/
+A list of pre-built backages can be found on [our site](http://www.openhmd.net/index.php/download/).
 
-## Using OpenHMD
-See the examples/ subdirectory for usage examples. The OpenGL example is not built by default, to build it use the --enable-openglexample option for the configure script. It requires SDL2, glew and OpenGL.
+## Utilizing OpenHMD
+See the `examples` subdirectory for usage examples. The OpenGL-based example is not built by default, thus you'll need to refer to the instructions for the build system you'll use. It requires [SDL2](https://libsdl.org/), [glew](http://glew.sourceforge.net/basic.html) and a library implementing the API of [OpenGL](https://www.opengl.org/). <br>
+The package implementing the OpenGL API may vary from OS to OS, for example, on Debian/Ubuntu, it's called `libgl1-mesa-dev`.
 
-An API reference can be generated using doxygen and is also available here: http://openhmd.net/doxygen/0.1.0/openhmd_8h.html
+An API reference can be generated using doxygen and is also available [here]http://openhmd.net/doxygen/0.1.0/openhmd_8h.html.
