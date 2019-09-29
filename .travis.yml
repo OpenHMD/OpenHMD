@@ -54,5 +54,5 @@ script:
   - if [[ "$BUILD" == "meson" ]]; then
       meson .. . -Dexamples=simple,opengl;
     else
-      cmake -G Ninja .. -DOPENHMD_EXAMPLE_SDL=1;
+      cmake -G Ninja .. -DOPENHMD_EXAMPLE_OPENGL=1;
     fi && ninja
