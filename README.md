@@ -9,7 +9,7 @@ For a full list of supported devices, please check [our wiki.](https://github.co
 
 ## Requirements
 You can either use [Ninja](https://ninja-build.org) in conjunction with [Meson](https://mesonbuild.com/) or [CMake](https://cmake.org). <br>
-You'll also need a copy of [hidapi](https://github.com/signal11/hidapi/).
+You'll also need a copy of [hidapi](https://github.com/signal11/hidapi/). We recommend to use our [fork](https://github.com/OpenHMD/hidapi) of hidapi.
 
 ## Language bindings
 - [Go bindings](https://github.com/Apfel/OpenHMD-GO) by [Marko (Apfel)](https://github.com/Apfel)
@@ -20,13 +20,12 @@ You'll also need a copy of [hidapi](https://github.com/signal11/hidapi/).
 - [Rust bindings](https://github.com/TheHellBox/openhmd-rs) by [TheHellBox](https://github.com/TheHellBox)
   
 ## Other FOSS HMD Drivers
-- libvr[http://hg.sitedethib.com/libvr]
+- [libvr](http://hg.sitedethib.com/libvr)
 
 ## Compiling and Installing
 ### Meson
 
-With Meson, you can enable and disable drivers to compile OpenHMD with.
-
+With Meson, you can enable and disable drivers to compile OpenHMD with. <br>
 Currently, the available drivers are:
 - `rift`
 - `deepon`
@@ -63,13 +62,17 @@ Currently, the available drivers are:
 - `OPENHMD_DRIVER_XGVR`
 - `OPENHMD_DRIVER_VRTEK`
 - `OPENHMD_DRIVER_EXTERNAL`
-- `OPENHMD_DRIVER_ANDROID.`
+- `OPENHMD_DRIVER_ANDROID`
 
-These can be enabled or disabled adding `-DDRIVER_OF_CHOICE=ON` *(obviously replacing `DRIVER_OF_CHOICE` with, well, your driver of choice™)* after the `cmake` command, or by using `cmake-gui`.
+These can be enabled or disabled adding `-DDRIVER_OF_CHOICE=ON` *(obviously replacing `DRIVER_OF_CHOICE` with, well, your driver of choice™)* after the `cmake` command, or by using `cmake-gui`. <br>
+You can enable the examples by doing the same:
+
+- `OPENHMD_EXAMPLE_SIMPLE` for the commandline-based example.
+- `OPENHMD_EXAMPLE_OPENGL` for the OpenGL-based example.
 
 ```sh
 mkdir build && cd build
-cmake ..
+cmake .. [-DOPENHMD_DRIVER_OCULUS_RIFT=ON] [-DOPENHMD_DRIVER_DEEPOON=ON] [-DOPENHMD_DRIVER_PSVR=ON] [-DOPENHMD_DRIVER_HTC_VIVE=ON] [-DOPENHMD_DRIVER_NOLO=ON] [-DOPENHMD_DRIVER_WMR=ON] [-DOPENHMD_DRIVER_XGVR=ON] [-DOPENHMD_DRIVER_VRTEK=ON] [-DOPENHMD_DRIVER_EXTERNAL=ON] [-DOPENHMD_DRIVER_ANDROID=ON] [-DOPENHMD_EXAMPLE_SIMPLE=ON] [-DOPENHMD_EXAMPLE_OPENGL=ON]
 make
 sudo make install
 ```
