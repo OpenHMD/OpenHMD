@@ -7,11 +7,11 @@ Even though it doesn't require contribution any sort of from the users, it is st
 
 For a full list of supported devices, please check [our wiki.](https://github.com/OpenHMD/OpenHMD/wiki/Support-List)
 
-## Requirements
+### Requirements
 You can either use [Ninja](https://ninja-build.org) in conjunction with [Meson](https://mesonbuild.com/) or [CMake](https://cmake.org). <br>
 You'll also need a copy of [hidapi](https://github.com/signal11/hidapi/). We recommend to use our [fork](https://github.com/OpenHMD/hidapi) of hidapi.
 
-## Language bindings
+### Language bindings
 - [Go bindings](https://github.com/Apfel/OpenHMD-GO) by [Marko (Apfel)](https://github.com/Apfel)
 - [Java bindings](https://github.com/OpenHMD/OpenHMD-Java) by [Joey Ferwerda](https://github.com/TheOnlyJoey) and [Koen Mertens](https://github.com/KCMertens)
 - [.NET bindings](https://github.com/jurrien-fakkeldij/OpenHMD.NET) by [Jurrien Fakkeldij](https://github.com/jurrien-fakkeldij)
@@ -19,7 +19,7 @@ You'll also need a copy of [hidapi](https://github.com/signal11/hidapi/). We rec
 - [Python bindings](https://github.com/lubosz/python-rift) by [Lubosz Sarnecki](https://github.com/lubosz)
 - [Rust bindings](https://github.com/TheHellBox/openhmd-rs) by [TheHellBox](https://github.com/TheHellBox)
   
-## Other FOSS HMD Drivers
+### Other FOSS HMD Drivers
 - [libvr](http://hg.sitedethib.com/libvr)
 
 ## Compiling and Installing
@@ -48,7 +48,7 @@ ninja -C build
 sudo ninja -C build install
 ```
 
-### CMake:
+### CMake
 
 With CMake, you can enable and disable drivers to compile OpenHMD with.
 
@@ -112,10 +112,10 @@ A starting point might be the [CMake wiki](https://gitlab.kitware.com/cmake/comm
 #### Static linking on windows
 If you're linking against OpenHMD statically on Windows *(no matter if MinGW was used or not)*, you'll have to make sure that `OHMD_STATIC` is set before including `openhmd.h`. For GCC, this can be done by adding the compiler flag `-DOHMD_STATIC`, and with MSVC it can be done using `/DOHMD_STATIC`.
 
-## Pre-built packages
+### Pre-built packages
 A list of pre-built backages can be found on [our site](http://www.openhmd.net/index.php/download/).
 
-## Utilizing OpenHMD
+### Utilizing OpenHMD
 See the `examples` subdirectory for usage examples. The OpenGL-based example is not built by default, thus you'll need to refer to the instructions for the build system you'll use. It requires [SDL2](https://libsdl.org/), [glew](http://glew.sourceforge.net/basic.html) and a library implementing the API of [OpenGL](https://www.opengl.org/). <br>
 The package implementing the OpenGL API may vary from OS to OS, for example, on Debian/Ubuntu, it's called `libgl1-mesa-dev`.
 
