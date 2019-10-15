@@ -33,45 +33,46 @@ typedef struct {
 	hid_device* hmd_imu;
 	fusion sensor_fusion;
 	vec3f raw_accel, raw_gyro;
+	vec3f accel_bias, gyro_bias;
 	uint32_t last_ticks;
 	uint8_t last_seq;
 	hololens_sensors_packet sensor;
 
 } wmr_priv;
 
-static void vec3f_from_hololens_gyro(int16_t smp[3][32], int i, vec3f* out_vec)
+static void vec3f_from_hololens_gyro(int16_t smp[3][32], int i, const vec3f* bias, vec3f* out_vec)
 {
-	out_vec->x = (float)(smp[1][8*i+0] +
+	out_vec->x = ((float)(smp[1][8*i+0] +
 			     smp[1][8*i+1] +
 			     smp[1][8*i+2] +
 			     smp[1][8*i+3] +
 			     smp[1][8*i+4] +
 			     smp[1][8*i+5] +
 			     smp[1][8*i+6] +
-			     smp[1][8*i+7]) * 0.001f * -0.125f;
-	out_vec->y = (float)(smp[0][8*i+0] +
+			     smp[1][8*i+7]) * 0.001f * -0.125f) - bias->y * 1.125f;
+	out_vec->y = ((float)(smp[0][8*i+0] +
 			     smp[0][8*i+1] +
 			     smp[0][8*i+2] +
 			     smp[0][8*i+3] +
 			     smp[0][8*i+4] +
 			     smp[0][8*i+5] +
 			     smp[0][8*i+6] +
-			     smp[0][8*i+7]) * 0.001f * -0.125f;
-	out_vec->z = (float)(smp[2][8*i+0] +
+			     smp[0][8*i+7]) * 0.001f * -0.125f) - bias->x * 1.125f;
+	out_vec->z = ((float)(smp[2][8*i+0] +
 			     smp[2][8*i+1] +
 			     smp[2][8*i+2] +
 			     smp[2][8*i+3] +
 			     smp[2][8*i+4] +
 			     smp[2][8*i+5] +
 			     smp[2][8*i+6] +
-			     smp[2][8*i+7]) * 0.001f * -0.125f;
+			     smp[2][8*i+7]) * 0.001f * -0.125f) - bias->z * 1.125f;
 }
 
-static void vec3f_from_hololens_accel(int32_t smp[3][4], int i, vec3f* out_vec)
+static void vec3f_from_hololens_accel(int32_t smp[3][4], int i, const vec3f* bias, vec3f* out_vec)
 {
-	out_vec->x = (float)smp[1][i] * 0.001f * -1.0f;
-	out_vec->y = (float)smp[0][i] * 0.001f * -1.0f;
-	out_vec->z = (float)smp[2][i] * 0.001f * -1.0f;
+	out_vec->x = (float)smp[1][i] * 0.001f * -1.0f - bias->y;
+	out_vec->y = (float)smp[0][i] * 0.001f * -1.0f - bias->x;
+	out_vec->z = (float)smp[2][i] * 0.001f * -1.0f - bias->z;
 }
 
 static void handle_tracker_sensor_msg(wmr_priv* priv, unsigned char* buffer, int size)
@@ -94,8 +95,8 @@ static void handle_tracker_sensor_msg(wmr_priv* priv, unsigned char* buffer, int
 
 		float dt = tick_delta * TICK_LEN;
 
-		vec3f_from_hololens_gyro(s->gyro, i, &priv->raw_gyro);
-		vec3f_from_hololens_accel(s->accel, i, &priv->raw_accel);
+		vec3f_from_hololens_gyro(s->gyro, i, &priv->gyro_bias, &priv->raw_gyro);
+		vec3f_from_hololens_accel(s->accel, i, &priv->accel_bias, &priv->raw_accel);
 
 		ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 
@@ -374,6 +375,25 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			LOGE("Found display width %lli\n", returnlist[0]->int_value); //taking the first element since it does not matter if you take display 0 or 1
 			resolution_h = returnlist[0]->int_value;
 			
+			//Go through all the sensors and get the noise information
+			const nx_json* noiselist[32] = {0};
+			resetList(&noiselist); process_nxjson_obj(json, &noiselist, "BiasTemperatureModel");
+			resetList(&returnlist); process_nxjson_obj(json, &returnlist, "SensorType");
+
+			for (int i = 0; i < 3; i++) //lazy should be sizeof returnlist
+			{
+				if (strcmp(returnlist[i]->text_value, "CALIBRATION_InertialSensorType_Gyro") == 0 ) {
+					priv->gyro_bias.x = noiselist[i]->child->dbl_value; //pos 0
+					priv->gyro_bias.y = noiselist[i]->child->next->next->next->next->dbl_value; //pos 4
+					priv->gyro_bias.z = noiselist[i]->child->next->next->next->next->next->next->next->next->dbl_value; //pos 8
+				}
+				else if (strcmp(returnlist[i]->text_value, "CALIBRATION_InertialSensorType_Accelerometer") == 0 ) {
+					priv->accel_bias.x = noiselist[i]->child->dbl_value; //pos 0
+					priv->accel_bias.y = noiselist[i]->child->next->next->next->next->dbl_value; //pos 4
+					priv->accel_bias.z = noiselist[i]->child->next->next->next->next->next->next->next->next->dbl_value; //pos 8
+				}
+			}
+
 			//Left in for debugging until we confirmed most variables working
 			/*
 		 	for (int i = 0; i < 32; i++)
