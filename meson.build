@@ -62,6 +62,10 @@ if get_option('default_library') == 'shared'
 	else
 		c_args += '-fvisibility=hidden'
 	endif
+else
+	if host_machine.system() == 'windows'
+		c_args += '-DOHMD_STATIC'
+	endif
 endif
 
 _drivers = get_option('drivers')
