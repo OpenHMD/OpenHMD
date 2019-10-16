@@ -38,6 +38,7 @@ deps = [
 	dep_threads,
 ]
 
+dep_realsense2 = dependency('realsense2', required : false)
 
 #
 # Main lib
@@ -141,6 +142,14 @@ if _drivers.contains('android')
 		'src/drv_android/android.c',
 	]
 	c_args += '-DDRIVER_ANDROID'
+endif
+
+if _drivers.contains('t265')
+	sources += [
+		'src/drv_t265/t265.c',
+	]
+	c_args += '-DDRIVER_T265'
+	deps += dep_realsense2
 endif
 
 openhmd_lib = library(
