@@ -59,6 +59,10 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
 #endif
 
+#if DRIVER_T265
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_t265_drv(ctx);
+#endif
+
 #if DRIVER_EXTERNAL
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_external_drv(ctx);
 #endif
@@ -355,7 +359,7 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 		*(vec3f*)out = device->position;
 		for(int i = 0; i < 3; i++)
 			out[i] += device->position_correction.arr[i];
-		
+
 		return OHMD_S_OK;
 	}
 	case OHMD_UNIVERSAL_DISTORTION_K: {
@@ -455,7 +459,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_in
 		case OHMD_SCREEN_VERTICAL_RESOLUTION:
 			*out = device->properties.vres;
 			return OHMD_S_OK;
-		
+
 		case OHMD_CONTROL_COUNT:
 			*out = device->properties.control_count;
 			return OHMD_S_OK;
@@ -463,7 +467,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_in
 		case OHMD_CONTROLS_TYPES:
 			memcpy(out, device->properties.controls_types, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
-		
+
 		case OHMD_CONTROLS_HINTS:
 			memcpy(out, device->properties.controls_hints, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
