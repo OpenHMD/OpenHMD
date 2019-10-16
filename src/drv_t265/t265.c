@@ -29,7 +29,7 @@ struct Pose_Data
 
 typedef struct {
 	ohmd_device base;
-  struct RS_State* handle;
+  struct RS_State handle;
 } t265_priv;
 
 int check_error(rs2_error* e)
@@ -202,18 +202,18 @@ int update(struct RS_State* rs_state, struct Pose_Data* _data)
         return 1;
       }
 
-      struct rs2_pose* camera_pose;
-      rs2_pose_frame_get_pose_data(frame, camera_pose, &e);
+      struct rs2_pose camera_pose;
+      rs2_pose_frame_get_pose_data(frame, &camera_pose, &e);
       check_error(e);
 
-      _data->rotation_x = camera_pose->rotation.x;
-      _data->rotation_y = camera_pose->rotation.y;
-      _data->rotation_z = camera_pose->rotation.z;
-      _data->rotation_w = camera_pose->rotation.w;
+      _data->rotation_x = camera_pose.rotation.x;
+      _data->rotation_y = camera_pose.rotation.y;
+      _data->rotation_z = camera_pose.rotation.z;
+      _data->rotation_w = camera_pose.rotation.w;
 
-      _data->translation_x = camera_pose->translation.x;
-      _data->translation_y = camera_pose->translation.y;
-      _data->translation_z = camera_pose->translation.z;
+      _data->translation_x = camera_pose.translation.x;
+      _data->translation_y = camera_pose.translation.y;
+      _data->translation_z = camera_pose.translation.z;
 
       /*
       printf("Rotation x %.3f\n", camera_pose->rotation.x);
@@ -232,22 +232,16 @@ static void update_device(ohmd_device* device)
 {
   t265_priv* priv = (t265_priv*)device;
 
-  struct RS_State rs_state;
   struct Pose_Data pose_data;
-  start_sensor(&rs_state);
-  update(&rs_state, &pose_data);
-  //while (update(&rs_state, &pose_data) == 0)
-  //{
-    priv->base.rotation.x = pose_data.rotation_x;
-    priv->base.rotation.y = pose_data.rotation_y;
-    priv->base.rotation.z = pose_data.rotation_z;
-    priv->base.rotation.w = pose_data.rotation_w;
+  update(&priv->handle, &pose_data);
+  priv->base.rotation.x = pose_data.rotation_x;
+  priv->base.rotation.y = pose_data.rotation_y;
+  priv->base.rotation.z = pose_data.rotation_z;
+  priv->base.rotation.w = pose_data.rotation_w;
 
-    priv->base.position.x = pose_data.translation_x;
-    priv->base.position.y = pose_data.translation_y;
-    priv->base.position.z = pose_data.translation_z;
-  //}
-  close_t265(&rs_state);
+  priv->base.position.x = pose_data.translation_x;
+  priv->base.position.y = pose_data.translation_y;
+  priv->base.position.z = pose_data.translation_z;
 
   /*
   printf("Rotation x %.3f\n", priv->base.rotation.x);
@@ -268,14 +262,13 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	t265_priv* priv = (t265_priv*)device;
 
 	switch(type){
+    // HMD
     case OHMD_ROTATION_QUAT:
     *(quatf*)out = priv->base.rotation;
     break;
 
     case OHMD_POSITION_VECTOR:
-    // HMD
-    out[0] = out[1] = out[2] = 0;
-    //*(vec3f*)out = priv->base.position;
+    *(vec3f*)out = priv->base.position;
     break;
 
     case OHMD_DISTORTION_K:
@@ -298,8 +291,8 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 
 static void close_device(ohmd_device* device)
 {
-  //t265_priv* priv = (t265_priv*)device;
-  //close_t265(priv->handle);
+  t265_priv* priv = (t265_priv*)device;
+  close_t265(&priv->handle);
 	LOGD("Closing t265 device");
 	free(device);
 }
@@ -310,10 +303,10 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv)
 		return NULL;
 
-  //struct RS_State rs_state;
-  //memset(&rs_state, 0, sizeof(rs_state));
-  //priv->handle = &rs_state;
-  //start_sensor(priv->handle);
+  struct RS_State rs_state;
+  memset(&rs_state, 0, sizeof(rs_state));
+  priv->handle = rs_state;
+  start_sensor(&priv->handle);
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
