@@ -34,7 +34,7 @@ option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
 option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
-option(OPENHMD_COMMUNITY_DRIVER_T265 "General t265 driver" ON)
+option(OPENHMD_COMMUNITY_DRIVER_T265 "General t265 driver" OFF)
 
 
 option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)

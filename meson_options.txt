@@ -35,7 +35,6 @@ option(
 		'wmr',
 		'xgvr',
 		'external',
-		't265',
 	],
 )
 
