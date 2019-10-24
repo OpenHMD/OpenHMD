@@ -144,11 +144,11 @@ if _drivers.contains('android')
 	c_args += '-DDRIVER_ANDROID'
 endif
 
-if _drivers.contains('t265')
+if _drivers.contains('community-t265')
 	sources += [
 		'src/drv_t265/t265.c',
 	]
-	c_args += '-DDRIVER_T265'
+	c_args += '-DDRIVER_COMMUNITY_T265'
 	deps += dep_realsense2
 endif
 

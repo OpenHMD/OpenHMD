@@ -59,7 +59,7 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
 #endif
 
-#if DRIVER_T265
+#if DRIVER_COMMUNITY_T265
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_t265_drv(ctx);
 #endif
 
