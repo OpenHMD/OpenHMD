@@ -24,6 +24,7 @@ option(
 		'xgvr',
 		'external',
 		'android',
+		'community-t265',
 	],
 	value: [
 		'rift',
