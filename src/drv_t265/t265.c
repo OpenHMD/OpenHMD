@@ -28,7 +28,7 @@ struct Pose_Data
 };
 
 typedef struct {
-	ohmd_device base;
+  ohmd_device base;
   struct RS_State handle;
 } t265_priv;
 
