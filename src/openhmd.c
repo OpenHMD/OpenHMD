@@ -459,7 +459,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_in
 		case OHMD_SCREEN_VERTICAL_RESOLUTION:
 			*out = device->properties.vres;
 			return OHMD_S_OK;
-
+		
 		case OHMD_CONTROL_COUNT:
 			*out = device->properties.control_count;
 			return OHMD_S_OK;
