@@ -38,7 +38,7 @@ deps = [
 	dep_threads,
 ]
 
-dep_realsense2 = dependency('realsense2', required : false)
+dep_realsense2 = dependency('realsense2', required: false)
 
 #
 # Main lib

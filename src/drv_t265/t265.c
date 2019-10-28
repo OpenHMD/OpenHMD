@@ -37,8 +37,8 @@ int check_error(rs2_error* e)
   if (e)
   {
     fprintf(stderr, "rs_error was raised when calling %s(%s): \n",
-    rs2_get_failed_function(e), rs2_get_failed_args(e));
-    fprintf(stderr, "%s\n", rs2_get_error_message(e));
+            rs2_get_failed_function(e), rs2_get_failed_args(e));
+            fprintf(stderr, "%s\n", rs2_get_error_message(e));
     return 1;
   }
   return 0;
@@ -48,8 +48,6 @@ int create_context(struct RS_State* rs_state)
 {
   rs2_error* e = NULL;
 
-  //fprintf(stderr, "creating context\n");
-
   rs_state->ctx = rs2_create_context(RS2_API_VERSION, &e);
   if (check_error(e) != 0)
   {
@@ -57,8 +55,6 @@ int create_context(struct RS_State* rs_state)
     fprintf(stderr, "Failed creating rs context\n");
     return 1;
   }
-
-  //fprintf(stderr, "context created\n");
 
   return 0;
 }
@@ -107,12 +103,18 @@ int create_streams(struct RS_State* s)
   s->pipe = rs2_create_pipeline(s->ctx, &e);
   if (check_error(e) != 0)
   {
+    fprintf(stderr, "Failed creating pipeline\n")
     s->pipe = NULL;
     return 1;
   }
 
   s->config = rs2_create_config(&e);
-  check_error(e);
+  if (check_error(e) != 0)
+  {
+    fprintf(stderr, "Failed creating congfig\n")
+    s->config= NULL;
+    return 1;
+  }
 
 
   rs2_config_enable_stream(s->config, RS2_STREAM_POSE, 0, 0, 0, RS2_FORMAT_6DOF, 200, &e);
@@ -121,7 +123,6 @@ int create_streams(struct RS_State* s)
     fprintf(stderr, "Failed initting pose streaming\n");
     return 1;
   }
-  //fprintf(stderr, "Pose stream created\n");
 
   return 0;
 }
@@ -141,7 +142,6 @@ int start_stream(struct RS_State* s)
     fprintf(stderr, "Failed starting pipeline\n");
     return 1;
   }
-  //fprintf(stderr, "pipeline started\n");
 
   return 0;
 }
@@ -184,14 +184,19 @@ int update(struct RS_State* rs_state, struct Pose_Data* _data)
   }
 
   int num_of_frames = rs2_embedded_frames_count(frames, &e);
-  check_error(e);
+  if (check_error(e) != 0) {
+    fprintf(stderr, "Failed getting frames count\n");
+    return 1;
+  }
 
   int i;
   for (i = 0; i < num_of_frames; i++)
   {
     rs2_frame* frame = rs2_extract_frame(frames, i, &e);
-    check_error(e);
-
+    if (check_error(e) != 0) {
+      fprintf(stderr, "Failed extracting frame\n");
+      return 1;
+    }
     if (rs2_is_frame_extendable_to(frame, RS2_EXTENSION_POSE_FRAME, &e) == 1)
     {
       if (check_error(e) != 0)
@@ -204,8 +209,10 @@ int update(struct RS_State* rs_state, struct Pose_Data* _data)
 
       struct rs2_pose camera_pose;
       rs2_pose_frame_get_pose_data(frame, &camera_pose, &e);
-      check_error(e);
-
+      if (check_error(e) != 0) {
+        fprintf(stderr, "Failed getting pose data\n");
+        return 1;
+      }
       _data->rotation_x = camera_pose.rotation.x;
       _data->rotation_y = camera_pose.rotation.y;
       _data->rotation_z = camera_pose.rotation.z;
@@ -215,13 +222,6 @@ int update(struct RS_State* rs_state, struct Pose_Data* _data)
       _data->translation_y = camera_pose.translation.y;
       _data->translation_z = camera_pose.translation.z;
 
-      /*
-      printf("Rotation x %.3f\n", camera_pose->rotation.x);
-      printf("Rotation y %.3f\n", camera_pose->rotation.y);
-      printf("Rotation z %.3f\n", camera_pose->rotation.z);
-      printf("Rotation w %.3f\n", camera_pose->rotation.w);
-      */
-      }
       rs2_release_frame(frame);
     }
     rs2_release_frame(frames);
@@ -244,6 +244,7 @@ static void update_device(ohmd_device* device)
   priv->base.position.z = pose_data.translation_z;
 
   /*
+  Debug code
   printf("Rotation x %.3f\n", priv->base.rotation.x);
   printf("Rotation y %.3f\n", priv->base.rotation.y);
   printf("Rotation z %.3f\n", priv->base.rotation.z);
@@ -303,33 +304,33 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	if(!priv)
 		return NULL;
 
-  struct RS_State rs_state;
-  memset(&rs_state, 0, sizeof(rs_state));
-  priv->handle = rs_state;
-  start_sensor(&priv->handle);
+    struct RS_State rs_state;
+    memset(&rs_state, 0, sizeof(rs_state));
+    priv->handle = rs_state;
+    start_sensor(&priv->handle);
 
-	// Set default device properties
-	ohmd_set_default_device_properties(&priv->base.properties);
+	   // Set default device properties
+	   ohmd_set_default_device_properties(&priv->base.properties);
 
-	// Set device properties (imitates the rift values)
-	priv->base.properties.hsize = 0.149760f;
-	priv->base.properties.vsize = 0.093600f;
-	priv->base.properties.hres = 1920;
-	priv->base.properties.vres = 1080;
-	priv->base.properties.lens_sep = 0.063500f;
-	priv->base.properties.lens_vpos = 0.046800f;
-	priv->base.properties.fov = DEG_TO_RAD(125.5144f);
-	priv->base.properties.ratio = (1280.0f / 800.0f) / 2.0f;
+	    // Set device properties (imitates the rift values)
+      priv->base.properties.hsize = 0.149760f;
+      priv->base.properties.vsize = 0.093600f;
+      priv->base.properties.hres = 1920;
+      priv->base.properties.vres = 1080;
+      priv->base.properties.lens_sep = 0.063500f;
+      priv->base.properties.lens_vpos = 0.046800f;
+      priv->base.properties.fov = DEG_TO_RAD(125.5144f);
+      priv->base.properties.ratio = (1280.0f / 800.0f) / 2.0f;
 
-	// calculate projection eye projection matrices from the device properties
-	ohmd_calc_default_proj_matrices(&priv->base.properties);
+	     // calculate projection eye projection matrices from the device properties
+	     ohmd_calc_default_proj_matrices(&priv->base.properties);
 
-	// set up device callbacks
-	priv->base.update = update_device;
-	priv->base.close = close_device;
-	priv->base.getf = getf;
+	     // set up device callbacks
+       priv->base.update = update_device;
+       priv->base.close = close_device;
+       priv->base.getf = getf;
 
-	return (ohmd_device*)priv;
+       return (ohmd_device*)priv;
 }
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
@@ -339,15 +340,22 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
   rs2_error* e = NULL;
   rs2_context* ctx = rs2_create_context(RS2_API_VERSION, &e);
-  check_error(e);
+  if (check_error(e) != 0) {
+    fprintf(stderr, "Failed creating context\n");
+    return 1;
+  }
 
   rs2_device_list* device_list = rs2_query_devices(ctx, &e);
-  check_error(e);
-  //printf("device list created\n");
+  if (check_error(e) != 0) {
+    fprintf(stderr, "Failed getting devices\n");
+    return 1;
+  }
 
   int dev_count = rs2_get_device_count(device_list, &e);
-  check_error(e);
-  //printf("There are %d connected RealSense devices.\n", dev_count);
+  if (check_error(e) != 0) {
+    fprintf(stderr, "Failed getting device count\n");
+    return 1;
+  }
 
   while (id < dev_count)
   {

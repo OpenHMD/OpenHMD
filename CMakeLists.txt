@@ -36,7 +36,6 @@ option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 option(OPENHMD_COMMUNITY_DRIVER_T265 "General t265 driver" OFF)
 
-
 option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
 option(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
 
