@@ -467,7 +467,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_geti(ohmd_device* device, ohmd_in
 		case OHMD_CONTROLS_TYPES:
 			memcpy(out, device->properties.controls_types, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
-
+		
 		case OHMD_CONTROLS_HINTS:
 			memcpy(out, device->properties.controls_hints, device->properties.control_count * sizeof(int));
 			return OHMD_S_OK;
