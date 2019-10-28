@@ -103,7 +103,7 @@ int create_streams(struct RS_State* s)
   s->pipe = rs2_create_pipeline(s->ctx, &e);
   if (check_error(e) != 0)
   {
-    fprintf(stderr, "Failed creating pipeline\n")
+    fprintf(stderr, "Failed creating pipeline\n");
     s->pipe = NULL;
     return 1;
   }
@@ -111,7 +111,7 @@ int create_streams(struct RS_State* s)
   s->config = rs2_create_config(&e);
   if (check_error(e) != 0)
   {
-    fprintf(stderr, "Failed creating congfig\n")
+    fprintf(stderr, "Failed creating congfig\n");
     s->config= NULL;
     return 1;
   }
@@ -226,6 +226,7 @@ int update(struct RS_State* rs_state, struct Pose_Data* _data)
     }
     rs2_release_frame(frames);
     return 0;
+  }
 }
 
 static void update_device(ohmd_device* device)
