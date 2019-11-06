@@ -119,4 +119,4 @@ A list of pre-built backages can be found on [our site](http://www.openhmd.net/i
 See the `examples` subdirectory for usage examples. The OpenGL-based example is not built by default, thus you'll need to refer to the instructions for the build system you'll use. It requires [SDL2](https://libsdl.org/), [glew](http://glew.sourceforge.net/basic.html) and a library implementing the API of [OpenGL](https://www.opengl.org/). <br>
 The package implementing the OpenGL API may vary from OS to OS, for example, on Debian/Ubuntu, it's called `libgl1-mesa-dev`.
 
-An API reference can be generated using doxygen and is also available [here]http://openhmd.net/doxygen/0.1.0/openhmd_8h.html.
+An API reference can be generated using doxygen and is also available [here](http://openhmd.net/doxygen/0.1.0/openhmd_8h.html).
