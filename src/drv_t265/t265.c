@@ -373,7 +373,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
     //OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
 		desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
-		desc->device_class = OHMD_DEVICE_CLASS_GENERICK_TRACKER;
+		desc->device_class = OHMD_DEVICE_CLASS_GENERIC_TRACKER;
 
 		desc->id = id++;
   }
