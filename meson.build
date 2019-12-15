@@ -242,21 +242,23 @@ install_headers('include/openhmd.h', subdir: 'openhmd')
 # Unit tests
 #
 
-unittests_sources = [
-	'src/omath.c',
-	'tests/unittests/highlevel.c',
-	'tests/unittests/main.c',
-	'tests/unittests/quat.c',
-	'tests/unittests/tests.h',
-	'tests/unittests/vec.c'
-]
+if get_option('tests')
+	unittests_sources = [
+		'src/omath.c',
+		'tests/unittests/highlevel.c',
+		'tests/unittests/main.c',
+		'tests/unittests/quat.c',
+		'tests/unittests/tests.h',
+		'tests/unittests/vec.c'
+	]
 
-unittests = executable(
-	'openhmd_unittests',
-	unittests_sources,
-	include_directories: include_directories('./include', './src'),
-	link_with: [openhmd_lib],
-	dependencies: [dep_libm, dep_threads]
-)
+	unittests = executable(
+		'openhmd_unittests',
+		unittests_sources,
+		include_directories: include_directories('./include', './src'),
+		link_with: [openhmd_lib],
+		dependencies: [dep_libm, dep_threads]
+	)
 
-test('unittests', unittests)
+	test('unittests', unittests)
+endif
