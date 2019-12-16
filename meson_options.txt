@@ -49,3 +49,9 @@ option(
 	],
 	value: 'auto',
 )
+
+option(
+	'tests',
+	type: 'boolean',
+	value: true,
+)
