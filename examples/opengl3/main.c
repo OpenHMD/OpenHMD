@@ -30,6 +30,7 @@
 
 #define GL_DEBUG 0
 
+#if GL_DEBUG
 void GLAPIENTRY
 gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
                   GLsizei length, const GLchar* message, const void* userParam)
@@ -38,6 +39,7 @@ gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
 	        (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
 	        type, severity, message);
 }
+#endif
 
 float randf()
 {
@@ -236,11 +238,11 @@ int main(int argc, char** argv)
 	GLuint appshader;
 	init_gl(&gl, hmd_w, hmd_h, VAOs, &appshader);
 
-	if (GL_DEBUG) {
-		glEnable(GL_DEBUG_OUTPUT);
-		glDebugMessageCallback(gl_debug_callback, 0);
-	}
-		
+#if GL_DEBUG
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(gl_debug_callback, 0);
+#endif
+
 	int eye_w = hmd_w/2*OVERSAMPLE_SCALE;
 	int eye_h = hmd_h*OVERSAMPLE_SCALE;
 

@@ -19,9 +19,8 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #else
-#include <GL/gl.h>
-#include <GL/glext.h>
-
+#include <OpenGL/gl3.h>
+#include <OpenGL/gl3ext.h>
 static inline void glewInit(void) {}
 #endif
 
