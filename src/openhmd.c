@@ -59,6 +59,10 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_vrtek_drv(ctx);
 #endif
 
+#if DRIVER_OSVR_HDK2
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_osvr_hdk_drv(ctx);
+#endif
+
 #if DRIVER_ANDROID
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_android_drv(ctx);
 #endif

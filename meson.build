@@ -143,6 +143,15 @@ if _drivers.contains('vrtek')
 	deps += dep_hidapi
 endif
 
+if _drivers.contains('osvr-hdk2')
+	sources += [
+		'src/drv_osvr_hdk/osvr.c',
+		'src/drv_osvr_hdk/packet.c',
+	]
+	c_args += '-DDRIVER_OSVR_HDK2'
+	deps += dep_hidapi
+endif
+
 if _drivers.contains('external')
 	sources += [
 		'src/drv_external/external.c',

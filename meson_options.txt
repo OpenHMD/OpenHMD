@@ -23,6 +23,7 @@ option(
 		'wmr',
 		'xgvr',
 		'vrtek',
+		'osvr-hdk2',
 		'external',
 		'android',
 	],
@@ -35,6 +36,7 @@ option(
 		'wmr',
 		'xgvr',
 		'vrtek',
+		'osvr-hdk2',
 		'external',
 	],
 )
