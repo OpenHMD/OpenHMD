@@ -5,6 +5,11 @@ project(openhmd C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# choose glvnd over legacy gl when available
+if (POLICY CMP0072)
+	cmake_policy (SET CMP0072 NEW)
+endif(POLICY CMP0072)
+
 set(LIB_VERSION_MAJOR 0)
 set(LIB_VERSION_MINOR 1)
 set(LIB_VERSION_PATCH 0)
