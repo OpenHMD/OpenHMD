@@ -338,7 +338,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		if (cur_dev->interface_number == 4) {
 			desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD Sony PSVR Driver");
 			strcpy(desc->vendor, "Sony");
 			strcpy(desc->product, "PSVR");
 
@@ -373,6 +372,7 @@ ohmd_driver* ohmd_create_psvr_drv(ohmd_context* ctx)
 	if(!drv)
 		return NULL;
 
+	strcpy(drv->name, "OpenHMD Sony PSVR Driver");
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->destroy = destroy_driver;

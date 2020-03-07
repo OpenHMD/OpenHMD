@@ -469,7 +469,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	while (cur_dev) {
 		ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-		strcpy(desc->driver, "OpenHMD Windows Mixed Reality Driver");
 		strcpy(desc->vendor, "Microsoft");
 		strcpy(desc->product, "HoloLens Sensors");
 
@@ -502,6 +501,7 @@ ohmd_driver* ohmd_create_wmr_drv(ohmd_context* ctx)
 	if(!drv)
 		return NULL;
 
+	strcpy(drv->name, "OpenHMD Windows Mixed Reality Driver");
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->destroy = destroy_driver;

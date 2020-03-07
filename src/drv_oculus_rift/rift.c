@@ -1083,7 +1083,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 				int id = 0;
 				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-				strcpy(desc->driver, "OpenHMD Rift Driver");
 				strcpy(desc->vendor, "Oculus VR, Inc.");
 				strcpy(desc->product, rd[i].name);
 
@@ -1103,7 +1102,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 					desc = &list->devices[list->num_devices++];
 					desc->revision = rd[i].rev;
 
-					strcpy(desc->driver, "OpenHMD Rift Driver");
 					strcpy(desc->vendor, "Oculus VR, Inc.");
 					sprintf(desc->product, "%s: Right Controller", rd[i].name);
 
@@ -1122,7 +1120,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 					desc = &list->devices[list->num_devices++];
 					desc->revision = rd[i].rev;
 
-					strcpy(desc->driver, "OpenHMD Rift Driver");
 					strcpy(desc->vendor, "Oculus VR, Inc.");
 					sprintf(desc->product, "%s: Left Controller", rd[i].name);
 
@@ -1162,6 +1159,7 @@ ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx)
 
 	ohmd_toggle_ovr_service(0); //disable OVRService if running
 
+	strcpy(drv->name, "OpenHMD Rift Driver");
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->destroy = destroy_driver;

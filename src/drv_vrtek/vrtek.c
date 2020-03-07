@@ -635,7 +635,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
                         wcscmp(cur_dev->product_string, L"HID")==0) {
             ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-            strcpy(desc->driver, "OpenHMD VR-Tek Driver");
             strcpy(desc->vendor, "VR-Tek");
             strcpy(desc->product, "VR-Tek WVR");
 
@@ -664,6 +663,7 @@ ohmd_driver* ohmd_create_vrtek_drv(ohmd_context* ctx)
     if (drv == NULL)
         return NULL;
 
+    strcpy(drv->name, "OpenHMD VR-Tek Driver");
     drv->get_device_list = get_device_list;
     drv->open_device = open_device;
     drv->destroy = destroy_driver;

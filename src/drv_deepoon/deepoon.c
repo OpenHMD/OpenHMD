@@ -283,7 +283,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "Deepoon Driver");
 			strcpy(desc->vendor, "Deepoon");
 			strcpy(desc->product, "Deepoon E2");
 
@@ -313,6 +312,7 @@ ohmd_driver* ohmd_create_deepoon_drv(ohmd_context* ctx)
 	if(drv == NULL)
 		return NULL;
 
+	strcpy(drv->name, "Deepoon Driver");
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->ctx = ctx;
