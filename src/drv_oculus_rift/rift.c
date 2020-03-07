@@ -1093,7 +1093,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 				strcpy(desc->path, cur_dev->path);
 
-				desc->driver_ptr = driver;
+				desc->driver = driver;
 				desc->id = id++;
 
 				/* For CV1, publish touch controllers */
@@ -1113,7 +1113,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 						OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
 					desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
-					desc->driver_ptr = driver;
+					desc->driver = driver;
 					desc->id = id++;
 
 					// Controller 1 (left)
@@ -1131,7 +1131,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 						OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
 
 					desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
-					desc->driver_ptr = driver;
+					desc->driver = driver;
 					desc->id = id++;
 				}
 			}

@@ -116,7 +116,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 	desc->device_class = OHMD_DEVICE_CLASS_HMD;
 	desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING | OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING;
 
-	desc->driver_ptr = driver;
+	desc->driver = driver;
 }
 
 static void destroy_driver(ohmd_driver* drv)

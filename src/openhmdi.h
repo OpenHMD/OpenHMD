@@ -41,7 +41,7 @@ typedef struct {
 	int id;
 	ohmd_device_flags device_flags;
 	ohmd_device_class device_class;
-	ohmd_driver* driver_ptr;
+	ohmd_driver* driver;
 } ohmd_device_desc;
 
 typedef struct {

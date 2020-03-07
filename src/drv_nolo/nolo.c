@@ -379,7 +379,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 			desc->device_flags = OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 			desc->device_class = OHMD_DEVICE_CLASS_HMD;
 
-			desc->driver_ptr = driver;
+			desc->driver = driver;
 			desc->id = id++;
 
 			//Controller 0
@@ -397,7 +397,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 
-			desc->driver_ptr = driver;
+			desc->driver = driver;
 			desc->id = id++;
 
 			// Controller 1
@@ -415,7 +415,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 
 			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 
-			desc->driver_ptr = driver;
+			desc->driver = driver;
 			desc->id = id++;
 
 			cur_dev = cur_dev->next;

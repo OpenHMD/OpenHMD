@@ -642,7 +642,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
             desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 
             strcpy(desc->path, cur_dev->path);
-            desc->driver_ptr = driver;
+            desc->driver = driver;
         }
         cur_dev = cur_dev->next;
     }
