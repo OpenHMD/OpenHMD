@@ -312,7 +312,7 @@ ohmd_driver* ohmd_create_deepoon_drv(ohmd_context* ctx)
 	if(drv == NULL)
 		return NULL;
 
-	strcpy(drv->name, "Deepoon Driver");
+	strcpy(drv->name, "OpenHMD Deepoon Driver");
 	drv->get_device_list = get_device_list;
 	drv->open_device = open_device;
 	drv->ctx = ctx;
