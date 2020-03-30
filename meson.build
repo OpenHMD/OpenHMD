@@ -237,6 +237,11 @@ pkg.generate(
 )
 install_headers('include/openhmd.h', subdir: 'openhmd')
 
+# Declare openhmd as a dependency so it can be used
+# as a meson subproject
+openhmd_dep = declare_dependency(
+  include_directories: include_directories('./include'),
+  link_with : openhmd_lib)
 
 #
 # Unit tests
