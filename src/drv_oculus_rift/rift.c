@@ -1078,7 +1078,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		while (cur_dev) {
 			// We need to check the manufacturer because other companies (eg: VR-Tek)
 			// are reusing the Oculus DK1 USB ID for their own HMDs
-			if((wcscmp(cur_dev->manufacturer_string, L"Oculus VR, Inc.") == 0) &&
+			if(ohmd_wstring_match(cur_dev->manufacturer_string, L"Oculus VR, Inc.") &&
 			   (rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface)) {
 				int id = 0;
 				ohmd_device_desc* desc = &list->devices[list->num_devices++];

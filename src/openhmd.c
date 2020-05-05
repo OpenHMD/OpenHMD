@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <wchar.h>
 
 // Running automatic updates at 1000 Hz
 #define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
@@ -611,6 +612,13 @@ uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_
 	// integer overflow.
 	return ticks / srcTicksPerSecond * dstTicksPerSecond +
 		ticks % srcTicksPerSecond * dstTicksPerSecond / srcTicksPerSecond;
+}
+
+int ohmd_wstring_match(const wchar_t *a, const wchar_t *b)
+{
+	if(!a || !b)
+		return 0;
+	return wcscmp(a, b) == 0;
 }
 
 void ohmd_get_version(int* out_major, int* out_minor, int* out_patch)
