@@ -1,4 +1,4 @@
 [wrap-git]
 directory = hidapi
 url = https://github.com/OpenHMD/hidapi
-revision = b245d332914021c420001292ddea1769eff17f6d
+revision = f19cb5e6ec30882b1367058e73a413b0b45636a2
