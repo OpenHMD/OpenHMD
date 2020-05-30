@@ -31,6 +31,7 @@ set(openhmd_source_files
 )
 
 option(OPENHMD_DRIVER_OCULUS_RIFT "Oculus Rift DK1 and DK2" ON)
+option(OPENHMD_DRIVER_OCULUS_RIFT_S "Oculus Rift S" ON)
 option(OPENHMD_DRIVER_DEEPOON "Deepoon E2" ON)
 option(OPENHMD_DRIVER_WMR "Windows Mixed Reality" ON)
 option(OPENHMD_DRIVER_PSVR "Sony PSVR" ON)
@@ -57,6 +58,20 @@ if(OPENHMD_DRIVER_OCULUS_RIFT)
 	include_directories(${HIDAPI_INCLUDE_DIRS})
 	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
 endif(OPENHMD_DRIVER_OCULUS_RIFT)
+
+if(OPENHMD_DRIVER_OCULUS_RIFT_S)
+	set(openhmd_source_files ${openhmd_source_files}
+  ${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s-firmware.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s-protocol.c
+	${CMAKE_CURRENT_LIST_DIR}/src/ext_deps/nxjson.c
+	)
+  add_definitions(-DDRIVER_OCULUS_RIFT_S)
+
+	find_package(HIDAPI REQUIRED)
+	include_directories(${HIDAPI_INCLUDE_DIRS})
+	set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+endif(OPENHMD_DRIVER_OCULUS_RIFT_S)
 
 if(OPENHMD_DRIVER_DEEPOON)
 	set(openhmd_source_files ${openhmd_source_files}

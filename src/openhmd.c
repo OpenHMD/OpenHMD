@@ -31,6 +31,10 @@ OHMD_APIENTRYDLL ohmd_context* OHMD_APIENTRY ohmd_ctx_create(void)
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_drv(ctx);
 #endif
 
+#if DRIVER_OCULUS_RIFT_S
+	ctx->drivers[ctx->num_drivers++] = ohmd_create_oculus_rift_s_drv(ctx);
+#endif
+
 #if DRIVER_DEEPOON
 	ctx->drivers[ctx->num_drivers++] = ohmd_create_deepoon_drv(ctx);
 #endif

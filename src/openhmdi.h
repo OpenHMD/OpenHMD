@@ -147,6 +147,7 @@ void ohmd_set_universal_aberration_k(ohmd_device_properties* props, float r, flo
 // drivers
 ohmd_driver* ohmd_create_dummy_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_oculus_rift_drv(ohmd_context* ctx);
+ohmd_driver* ohmd_create_oculus_rift_s_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_deepoon_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_htc_vive_drv(ohmd_context* ctx);
 ohmd_driver* ohmd_create_wmr_drv(ohmd_context* ctx);
