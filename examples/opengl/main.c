@@ -253,6 +253,7 @@ int main(int argc, char** argv)
 						printf("lens separation: %04f\n", sep);
 						printf("IPD: %0.4f\n", ipd);
 						printf("warp_scale: %0.4f\r\n", warp_scale);
+						printf("warp_adj: %0.4f => Actual warp_scale = %0.4f\r\n", warp_adj, warp_adj * warp_scale);
 						printf("distortion coeffs: [%0.4f, %0.4f, %0.4f, %0.4f]\n", distortion_coeffs[0], distortion_coeffs[1], distortion_coeffs[2], distortion_coeffs[3]);
 						printf("aberration coeffs: [%0.4f, %0.4f, %0.4f]\n", aberr_scale[0], aberr_scale[1], aberr_scale[2]);
 						printf("left_lens_center: [%0.4f, %0.4f]\n", left_lens_center[0], left_lens_center[1]);
