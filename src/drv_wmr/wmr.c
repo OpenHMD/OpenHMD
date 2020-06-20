@@ -14,6 +14,10 @@
 #define MICROSOFT_VID        0x045e
 #define HOLOLENS_SENSORS_PID 0x0659
 
+
+#define REVERB_VID           0x03f0
+#define REVERB_PID           0x0c6a
+ 
 #include <string.h>
 #include <wchar.h>
 #include <hidapi.h>
@@ -329,11 +333,25 @@ void resetList(const nx_json* (*list)[32])
 	memset(list, 0, sizeof(*list));
 }
 
+void init_reverb() {
+    LOGI("Initializing Reverb.");
+    hid_device* hid = hid_open(REVERB_VID, REVERB_PID, NULL);
+    unsigned char cmd[64] = { 0x50, 0x01 };
+    for (int i = 0; i<4; i++) {
+        hid_write(hid, cmd, sizeof(cmd));
+        unsigned char data[64] = { 0x50 };
+        hid_get_feature_report(hid, data, sizeof(data));
+    }
+    unsigned char cmd_2[64] = { 0x04, 0x01 };
+    hid_write(hid, cmd_2, sizeof(cmd_2));
+}
+
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 {
 	wmr_priv* priv = ohmd_alloc(driver->ctx, sizeof(wmr_priv));
 	unsigned char *config;
 	bool samsung = false;
+	bool reverb = false;
 
 	if(!priv)
 		return NULL;
@@ -359,6 +377,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			    "Samsung Windows Mixed Reality 800ZAA", 64) == 0) {
 			samsung = true;
 		}
+		if (strncmp(hdr->name,
+			    "HP Reverb VR Headset VR1000-2xxx", 64) == 0) {
+                        reverb = true;
+		}
+
 
 		char *json_data = (char*)config + hdr->json_start + sizeof(uint16_t);
 		const nx_json* json = nx_json_parse(json_data, 0);
@@ -417,6 +440,11 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	// Set default device properties
 	ohmd_set_default_device_properties(&priv->base.properties);
+
+        if (reverb) {
+            LOGI("Detected HP Reverb");
+            init_reverb();
+        }
 
 	// Set device properties
 	if (samsung) {
