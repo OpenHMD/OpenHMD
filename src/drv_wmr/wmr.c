@@ -338,12 +338,13 @@ void init_reverb() {
     hid_device* hid = hid_open(REVERB_VID, REVERB_PID, NULL);
     unsigned char cmd[64] = { 0x50, 0x01 };
     for (int i = 0; i<4; i++) {
-        hid_write(hid, cmd, sizeof(cmd));
+        hid_send_feature_report(hid, cmd, sizeof(cmd));
         unsigned char data[64] = { 0x50 };
         hid_get_feature_report(hid, data, sizeof(data));
     }
     unsigned char cmd_2[64] = { 0x04, 0x01 };
-    hid_write(hid, cmd_2, sizeof(cmd_2));
+    hid_send_feature_report(hid, cmd_2, sizeof(cmd_2));
+    hid_close(hid);
 }
 
 static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
