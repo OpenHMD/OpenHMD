@@ -42,6 +42,13 @@ typedef enum {
 	RIFT_S_CTRL_IMU = 0x91
 } rift_s_controller_block_id_t;
 
+typedef enum {
+    RIFT_S_DEVICE_TYPE_UNKNOWN = 0,
+    RIFT_S_DEVICE_LEFT_CONTROLLER = 0x13001101,
+    RIFT_S_DEVICE_RIGHT_CONTROLLER = 0x13011101,
+} rift_s_device_type;
+
+#pragma pack(push,1)
 typedef struct {
 	uint8_t id;
 
@@ -50,26 +57,26 @@ typedef struct {
 
 	int16_t accel[3];
 	int16_t gyro[3];
-}	__attribute__((aligned(1), packed)) rift_s_controller_imu_block_t;
+}	rift_s_controller_imu_block_t;
 
 typedef struct {
 	/* 0x08, 0x0c, 0x0d or 0x0e block */
 	uint8_t id;
 
 	uint8_t val;
-}	__attribute__((aligned(1), packed)) rift_s_controller_maskbyte_block_t;
+}	rift_s_controller_maskbyte_block_t;
 
 typedef struct {
 	/* 0x1b trigger/grip block */
 	uint8_t id;
 	uint8_t vals[3];
-}	__attribute__((aligned(1), packed)) rift_s_controller_triggrip_block_t;
+}	rift_s_controller_triggrip_block_t;
 
 typedef struct {
 	/* 0x22 joystick axes block */
 	uint8_t id;
 	uint32_t val;
-}	__attribute__((aligned(1), packed)) rift_s_controller_joystick_block_t;
+}	rift_s_controller_joystick_block_t;
 
 typedef struct {
 	/* 0x27 - capsense block */
@@ -79,11 +86,11 @@ typedef struct {
 	uint8_t b_y;
 	uint8_t joystick;
 	uint8_t trigger;
-}	__attribute__((aligned(1), packed)) rift_s_controller_capsense_block_t;
+}	rift_s_controller_capsense_block_t;
 
 typedef struct {
 	uint8_t data[19];
-}	__attribute__((aligned(1), packed)) rift_s_controller_raw_block_t;
+}	rift_s_controller_raw_block_t;
 
 typedef union {
 	uint8_t block_id;
@@ -93,7 +100,8 @@ typedef union {
 	rift_s_controller_joystick_block_t joystick;
 	rift_s_controller_capsense_block_t capsense;
 	rift_s_controller_raw_block_t raw;
-}	__attribute__((aligned(1), packed)) rift_s_controller_info_block_t;
+}	rift_s_controller_info_block_t;
+#pragma pack(pop)
 
 typedef struct {
 	uint8_t id;
@@ -118,13 +126,14 @@ typedef struct {
 	uint8_t extra_bytes[48];
 } rift_s_controller_report_t;
 
+#pragma pack(push,1)
 typedef struct {
 	uint8_t marker;
 
 	int16_t accel[3];
 	int16_t gyro[3];
 	int16_t temperature;
-} __attribute__((aligned(1), packed)) rift_s_hmd_imu_sample_t;
+} rift_s_hmd_imu_sample_t;
 
 typedef struct {
 	uint8_t id;
@@ -143,7 +152,7 @@ typedef struct {
 	int16_t unknown_zero1;
 	int16_t frame_id;
 	int16_t unknown_zero2;
-} __attribute__((aligned(1), packed)) rift_s_hmd_report_t;
+} rift_s_hmd_report_t;
 
 /* Read using report 6 */
 typedef struct {
@@ -153,7 +162,7 @@ typedef struct {
 	uint16_t unknown1;
 	uint8_t refresh_rate;
 	uint8_t unknown2[14];
-} __attribute__((aligned(1), packed)) rift_s_device_info_t;
+} rift_s_device_info_t;
 
 /* Read using report 9 */
 typedef struct {
@@ -163,7 +172,7 @@ typedef struct {
 		float accel_scale; /* Accel = reading * g / accel_scale */
 		float temperature_scale; /* Temperature = reading / scale + offset */
 		float temperature_offset;
-} __attribute__((aligned(1), packed)) rift_s_imu_config_t;
+} rift_s_imu_config_t;
 
 /* Packet read from endpoint 11 (0x0b) */
 typedef struct {
@@ -171,26 +180,21 @@ typedef struct {
     uint8_t seqnum;
     uint8_t busy_flag;
     uint8_t response_bytes[197];
-} __attribute__((aligned(1), packed)) rift_s_hmd_radio_response_t;
+} rift_s_hmd_radio_response_t;
 
 /* Struct for sending radio commands to 0x12 / 0x13 */
 typedef struct {
     uint8_t cmd;
     uint64_t device_id;
     uint8_t cmd_bytes[52];
-} __attribute__((aligned(1), packed)) rift_s_hmd_radio_command_t;
-
-typedef enum {
-    RIFT_S_DEVICE_TYPE_UNKNOWN = 0,
-    RIFT_S_DEVICE_LEFT_CONTROLLER = 0x13001101,
-    RIFT_S_DEVICE_RIGHT_CONTROLLER = 0x13011101,
-} rift_s_device_type;
+} rift_s_hmd_radio_command_t;
 
 typedef struct {
 	uint64_t device_id;
 	uint32_t device_type;
 	uint64_t empty[2];
-} __attribute__((aligned(1), packed)) rift_s_device_type_record_t;
+} rift_s_device_type_record_t;
+#pragma pack(pop)
 
 /* The maximum number that can fit in a 200 byte report */
 #define DEVICES_LIST_MAX_DEVICES 7
