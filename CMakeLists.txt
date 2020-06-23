@@ -62,8 +62,10 @@ endif(OPENHMD_DRIVER_OCULUS_RIFT)
 if(OPENHMD_DRIVER_OCULUS_RIFT_S)
 	set(openhmd_source_files ${openhmd_source_files}
   ${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s-controller.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s-firmware.c
 	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s-protocol.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_oculus_rift_s/rift-s-radio.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ext_deps/nxjson.c
 	)
   add_definitions(-DDRIVER_OCULUS_RIFT_S)
