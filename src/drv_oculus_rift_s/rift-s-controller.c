@@ -158,7 +158,7 @@ handle_imu_update (rift_s_controller_state *ctrl, uint32_t imu_timestamp, const 
 #endif
 }
 
-static void
+static bool
 update_controller_state (rift_s_controller_state *ctrl, rift_s_controller_report_t *report)
 {
 #if DUMP_CONTROLLER_STATE
@@ -220,14 +220,21 @@ update_controller_state (rift_s_controller_state *ctrl, rift_s_controller_report
 				break;
 			}
 			default:
-				LOGW ("Invalid controller info block with ID %02x. Please report it.\n", info->block_id);
-				break;
+				LOGW ("Invalid controller info block with ID %02x from device %08" PRIx64 ". Please report it.\n",
+					info->block_id, ctrl->device_id);
+				return false;
 		}
 	}
 
 	if (report->extra_bytes_len > 0) {
-		assert (report->extra_bytes_len <= sizeof (ctrl->extra_bytes));
-		memcpy (ctrl->extra_bytes, report->extra_bytes, report->extra_bytes_len);
+		if (report->extra_bytes_len <= sizeof (ctrl->extra_bytes))
+			memcpy (ctrl->extra_bytes, report->extra_bytes, report->extra_bytes_len);
+		else {
+			LOGW("Controller report from %16" PRIx64" had too many extra bytes - %u (max %u)\n",
+				ctrl->device_id, report->extra_bytes_len, (unsigned int)(sizeof(ctrl->extra_bytes)));
+			return false;
+		}
+
 	}
 	ctrl->extra_bytes_len = report->extra_bytes_len;
 
@@ -263,6 +270,8 @@ update_controller_state (rift_s_controller_state *ctrl, rift_s_controller_report
 		}
 	}
 	ctrl->log_flags = report->flags;
+
+	return true;
 }
 
 #define READ_LE16(b) (b)[0]| ((b)[1]) << 8
@@ -344,6 +353,7 @@ rift_s_handle_controller_report (rift_s_hmd_t *hmd, hid_device *hid, const unsig
 
 	if (!rift_s_parse_controller_report (&report, buf, size)) {
 		rift_s_hexdump_buffer ("Invalid Controller Report", buf, size);
+		return;
 	}
 
 	if (report.device_id == 0x00) {
@@ -383,5 +393,6 @@ rift_s_handle_controller_report (rift_s_hmd_t *hmd, hid_device *hid, const unsig
 	if (ctrl->device_type == 0x00)
 		update_device_types (hmd, hid);
 
-	update_controller_state (ctrl, &report);
+	if (!update_controller_state (ctrl, &report))
+		rift_s_hexdump_buffer ("Invalid Controller Report Content", buf, size);
 }

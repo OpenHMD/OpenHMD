@@ -47,8 +47,10 @@ rift_s_parse_controller_report (rift_s_controller_report_t *report, const unsign
 	if (buf[0] != 0x67)
 		return false;
 
-	if (size != 62)
+	if (size < 62) {
+		LOGW("Controller report with size %d - please report it", size);
 		return false;
+	}
 
 	report->id = buf[0];
 	report->device_id = *(uint64_t *)(buf + 1);
