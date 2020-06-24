@@ -4,10 +4,12 @@
  *
  * OpenHMD - Free and Open Source API and drivers for immersive technology.
  */
+#define __STDC_FORMAT_MACROS
 
 #include <hidapi.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "rift-s.h"
 #include "rift-s-hmd.h"
@@ -46,7 +48,7 @@ update_device_types (rift_s_hmd_t *hmd, hid_device *hid) {
 			}
 		}
 		if (c == hmd->num_active_controllers) {
-			LOGW("Got a device type record for an unknown device 0x%16lx\n", dev->device_id);
+			LOGW("Got a device type record for an unknown device 0x%16" PRIx64 "\n", dev->device_id);
 		}
 	}
 
@@ -294,7 +296,7 @@ ctrl_config_cb (bool success, uint8_t *response_bytes, int response_bytes_len, r
 	}
 	response_bytes += 5;
 
-	LOGI ("Found new controller 0x%16lx type %08x\n", ctrl->device_id, ctrl->device_type);
+	LOGI ("Found new controller 0x%16" PRIx64 " type %08x\n", ctrl->device_id, ctrl->device_type);
 
 	ctrl->config.accel_limit = READ_LE16(response_bytes + 0);
 	ctrl->config.gyro_limit = READ_LE16(response_bytes + 2);
@@ -320,7 +322,7 @@ ctrl_json_cb (bool success, uint8_t *response_bytes, int response_bytes_len, rif
 		ctrl->have_calibration = true;
 	}
 	else {
-		LOGE ("Failed to parse controller configuration for controller 0x%16lx\n", ctrl->device_id);
+		LOGE ("Failed to parse controller configuration for controller 0x%16" PRIx64 "\n", ctrl->device_id);
 	}
 }
 
@@ -361,7 +363,7 @@ rift_s_handle_controller_report (rift_s_hmd_t *hmd, hid_device *hid, const unsig
 
 	if (ctrl == NULL) {
 		if (hmd->num_active_controllers == MAX_CONTROLLERS) {
-			LOGE ("Too many controllers. Can't add %08lx\n", report.device_id);
+			LOGE ("Too many controllers. Can't add %08" PRIx64 "\n", report.device_id);
 			return;
 		}
 

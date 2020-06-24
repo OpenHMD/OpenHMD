@@ -264,8 +264,8 @@ int rift_s_read_firmware_block (hid_device *dev, uint8_t block_id,
 
 	if (total_read > 0) {
 		if (total_read < block_len) {
-			LOGE ("Short FW read - only read %lu bytes of %u",
-				 total_read, block_len);
+			LOGE ("Short FW read - only read %u bytes of %u",
+				 (unsigned int) total_read, block_len);
 			free(outbuf);
 			return -1;
 		}

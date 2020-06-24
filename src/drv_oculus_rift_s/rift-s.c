@@ -308,10 +308,10 @@ static int getf_touch_controller(ohmd_device *device, ohmd_float_value type, flo
 	case OHMD_DISTORTION_K:
 		return -1;
 	case OHMD_CONTROLS_STATE:
-		out[0] = (ctrl->buttons & RIFT_S_BUTTON_A) != 0;
-		out[1] = (ctrl->buttons & RIFT_S_BUTTON_B) != 0;
-		out[2] = (ctrl->buttons & RIFT_S_BUTTON_OCULUS) != 0;
-		out[3] = (ctrl->buttons & RIFT_S_BUTTON_STICK) != 0;
+		out[0] = (ctrl->buttons & RIFT_S_BUTTON_A) != 0 ? 1.0 : 0.0;
+		out[1] = (ctrl->buttons & RIFT_S_BUTTON_B) != 0 ? 1.0 : 0.0;
+		out[2] = (ctrl->buttons & RIFT_S_BUTTON_OCULUS) != 0 ? 1.0 : 0.0;
+		out[3] = (ctrl->buttons & RIFT_S_BUTTON_STICK) != 0 ? 1.0 : 0.0;
 
 		out[4] = (float)(ctrl->trigger) / 65535.0;
 		out[5] = (float)(ctrl->grip) / 65535.0;
@@ -470,8 +470,8 @@ static rift_s_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	/* FIXME: Incorrection distortion taken from the Rift CV1 for now */
 #if 1
-  ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 0.098, .324, -0.241, 0.819);
-	ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.9952420, 1.0, 1.0008074);
+  ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 0.098f, .324f, -0.241f, 0.819f);
+	ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.9952420f, 1.0f, 1.0008074f);
 #else
   /* First pass at manual calibration */
 	double scale = 1.31;
