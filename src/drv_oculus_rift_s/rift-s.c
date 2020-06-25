@@ -313,8 +313,8 @@ static int getf_touch_controller(ohmd_device *device, ohmd_float_value type, flo
 		out[2] = (ctrl->buttons & RIFT_S_BUTTON_OCULUS) != 0 ? 1.0 : 0.0;
 		out[3] = (ctrl->buttons & RIFT_S_BUTTON_STICK) != 0 ? 1.0 : 0.0;
 
-		out[4] = (float)(ctrl->trigger) / 65535.0;
-		out[5] = (float)(ctrl->grip) / 65535.0;
+		out[4] = 1.0 - (float)(ctrl->trigger) / 4096.0;
+		out[5] = 1.0 - (float)(ctrl->grip) / 4096.0;
 		out[6] = (float)(ctrl->joystick_x) / 32768.0; /* FIXME: Scale this properly */
 		out[7] = (float)(ctrl->joystick_y) / 32768.0; /* FIXME: Scale this properly */
 		break;
@@ -375,7 +375,7 @@ static void init_touch_device(rift_s_controller_device *touch, int id)
 
 	ohmd_dev->properties.control_count = 8;
 
-	if (id == 0) {
+	if (id == 1) { // Right controller
 		ohmd_dev->properties.controls_hints[0] = OHMD_BUTTON_A;
 		ohmd_dev->properties.controls_hints[1] = OHMD_BUTTON_B;
 		ohmd_dev->properties.controls_hints[2] = OHMD_HOME; // Oculus button
