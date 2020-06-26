@@ -158,12 +158,12 @@ static void compile_shader_src(GLuint shader, const char* src)
 
 GLuint compile_shader(const char* vertex, const char* fragment)
 {
-	// Create the handels
+	// Create the handles
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint programShader = glCreateProgram();
 
-	// Attach the shaders to a program handel.
+	// Attach the shaders to a program handle.
 	glAttachShader(programShader, vertexShader);
 	glAttachShader(programShader, fragmentShader);
 
