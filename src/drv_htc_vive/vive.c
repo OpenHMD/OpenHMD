@@ -56,9 +56,9 @@ typedef struct {
 
 } vive_priv;
 
-void vec3f_from_vive_vec_accel(const vive_imu_config* config,
-                               const int16_t* smp,
-                               vec3f* out)
+static void vec3f_from_vive_vec_accel(const vive_imu_config* config,
+                                      const int16_t* smp,
+                                      vec3f* out)
 {
 	float range = config->acc_range / 32768.0f;
 	out->x = range * config->acc_scale.x * (float) smp[0] - config->acc_bias.x;
@@ -66,9 +66,9 @@ void vec3f_from_vive_vec_accel(const vive_imu_config* config,
 	out->z = range * config->acc_scale.z * (float) smp[2] - config->acc_bias.z;
 }
 
-void vec3f_from_vive_vec_gyro(const vive_imu_config* config,
-                              const int16_t* smp,
-                              vec3f* out)
+static void vec3f_from_vive_vec_gyro(const vive_imu_config* config,
+                                     const int16_t* smp,
+                                     vec3f* out)
 {
 	float range = config->gyro_range / 32768.0f;
 	out->x = range * config->gyro_scale.x * (float)smp[0] - config->gyro_bias.x;
@@ -92,8 +92,8 @@ static bool process_error(vive_priv* priv)
 	return false;
 }
 
-vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt,
-                                         int last_seq)
+static vive_headset_imu_sample* get_next_sample(vive_headset_imu_packet* pkt,
+                                                int last_seq)
 {
 	int diff[3];
 
@@ -336,7 +336,7 @@ static hid_device* open_device_idx(int manufacturer, int product, int iface,
 	return ret;
 }
 
-int vive_read_firmware(hid_device* device)
+static int vive_read_firmware(hid_device* device)
 {
 	vive_firmware_version_packet packet = {
 		.id = VIVE_FIRMWARE_VERSION_PACKET_ID,
@@ -366,7 +366,7 @@ int vive_read_firmware(hid_device* device)
 	return 0;
 }
 
-int vive_read_config(vive_priv* priv)
+static int vive_read_config(vive_priv* priv)
 {
 	vive_config_start_packet start_packet = {
 		.id = VIVE_CONFIG_START_PACKET_ID,
@@ -415,7 +415,7 @@ int vive_read_config(vive_priv* priv)
 
 #define OHMD_GRAVITY_EARTH 9.80665 // m/s²
 
-int vive_get_range_packet(vive_priv* priv)
+static int vive_get_range_packet(vive_priv* priv)
 {
 	int ret;
 
