@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 		//ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
 		//ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
 
-		// get rotation and postition
+		// get rotation and position
 		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
 		print_infof(hmd, "position vec: ", 3, OHMD_POSITION_VECTOR);
 
