@@ -392,7 +392,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_getf(ohmd_device* device, ohmd_fl
 	return ret;
 }
 
-int ohmd_device_setf_unp(ohmd_device* device, ohmd_float_value type, const float* in)
+static int ohmd_device_setf_unp(ohmd_device* device, ohmd_float_value type, const float* in)
 {
 	switch(type){
 	case OHMD_EYE_IPD:
@@ -490,7 +490,7 @@ OHMD_APIENTRYDLL int OHMD_APIENTRY ohmd_device_seti(ohmd_device* device, ohmd_in
 }
 
 
-int ohmd_device_set_data_unp(ohmd_device* device, ohmd_data_value type, const void* in)
+static int ohmd_device_set_data_unp(ohmd_device* device, ohmd_data_value type, const void* in)
 {
     switch(type){
     case OHMD_DRIVER_DATA:
