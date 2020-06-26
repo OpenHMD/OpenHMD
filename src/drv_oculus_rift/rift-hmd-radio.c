@@ -138,7 +138,7 @@ static int rift_touch_parse_calibration(char *json,
 	int version_number = -1;
 	unsigned int i;
 
-	nxj = nx_json_parse (json, 0);
+	nxj = nx_json_parse (json, NULL);
 	if (nxj == NULL)
 		return -1;
 
