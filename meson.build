@@ -79,6 +79,20 @@ if _drivers.contains('rift')
 	deps += dep_hidapi
 endif
 
+_drivers = get_option('drivers')
+if _drivers.contains('rift-s')
+	sources += [
+		'src/drv_oculus_rift_s/rift-s.c',
+		'src/drv_oculus_rift_s/rift-s-controller.c',
+		'src/drv_oculus_rift_s/rift-s-protocol.c',
+		'src/drv_oculus_rift_s/rift-s-firmware.c',
+		'src/drv_oculus_rift_s/rift-s-radio.c',
+		'src/ext_deps/nxjson.c',
+	]
+	c_args += '-DDRIVER_OCULUS_RIFT_S'
+	deps += dep_hidapi
+endif
+
 if _drivers.contains('deepoon')
 	sources += [
 		'src/drv_deepoon/deepoon.c',

@@ -5,7 +5,8 @@
  */
 
 /* Hid helper. */
-
+#ifndef OPENHMD_HID_H
+#define OPENHMD_HID_H
 
 static inline char* _hid_to_unix_path(char* path)
 {
@@ -21,3 +22,5 @@ static inline char* _hid_to_unix_path(char* path)
 		(int)strtol(dev, NULL, 16));
 	return result;
 }
+
+#endif

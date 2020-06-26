@@ -16,6 +16,7 @@ option(
 	type: 'array',
 	choices: [
 		'rift',
+		'rift-s',
 		'deepoon',
 		'psvr',
 		'vive',
@@ -28,6 +29,7 @@ option(
 	],
 	value: [
 		'rift',
+		'rift-s',
 		'deepoon',
 		'psvr',
 		'vive',
