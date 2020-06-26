@@ -627,7 +627,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 			LOGE("Unknown VIVE revision.\n");
 	}
 
-	//TODO: Confirm exact mesurements. Get for VIVE Pro.
+	//TODO: Confirm exact measurements. Get for VIVE Pro.
 	priv->base.properties.hsize = 0.122822f;
 	priv->base.properties.vsize = 0.068234f;
 
