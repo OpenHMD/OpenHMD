@@ -107,7 +107,6 @@ static void update_device(ohmd_device* device)
 {
 	wmr_priv* priv = (wmr_priv*)device;
 
-	int size = 0;
 	unsigned char buffer[FEATURE_BUFFER_SIZE];
 
 	while(true){
@@ -125,10 +124,6 @@ static void update_device(ohmd_device* device)
 		}else if(buffer[0] != HOLOLENS_IRQ_DEBUG){
 			LOGE("unknown message type: %u", buffer[0]);
 		}
-	}
-
-	if(size < 0){
-		LOGE("error reading from device");
 	}
 }
 
