@@ -22,66 +22,6 @@
 #define WRITE16(_val) WRITE8((_val) & 0xff); WRITE8(((_val) >> 8) & 0xff);
 #define WRITE32(_val) WRITE16((_val) & 0xffff) *buffer; WRITE16(((_val) >> 16) & 0xffff);
 
-bool dp_decodesensor_range(pkt_sensor_range* range, const unsigned char* buffer, int size)
-{
-	if(!(size == 8 || size == 9)){
-		LOGE("invalid packet size (expected 8 or 9 but got %d)", size);
-		return false;
-	}
-
-	SKIP_CMD;
-	range->command_id = READ16;
-	range->accel_scale = READ8;
-	range->gyro_scale = READ16;
-	range->mag_scale = READ16;
-
-	return true;
-}
-
-bool dp_decodesensor_display_info(pkt_sensor_display_info* info, const unsigned char* buffer, int size)
-{
-	if(!(size == 56 || size == 57)){
-		LOGE("invalid packet size (expected 56 or 57 but got %d)", size);
-		//return false;
-	}
-
-	SKIP_CMD;
-	info->command_id = READ16;
-	info->distortion_type = READ8;
-	info->h_resolution = READ16;
-	info->v_resolution = READ16;
-	info->h_screen_size = READFIXED;
-	info->v_screen_size = READFIXED;
-	info->v_center = READFIXED;
-	info->lens_separation = READFIXED;
-	info->eye_to_screen_distance[0] = READFIXED;
-	info->eye_to_screen_distance[1] = READFIXED;
-
-	info->distortion_type_opts = 0;
-
-	for(int i = 0; i < 6; i++){
-		info->distortion_k[i] = READFLOAT;
-	}
-
-	return true;
-}
-
-bool dp_decodesensor_config(pkt_sensor_config* config, const unsigned char* buffer, int size)
-{
-	if(!(size == 7 || size == 8)){
-		LOGE("invalid packet size (expected 7 or 8 but got %d)", size);
-		return false;
-	}
-
-	SKIP_CMD;
-	config->command_id = READ16;
-	config->flags = READ8;
-	config->packet_interval = READ8;
-	config->keep_alive_interval = READ16;
-
-	return true;
-}
-
 static void dp_decodesample(const unsigned char* buffer, int32_t* smp)
 {
 	/*
