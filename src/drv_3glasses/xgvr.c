@@ -88,11 +88,6 @@ static int _get_feature_report(xgvr_priv* priv, unsigned char report_id, unsigne
     return hid_get_feature_report(priv->hid_handle, buf, FEATURE_BUFFER_SIZE);
 }
 
-static int _send_feature_report(xgvr_priv* priv, const unsigned char *data, size_t length)
-{
-    return hid_send_feature_report(priv->hid_handle, data, length);
-}
-
 static void _priv_update_firmware_version(xgvr_priv* priv)
 {
     unsigned char buf[FEATURE_BUFFER_SIZE];
