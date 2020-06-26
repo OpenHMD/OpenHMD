@@ -42,7 +42,7 @@ typedef struct {
     char *desc;
     int sku;
 } xgvr_platform_sku_t;
-xgvr_platform_sku_t platform_sku[] = {
+static const xgvr_platform_sku_t platform_sku[] = {
     {
         0x2b1c, 0x0200, "3Glasses-D3V1", PLATFORM_SKU_D3V1_M41V2,
     },
