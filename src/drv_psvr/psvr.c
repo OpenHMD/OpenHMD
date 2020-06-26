@@ -39,14 +39,14 @@ typedef struct {
 
 } psvr_priv;
 
-void accel_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
+static void accel_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[1] *  (9.81 / 16384);
 	out_vec->y = (float)smp[0] *  (9.81 / 16384);
 	out_vec->z = (float)smp[2] * -(9.81 / 16384);
 }
 
-void gyro_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
+static void gyro_from_psvr_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[1] * 0.00105f;
 	out_vec->y = (float)smp[0] * 0.00105f;
