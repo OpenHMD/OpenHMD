@@ -284,7 +284,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	priv->base.properties.lens_sep = 0.0630999878f;
 	priv->base.properties.lens_vpos = 0.0394899882f;
 
-	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact mesurements
+	priv->base.properties.fov = DEG_TO_RAD(103.57f); //TODO: Confirm exact measurements
 	priv->base.properties.ratio = (1920.0f / 1080.0f) / 2.0f;
 
 	priv->base.properties.control_count = 3;

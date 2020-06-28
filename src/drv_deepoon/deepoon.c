@@ -72,7 +72,7 @@ static void set_coordinate_frame(rift_priv* priv, rift_coordinate_frame coordfra
 	}
 
 	// read the state again, set the hw_coordinate_frame to match what
-	// the hardware actually is set to just incase it doesn't stick.
+	// the hardware actually is set to, just in case it doesn't stick.
 	size = get_feature_report(priv, RIFT_CMD_SENSOR_CONFIG, buf);
 	if(size <= 0){
 		LOGW("could not set coordinate frame");
