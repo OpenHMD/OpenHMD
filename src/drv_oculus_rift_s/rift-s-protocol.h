@@ -20,7 +20,7 @@
 #define RIFT_S_BUTTON_STICK 0x04
 #define RIFT_S_BUTTON_OCULUS 0x08
 
-#define RIFT_S_BUTTON_UNKNWON 0x10 // Unknown mask value seen sometimes. Low battery?
+#define RIFT_S_BUTTON_UNKNOWN 0x10 // Unknown mask value seen sometimes. Low battery?
 
 #define RIFT_S_FINGER_A_X_STRONG 0x01
 #define RIFT_S_FINGER_B_Y_STRONG 0x02
