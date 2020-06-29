@@ -614,13 +614,6 @@ uint64_t ohmd_monotonic_conv(uint64_t ticks, uint64_t srcTicksPerSecond, uint64_
 		ticks % srcTicksPerSecond * dstTicksPerSecond / srcTicksPerSecond;
 }
 
-int ohmd_wstring_match(const wchar_t *a, const wchar_t *b)
-{
-	if(!a || !b)
-		return 0;
-	return wcscmp(a, b) == 0;
-}
-
 void ohmd_get_version(int* out_major, int* out_minor, int* out_patch)
 {
 	*out_major = OHMD_VERSION_MAJOR;
