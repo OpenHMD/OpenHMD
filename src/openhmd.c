@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <wchar.h>
 
 // Running automatic updates at 1000 Hz
 #define AUTOMATIC_UPDATE_SLEEP (1.0 / 1000.0)
