@@ -12,7 +12,7 @@
 
 #include <wchar.h>
 
-int ohmd_wstring_match(const wchar_t *a, const wchar_t *b)
+static int ohmd_wstring_match(const wchar_t *a, const wchar_t *b)
 {
 	if(!a || !b)
 		return 0;
