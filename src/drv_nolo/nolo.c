@@ -28,14 +28,14 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
-void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0];
 	out_vec->y = (float)smp[1];
 	out_vec->z = -(float)smp[2];
 }
 
-void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+static void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
 {
 	out_vec->x = (float)smp[0];
 	out_vec->y = (float)smp[1];
@@ -196,7 +196,7 @@ static void close_device(ohmd_device* device)
 	free(priv);
 }
 
-void push_device(devices_t * head, drv_nolo* val) {
+static void push_device(devices_t * head, drv_nolo* val) {
 	devices_t* current = head;
 
 	if (!nolo_devices)
@@ -337,7 +337,7 @@ typedef struct {
 	int product;
 } nolo_verions;
 
-int is_nolo_device(struct hid_device_info* device)
+static int is_nolo_device(struct hid_device_info* device)
 {
 	if (wcscmp(device->manufacturer_string, L"LYRobotix") != 0) {
 		return 0;

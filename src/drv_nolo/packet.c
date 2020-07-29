@@ -109,7 +109,7 @@ void nolo_decode_orientation(const unsigned char* data, nolo_sample* smp)
 	}
 }
 
-void nolo_decode_controller_orientation(const unsigned char* data, nolo_sample* smp)
+static void nolo_decode_controller_orientation(const unsigned char* data, nolo_sample* smp)
 {	
 	// gyro
 	for(int i = 0; i < 3; i++){
