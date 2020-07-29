@@ -120,7 +120,7 @@ bool vive_decode_config_packet(vive_imu_config* result,
 
 	trim((char*)output, (char*)output, (unsigned int)output_size);
 
-	const nx_json* json = nx_json_parse((char*)output, 0);
+	const nx_json* json = nx_json_parse((char*)output, NULL);
 
 	if (json) {
 		get_vec3f_from_json(json, "acc_bias", &result->acc_bias);
