@@ -20,6 +20,7 @@ extern "C" {
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 
 #include "nxjson.h"
 
@@ -344,10 +345,13 @@ const nx_json* nx_json_parse_utf8(char* text) {
 
 const nx_json* nx_json_parse(char* text, nx_json_unicode_encoder encoder) {
   nx_json js={0};
+  char* locale = setlocale(LC_ALL, "C");
   if (!parse_value(&js, 0, text, encoder)) {
     if (js.child) nx_json_free(js.child);
+    setlocale(LC_ALL, locale);
     return 0;
   }
+  setlocale(LC_ALL, locale);
   return js.child;
 }
 
