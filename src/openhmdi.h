@@ -19,6 +19,7 @@
 #include "openhmd.h"
 #include "omath.h"
 #include "platform.h"
+#include "utils.h"
 
 #define OHMD_MAX_DEVICES 16
 

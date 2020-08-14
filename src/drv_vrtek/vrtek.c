@@ -631,8 +631,8 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
     struct hid_device_info* cur_dev = devs;
 
     while (cur_dev) {
-        if (wcscmp(cur_dev->manufacturer_string, L"STMicroelectronics")==0 &&
-                        wcscmp(cur_dev->product_string, L"HID")==0) {
+        if (ohmd_wstring_match(cur_dev->manufacturer_string, L"STMicroelectronics") &&
+                        ohmd_wstring_match(cur_dev->product_string, L"HID")) {
             ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
             strcpy(desc->driver, "OpenHMD VR-Tek Driver");

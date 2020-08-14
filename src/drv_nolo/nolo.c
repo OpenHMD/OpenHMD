@@ -339,14 +339,14 @@ typedef struct {
 
 static int is_nolo_device(struct hid_device_info* device)
 {
-	if (wcscmp(device->manufacturer_string, L"LYRobotix") != 0) {
+	if (!ohmd_wstring_match(device->manufacturer_string, L"LYRobotix")) {
 		return 0;
 	}
-	if (wcscmp(device->product_string, L"NOLO") == 0) { //Old Firmware
+	if (ohmd_wstring_match(device->product_string, L"NOLO")) { //Old Firmware
 		LOGE("Detected firmware <2.0, for the best result please upgrade your NOLO firmware above 2.0");
 		return 1;
 	}
-	if (wcscmp(device->product_string, L"NOLO HMD") == 0) { //New Firmware
+	if (ohmd_wstring_match(device->product_string, L"NOLO HMD")) { //New Firmware
 		return 2;
 	}
 
