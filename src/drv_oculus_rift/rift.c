@@ -99,8 +99,10 @@ static rift_hmd_t *find_hmd(char *hid_path)
 	device_list_t* current = rift_hmds;
 
 	while (current != NULL) {
-		if (strcmp(current->path, hid_path)==0)
+		if (strcmp(current->path, hid_path)==0) {
+			current->hmd->use_count++;
 			return current->hmd;
+		}
 		current = current->next;
 	}
 	return NULL;
@@ -1038,6 +1040,7 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		dev = &hmd->touch_dev[1].base;
 	else {
 		LOGE ("Invalid device description passed to open_device()");
+		release_hmd(hmd);
 		return NULL;
 	}
 
