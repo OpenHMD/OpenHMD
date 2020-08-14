@@ -12,11 +12,11 @@
 
 #include <wchar.h>
 
-static int ohmd_wstring_match(const wchar_t *a, const wchar_t *b)
+static inline int ohmd_wstring_match(const wchar_t *a, const wchar_t *b)
 {
 	if(!a || !b)
 		return 0;
 	return wcscmp(a, b) == 0;
 }
 
-#endif /* SHADERS_H */
+#endif /* UTILS_H */
