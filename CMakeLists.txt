@@ -10,6 +10,11 @@ if (POLICY CMP0072)
 	cmake_policy (SET CMP0072 NEW)
 endif(POLICY CMP0072)
 
+# policy to honor C_VISIBILITY_PRESET hidden, only exporting public ohmd api
+if (POLICY CMP0063)
+	cmake_policy(SET CMP0063 NEW)
+endif(POLICY CMP0063)
+
 set(LIB_VERSION_MAJOR 0)
 set(LIB_VERSION_MINOR 1)
 set(LIB_VERSION_PATCH 0)
@@ -204,6 +209,9 @@ if (BUILD_BOTH_STATIC_SHARED_LIBS)
 
 	set(TARGETS "openhmd-shared" "openhmd-static")
 
+	set_target_properties(openhmd-shared PROPERTIES C_VISIBILITY_PRESET hidden)
+	set_target_properties(openhmd-static PROPERTIES C_VISIBILITY_PRESET hidden)
+
 else ()
 
 	# Static or Shared
@@ -213,6 +221,7 @@ else ()
 
 	set(TARGETS "openhmd")
 
+	set_target_properties(openhmd PROPERTIES C_VISIBILITY_PRESET hidden)
 endif ()
 
 foreach(target ${TARGETS})
