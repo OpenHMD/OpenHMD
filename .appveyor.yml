@@ -30,7 +30,7 @@ build_script:
   - cmd: echo Building on %arch% with %compiler%
   - cmd: meson --backend=ninja builddir -Dexamples=simple
   - cmd: ninja -C builddir install
-  - cmd: 7z a openhmd.zip c:\bin\*.dll c:\bin\*.exe
+  - cmd: 7z a openhmd.zip c:\include\openhmd\openhmd.h c:\lib\openhmd.lib c:\bin\*.dll c:\bin\*.exe
 
 artifacts:
   - path: openhmd.zip
