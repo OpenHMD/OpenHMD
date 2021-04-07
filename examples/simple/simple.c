@@ -75,6 +75,7 @@ int main(int argc, char** argv)
 		printf("  vendor:  %s\n", ohmd_list_gets(ctx, i, OHMD_VENDOR));
 		printf("  product: %s\n", ohmd_list_gets(ctx, i, OHMD_PRODUCT));
 		printf("  path:    %s\n", ohmd_list_gets(ctx, i, OHMD_PATH));
+		printf("  driver:  %s\n", ohmd_list_gets(ctx, i, OHMD_DRIVER));
 		printf("  class:   %s\n", device_class_s[device_class > OHMD_DEVICE_CLASS_GENERIC_TRACKER ? 4 : device_class]);
 		printf("  flags:   %02x\n",  device_flags);
 		printf("    null device:         %s\n", device_flags & OHMD_DEVICE_FLAGS_NULL_DEVICE ? "yes" : "no");
