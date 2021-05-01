@@ -54,6 +54,10 @@ int main(int argc, char** argv)
 
 	ohmd_context* ctx = ohmd_ctx_create();
 
+	printf("\n");
+	ohmd_print_available_drivers(ctx);
+	printf("\n");
+
 	// Probe for devices
 	int num_devices = ohmd_ctx_probe(ctx);
 	if(num_devices < 0){

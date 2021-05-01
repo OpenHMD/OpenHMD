@@ -478,6 +478,13 @@ OHMD_APIENTRYDLL ohmd_status OHMD_APIENTRY ohmd_require_version(int major, int m
  **/
 OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_sleep(double time);
 
+/**
+ * Print a list of drivers the library was built with.
+ *
+ * @param ctx A pointer to a valid ohmd_context.
+ */
+OHMD_APIENTRYDLL void OHMD_APIENTRY ohmd_print_available_drivers(ohmd_context* ctx);
+
 #ifdef __cplusplus
 }
 #endif
