@@ -72,8 +72,8 @@ static void vec3f_from_vive_vec_gyro(const vive_imu_config* config,
 {
 	float range = config->gyro_range / 32768.0f;
 	out->x = range * config->gyro_scale.x * (float)smp[0] - config->gyro_bias.x;
-	out->y = range * config->gyro_scale.y * (float)smp[1] - config->gyro_bias.x;
-	out->z = range * config->gyro_scale.z * (float)smp[2] - config->gyro_bias.x;
+	out->y = range * config->gyro_scale.y * (float)smp[1] - config->gyro_bias.y;
+	out->z = range * config->gyro_scale.z * (float)smp[2] - config->gyro_bias.z;
 }
 
 static bool process_error(vive_priv* priv)
