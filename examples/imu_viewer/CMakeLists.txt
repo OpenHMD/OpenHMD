@@ -1,0 +1,5 @@
+project (imu_viewer C)
+include_directories(${CMAKE_BINARY_DIR}/include ${CMAKE_BINARY_DIR}/examples/ext_deps ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
+link_directories(${CMAKE_BINARY_DIR})
+add_executable(imu_viewer imu_viewer.c)
+target_link_libraries(imu_viewer PRIVATE openhmd m ${SDL2_LIBRARY} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES})

@@ -190,6 +190,7 @@ if (OPENHMD_EXAMPLE_SDL)
 	find_package(GLEW REQUIRED)
 	find_package(OpenGL REQUIRED)
 	add_subdirectory(./examples/opengl)
+	add_subdirectory(./examples/imu_viewer)
 endif (OPENHMD_EXAMPLE_SDL)
 
 set(TARGETS "")

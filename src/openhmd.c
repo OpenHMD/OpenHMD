@@ -310,6 +310,17 @@ static int ohmd_device_getf_unp(ohmd_device* device, ohmd_float_value type, floa
 			omat4x4f_transpose(&result, (mat4x4f*)out);
 			return OHMD_S_OK;
 		}
+	case OHMD_GL_MODEL_MATRIX: {
+			vec3f point = {{0, 0, 0}};
+			quatf rot = device->rotation;
+			oquatf_mult_me(&rot, &device->rotation_correction);
+			mat4x4f orient, world_shift, result;
+			omat4x4f_init_look_at(&orient, &rot, &point);
+			omat4x4f_init_translate(&world_shift, device->position.x, device->position.y, device->position.z);
+			omat4x4f_mult(&world_shift, &orient, &result);
+			omat4x4f_transpose(&result, (mat4x4f*)out);
+			return OHMD_S_OK;
+		}
 	case OHMD_LEFT_EYE_GL_PROJECTION_MATRIX:
 		omat4x4f_transpose(&device->properties.proj_left, (mat4x4f*)out);
 		return OHMD_S_OK;
