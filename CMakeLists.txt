@@ -48,7 +48,8 @@ option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
 option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
-option(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
+option(OPENHMD_EXAMPLE_SDL_OPENGL2 "SDL OpenGL 2 test (outdated)" OFF)
+option(OPENHMD_EXAMPLE_SDL_OPENGL3 "SDL OpenGL 3 test" OFF)
 
 if(OPENHMD_DRIVER_OCULUS_RIFT)
 	set(openhmd_source_files ${openhmd_source_files}
@@ -185,12 +186,19 @@ if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)
 endif(OPENHMD_EXAMPLE_SIMPLE)
 
-if (OPENHMD_EXAMPLE_SDL)
+if (OPENHMD_EXAMPLE_SDL_OPENGL2)
 	find_package(SDL2 REQUIRED)
 	find_package(GLEW REQUIRED)
 	find_package(OpenGL REQUIRED)
 	add_subdirectory(./examples/opengl)
-endif (OPENHMD_EXAMPLE_SDL)
+endif (OPENHMD_EXAMPLE_SDL_OPENGL2)
+
+if (OPENHMD_EXAMPLE_SDL_OPENGL3)
+	find_package(SDL2 REQUIRED)
+	find_package(GLEW REQUIRED)
+	find_package(OpenGL REQUIRED)
+	add_subdirectory(./examples/opengl3)
+endif (OPENHMD_EXAMPLE_SDL_OPENGL3)
 
 set(TARGETS "")
 
