@@ -37,9 +37,6 @@ For a full list of supported devices please check https://github.com/OpenHMD/Ope
     * https://github.com/lubosz/python-rift
   * Rust bindings by The\_HellBox
     * https://github.com/TheHellBox/openhmd-rs
-  
-## Other FOSS HMD Drivers
-  * libvr - http://hg.sitedethib.com/libvr
 
 ## Compiling and Installing
 Using Meson:
