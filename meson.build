@@ -160,6 +160,15 @@ if _drivers.contains('vrtek')
 	deps += dep_hidapi
 endif
 
+if _drivers.contains('lgr')
+	sources += [
+		'src/drv_lgr100/lgr100.c',
+		'src/drv_lgr100/packet.c',
+	]
+	c_args += '-DDRIVER_LGR'
+	deps += dep_hidapi
+endif
+
 if _drivers.contains('external')
 	sources += [
 		'src/drv_external/external.c',
