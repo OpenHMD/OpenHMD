@@ -77,11 +77,13 @@ typedef enum {
 	REV_DK2,
 	REV_CV1,
 
-	REV_GEARVR_GEN1
+	REV_GEARVR_GEN1,
+	REV_VIULUX_V9
 } rift_revision;
 
 typedef struct {
 	const char* name;
+	const wchar_t* manufacturer;
 	int company;
 	int id;
 	int iface;
@@ -701,7 +703,7 @@ static int rift_send_tracking_config(rift_hmd_t *rift, bool blink,
 	unsigned char buf[FEATURE_BUFFER_SIZE];
 	int size;
 
-	tracking_config.vsync_offset = RIFT_TRACKING_VSYNC_OFFSET;
+	tracking_config.vsync_offset = RIFT_TRACKING_VSYNC_OFFSET;  
 	tracking_config.duty_cycle = RIFT_TRACKING_DUTY_CYCLE;
 	tracking_config.exposure_us = exposure_us;
 	tracking_config.period_us = period_us;
@@ -918,6 +920,11 @@ static rift_hmd_t *open_hmd(ohmd_driver* driver, ohmd_device_desc* desc)
 
 	//setup generic distortion coeffs, from hand-calibration
 	switch (desc->revision) {
+		case REV_VIULUX_V9:
+		//Usually d = 1 - (a + b + c)
+			ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 0.247, -0.145, 0.103, 0.795);
+			ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.98790, 0.99500, 1.00100);
+			break;
 		case REV_DK2:
 			ohmd_set_universal_distortion_k(&(hmd_dev->base.properties), 0.247, -0.145, 0.103, 0.795);
 			ohmd_set_universal_aberration_k(&(hmd_dev->base.properties), 0.985, 1.000, 1.015);
@@ -1056,33 +1063,53 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	return &dev->base;
 }
 
-#define RIFT_ID_COUNT 5
+#define RIFT_ID_COUNT 6
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
 	// enumerate HID devices and add any Rifts found to the device list
 
 	rift_devices rd[RIFT_ID_COUNT] = {
-		{ "Rift (DK1)", OCULUS_VR_INC_ID, 0x0001,	-1, REV_DK1 },
-		{ "Rift (DK2)", OCULUS_VR_INC_ID, 0x0021,	-1, REV_DK2 },
-		{ "Rift (DK2)", OCULUS_VR_INC_ID, 0x2021,	-1, REV_DK2 },
-		{ "Rift (CV1)", OCULUS_VR_INC_ID, RIFT_CV1_PID,	 0, REV_CV1 },
+		{ "Rift (DK1)", L"Oculus VR, Inc.", OCULUS_VR_INC_ID, 0x0001,			-1, REV_DK1 },
+		{ "Rift (DK2)", L"Oculus VR, Inc.", OCULUS_VR_INC_ID, 0x0021,			-1, REV_DK2 },
+		{ "Rift (DK2)", L"Oculus VR, Inc.", OCULUS_VR_INC_ID, 0x2021,			-1, REV_DK2 },
+		{ "Rift (CV1)", L"Oculus VR, Inc.", OCULUS_VR_INC_ID, RIFT_CV1_PID,		 0, REV_CV1 },
 
-		{ "GearVR (Gen1)", SAMSUNG_ELECTRONICS_CO_ID, 0xa500,	 0, REV_GEARVR_GEN1 },
+		{ "Viulux v9",  L"Inlife 3D, Inc.", OCULUS_VR_INC_ID, 0x0001,	 		-1, REV_VIULUX_V9 },
+
+		{ "GearVR (Gen1)", NULL, 		   SAMSUNG_ELECTRONICS_CO_ID, 0xa500,	 0, REV_GEARVR_GEN1 }
 	};
 
 	for(int i = 0; i < RIFT_ID_COUNT; i++){
 		struct hid_device_info* devs = hid_enumerate(rd[i].company, rd[i].id);
-		struct hid_device_info* cur_dev = devs;
+		struct hid_device_info* cur_dev;
 
-		if(devs == NULL)
+		if(devs == NULL) {
 			continue;
+        }
 
-		while (cur_dev) {
+		for (cur_dev = devs; cur_dev; cur_dev = cur_dev->next) {
 			// We need to check the manufacturer because other companies (eg: VR-Tek)
 			// are reusing the Oculus DK1 USB ID for their own HMDs
-			if(ohmd_wstring_match(cur_dev->manufacturer_string, L"Oculus VR, Inc.") &&
-			   (rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface)) {
+
+			if (rd[i].manufacturer!=NULL) {
+
+				if(!(ohmd_wstring_match(cur_dev->manufacturer_string, rd[i].manufacturer) &&
+				(rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface)) ) {
+					LOGD("Skipping %s driver for %ls\n", rd[i].name, cur_dev->manufacturer_string);
+					continue;
+				}
+
+			} else {
+
+				if(!(ohmd_wstring_match(cur_dev->manufacturer_string, L"Oculus VR, Inc.") &&
+				(rd[i].iface == -1 || cur_dev->interface_number == rd[i].iface)) ) {
+					LOGD("Skipping %s driver for %ls\n", rd[i].name, cur_dev->manufacturer_string);
+					continue;
+				}
+			}
+			   
+			   {
 				int id = 0;
 				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
@@ -1141,7 +1168,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 					desc->id = id++;
 				}
 			}
-			cur_dev = cur_dev->next;
 		}
 
 		hid_free_enumeration(devs);
