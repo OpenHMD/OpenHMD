@@ -38,6 +38,82 @@ void print_infoi(ohmd_device* hmd, const char* name, int len, ohmd_int_value val
 	printf("\n");
 }
 
+/**
+ * Returns the control_count.
+*/
+int print_device_info(ohmd_device* hmd){
+	// Print hardware information for the opened device
+	int ivals[2];
+	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, ivals);
+	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, ivals + 1);
+	printf("resolution:              %i x %i\n", ivals[0], ivals[1]);
+
+	print_infof(hmd, "hsize:",            1, OHMD_SCREEN_HORIZONTAL_SIZE);
+	print_infof(hmd, "vsize:",            1, OHMD_SCREEN_VERTICAL_SIZE);
+	print_infof(hmd, "lens separation:",  1, OHMD_LENS_HORIZONTAL_SEPARATION);
+	print_infof(hmd, "lens vcenter:",     1, OHMD_LENS_VERTICAL_POSITION);
+	print_infof(hmd, "left eye fov:",     1, OHMD_LEFT_EYE_FOV);
+	print_infof(hmd, "right eye fov:",    1, OHMD_RIGHT_EYE_FOV);
+	print_infof(hmd, "left eye aspect:",  1, OHMD_LEFT_EYE_ASPECT_RATIO);
+	print_infof(hmd, "right eye aspect:", 1, OHMD_RIGHT_EYE_ASPECT_RATIO);
+	print_infof(hmd, "distortion k:",     6, OHMD_DISTORTION_K);
+	print_infoi(hmd, "control count:   ", 1, OHMD_CONTROL_COUNT);
+
+	int control_count;
+	ohmd_device_geti(hmd, OHMD_CONTROL_COUNT, &control_count);
+
+	const char* controls_fn_str[] = { "generic", "trigger", "trigger_click", "squeeze", "menu", "home",
+		"analog-x", "analog-y", "anlog_press", "button-a", "button-b", "button-x", "button-y",
+		"volume-up", "volume-down", "mic-mute"};
+
+	const char* controls_type_str[] = {"digital", "analog"};
+
+	int controls_fn[64];
+	int controls_types[64];
+
+	ohmd_device_geti(hmd, OHMD_CONTROLS_HINTS, controls_fn);
+	ohmd_device_geti(hmd, OHMD_CONTROLS_TYPES, controls_types);
+	
+	printf("%-25s", "controls:");
+	for(int i = 0; i < control_count; i++){
+		printf("%s (%s)%s", controls_fn_str[controls_fn[i]], controls_type_str[controls_types[i]], i == control_count - 1 ? "" : ", ");
+	}
+	return control_count;
+}
+
+void print_device_data(ohmd_context* ctx, ohmd_device* hmd, int control_count){
+	// Ask for n rotation quaternions and position vectors
+	for(int i = 0; i < 10000; i++){
+		ohmd_ctx_update(ctx);
+
+		// this can be used to set a different zero point
+		// for rotation and position, but is not required.
+		//float zero[] = {.0, .0, .0, 1};
+		//ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
+		//ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
+
+		// get rotation and position
+		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
+		print_infof(hmd, "position vec: ", 3, OHMD_POSITION_VECTOR);
+
+		// read controls
+		if (control_count) {
+			float control_state[256];
+			ohmd_device_getf(hmd, OHMD_CONTROLS_STATE, control_state);
+
+			printf("%-25s", "controls state:");
+			for(int i = 0; i < control_count; i++)
+			{
+				printf("%f ", control_state[i]);
+			}
+		}
+		puts("");
+
+		//ohmd_sleep(.01);
+		ohmd_sleep(1);
+	}
+}
+
 int main(int argc, char** argv)
 {
 	int device_idx = 0;
@@ -84,6 +160,31 @@ int main(int argc, char** argv)
 		printf("    right controller:    %s\n\n", device_flags & OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER ? "yes" : "no");
 	}
 
+	// ask the user which device should be polled
+	printf("== Available Devices ==\n");
+	// print the device and its name
+	for(int i = 0; i < num_devices; i++){
+		int device_class = 0, device_flags = 0;
+		const char* device_class_s[] = {"HMD", "Controller", "Generic Tracker", "Unknown"};
+
+		ohmd_list_geti(ctx, i, OHMD_DEVICE_CLASS, &device_class);
+		ohmd_list_geti(ctx, i, OHMD_DEVICE_FLAGS, &device_flags);
+
+		printf("device %d\n", i);
+		printf("  vendor:  %s\n", ohmd_list_gets(ctx, i, OHMD_VENDOR));
+		printf("  product: %s\n", ohmd_list_gets(ctx, i, OHMD_PRODUCT));
+	}
+	printf("== ================= ==\n");
+	printf("Please enter the device id to poll the device\n");
+	// Select the device from the input
+	scanf("%d", &device_idx);
+
+	printf("If a device requires another device to be polled,\n");
+	printf("Please enter a controller device (like for Nolo Controllers)\n");
+	printf("Enter -1 if no controller should be polled\n");
+	int controller_id = -1;
+	scanf("%d", &controller_id);
+
 	// Open specified device idx or 0 (default) if nothing specified
 	printf("opening device: %d\n", device_idx);
 	ohmd_device* hmd = ohmd_list_open_device(ctx, device_idx);
@@ -93,77 +194,19 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	// Print hardware information for the opened device
-	int ivals[2];
-	ohmd_device_geti(hmd, OHMD_SCREEN_HORIZONTAL_RESOLUTION, ivals);
-	ohmd_device_geti(hmd, OHMD_SCREEN_VERTICAL_RESOLUTION, ivals + 1);
-	printf("resolution:              %i x %i\n", ivals[0], ivals[1]);
-
-	print_infof(hmd, "hsize:",            1, OHMD_SCREEN_HORIZONTAL_SIZE);
-	print_infof(hmd, "vsize:",            1, OHMD_SCREEN_VERTICAL_SIZE);
-	print_infof(hmd, "lens separation:",  1, OHMD_LENS_HORIZONTAL_SEPARATION);
-	print_infof(hmd, "lens vcenter:",     1, OHMD_LENS_VERTICAL_POSITION);
-	print_infof(hmd, "left eye fov:",     1, OHMD_LEFT_EYE_FOV);
-	print_infof(hmd, "right eye fov:",    1, OHMD_RIGHT_EYE_FOV);
-	print_infof(hmd, "left eye aspect:",  1, OHMD_LEFT_EYE_ASPECT_RATIO);
-	print_infof(hmd, "right eye aspect:", 1, OHMD_RIGHT_EYE_ASPECT_RATIO);
-	print_infof(hmd, "distortion k:",     6, OHMD_DISTORTION_K);
-	
-	print_infoi(hmd, "control count:   ", 1, OHMD_CONTROL_COUNT);
-
-	int control_count;
-	ohmd_device_geti(hmd, OHMD_CONTROL_COUNT, &control_count);
-
-	const char* controls_fn_str[] = { "generic", "trigger", "trigger_click", "squeeze", "menu", "home",
-		"analog-x", "analog-y", "anlog_press", "button-a", "button-b", "button-x", "button-y",
-		"volume-up", "volume-down", "mic-mute"};
-
-	const char* controls_type_str[] = {"digital", "analog"};
-
-	int controls_fn[64];
-	int controls_types[64];
-
-	ohmd_device_geti(hmd, OHMD_CONTROLS_HINTS, controls_fn);
-	ohmd_device_geti(hmd, OHMD_CONTROLS_TYPES, controls_types);
-	
-	printf("%-25s", "controls:");
-	for(int i = 0; i < control_count; i++){
-		printf("%s (%s)%s", controls_fn_str[controls_fn[i]], controls_type_str[controls_types[i]], i == control_count - 1 ? "" : ", ");
+	ohmd_device* print_device;
+	int control_count = 0;
+	if(controller_id != -1){
+		ohmd_device* controller1 = ohmd_list_open_device(ctx, 1);
+		print_device = controller1;
+	}else{
+		print_device = hmd;
 	}
 
+	control_count = print_device_info(print_device);
 	printf("\n\n");
-
-	// Ask for n rotation quaternions and position vectors
-	for(int i = 0; i < 10000; i++){
-		ohmd_ctx_update(ctx);
-
-		// this can be used to set a different zero point
-		// for rotation and position, but is not required.
-		//float zero[] = {.0, .0, .0, 1};
-		//ohmd_device_setf(hmd, OHMD_ROTATION_QUAT, zero);
-		//ohmd_device_setf(hmd, OHMD_POSITION_VECTOR, zero);
-
-		// get rotation and position
-		print_infof(hmd, "rotation quat:", 4, OHMD_ROTATION_QUAT);
-		print_infof(hmd, "position vec: ", 3, OHMD_POSITION_VECTOR);
-
-		// read controls
-		if (control_count) {
-			float control_state[256];
-			ohmd_device_getf(hmd, OHMD_CONTROLS_STATE, control_state);
-
-			printf("%-25s", "controls state:");
-			for(int i = 0; i < control_count; i++)
-			{
-				printf("%f ", control_state[i]);
-			}
-		}
-		puts("");
-			
-		ohmd_sleep(.01);
-	}
-
+	print_device_data(ctx, print_device, control_count);
 	ohmd_ctx_destroy(ctx);
-	
+
 	return 0;
 }
