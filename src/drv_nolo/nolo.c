@@ -366,61 +366,62 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		struct hid_device_info* cur_dev = devs;
 
 		int id = 0;
-		while (cur_dev && is_nolo_device(cur_dev)) {
-			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		while(cur_dev){
+			if(is_nolo_device(cur_dev)){
+				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
-			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, rd[i].name);
+				strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+				strcpy(desc->vendor, "LYRobotix");
+				strcpy(desc->product, rd[i].name);
 
-			desc->revision = is_nolo_device(cur_dev);
+				desc->revision = is_nolo_device(cur_dev);
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->device_flags = OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
-			desc->device_class = OHMD_DEVICE_CLASS_GENERIC_TRACKER;
+				desc->device_flags = OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+				desc->device_class = OHMD_DEVICE_CLASS_GENERIC_TRACKER;
 
-			desc->driver_ptr = driver;
-			desc->id = id++;
+				desc->driver_ptr = driver;
+				desc->id = id++;
 
-			//Controller 0
-			desc = &list->devices[list->num_devices++];
+				//Controller 0
+				desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
-			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, "NOLO CV1: Controller 0");
+				strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+				strcpy(desc->vendor, "LYRobotix");
+				strcpy(desc->product, "NOLO CV1: Controller 0");
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->device_flags =
-				OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
+				desc->device_flags =
+					OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
-			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+				desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 
-			desc->driver_ptr = driver;
-			desc->id = id++;
+				desc->driver_ptr = driver;
+				desc->id = id++;
 
-			// Controller 1
-			desc = &list->devices[list->num_devices++];
+				// Controller 1
+				desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
-			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, "NOLO CV1: Controller 1");
+				strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+				strcpy(desc->vendor, "LYRobotix");
+				strcpy(desc->product, "NOLO CV1: Controller 1");
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->device_flags =
-				OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
+				desc->device_flags =
+					OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
 
-			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+				desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 
-			desc->driver_ptr = driver;
-			desc->id = id++;
-
+				desc->driver_ptr = driver;
+				desc->id = id++;
+			}
 			cur_dev = cur_dev->next;
 		}
 		hid_free_enumeration(devs);
