@@ -197,8 +197,8 @@ int main(int argc, char** argv)
 	ohmd_device* print_device;
 	int control_count = 0;
 	if(controller_id != -1){
-		ohmd_device* controller1 = ohmd_list_open_device(ctx, 1);
-		print_device = controller1;
+		ohmd_device* controller = ohmd_list_open_device(ctx, controller_id);
+		print_device = controller;
 	}else{
 		print_device = hmd;
 	}
