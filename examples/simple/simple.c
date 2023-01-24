@@ -110,7 +110,7 @@ void print_device_data(ohmd_context* ctx, ohmd_device* hmd, int control_count){
 		puts("");
 
 		//ohmd_sleep(.01);
-		ohmd_sleep(1);
+		ohmd_sleep(0.5);
 	}
 }
 

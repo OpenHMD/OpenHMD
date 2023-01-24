@@ -28,18 +28,36 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
-static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 {
-	out_vec->x = (float)smp[0];
-	out_vec->y = (float)smp[1];
-	out_vec->z = -(float)smp[2];
+	switch(type) {
+		case 0:
+			out_vec->x = (float)smp[0];
+			out_vec->y = (float)smp[1];
+			out_vec->z = -(float)smp[2];
+			break;
+		case 1:
+			out_vec->x = (float)smp[0];
+			out_vec->z = -(float)smp[1];
+			out_vec->y = (float)smp[2];
+			break;
+	}
 }
 
-static void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+static void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 {
-	out_vec->x = (float)smp[0];
-	out_vec->y = (float)smp[1];
-	out_vec->z = -(float)smp[2];
+	switch(type) {
+		case 0:
+			out_vec->x = (float)smp[0];
+			out_vec->y = (float)smp[1];
+			out_vec->z = -(float)smp[2];
+			break;
+		case 1:
+			out_vec->x = (float)smp[0];
+			out_vec->z = -(float)smp[1];
+			out_vec->y = (float)smp[2];
+			break;
+	}
 }
 
 static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int size, int type)
@@ -62,8 +80,8 @@ static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int
 	float dt = (tick_delta/(float)priv->base.ctx->monotonic_ticks_per_sec)/1000.0f;
 
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
-	accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro);
-	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel);
+	accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro, type);
+	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel, type);
 	ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 }
 
@@ -174,7 +192,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	case OHMD_CONTROLS_STATE:
 		if(priv->id > 0) {
 			for (int i = 0; i < 8; i++){
-				out[i] = priv->controller_values[i];
+				//nolo reports values from 0 to 255 for touchpad, normalize to [-1, 1]
+				if(i == 6 || i == 7){
+					out[i] = (127.5f - priv->controller_values[i])/127.5f;
+				}else{
+					out[i] = priv->controller_values[i];
+				}
 			}
 		}
 		break;
