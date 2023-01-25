@@ -28,6 +28,7 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
+//accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro, type);
 static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 {
 	switch(type) {
@@ -44,6 +45,7 @@ static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 	}
 }
 
+//gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel, type);
 static void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 {
 	switch(type) {
@@ -80,8 +82,8 @@ static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int
 	float dt = (tick_delta/(float)priv->base.ctx->monotonic_ticks_per_sec)/1000.0f;
 
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
-	accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro, type);
-	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel, type);
+	accel_from_nolo_vec(priv->sample.accel, &priv->raw_accel, type);
+	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_gyro, type);
 	ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 }
 

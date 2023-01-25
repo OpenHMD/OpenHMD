@@ -96,29 +96,29 @@ void nolo_decode_position(const unsigned char* data, vec3f* pos)
 
 void nolo_decode_orientation(const unsigned char* data, nolo_sample* smp)
 {	
-	// acceleration
+	// gyro
 	for(int i = 0; i < 3; i++){
-		smp->accel[i] = read16(&data);
+		smp->gyro[i] = read16(&data);
 	}
 
 	data += 6;
 
-	// gyro
+	// acceleration
 	for(int i = 0; i < 3; i++){
-		smp->gyro[i] = read16(&data);
+		smp->accel[i] = read16(&data);
 	}
 }
 
 static void nolo_decode_controller_orientation(const unsigned char* data, nolo_sample* smp)
 {	
-	// gyro
-	for(int i = 0; i < 3; i++){
-		smp->gyro[i] = read16(&data);
-	}
-
 	// acceleration
 	for(int i = 0; i < 3; i++){
 		smp->accel[i] = read16(&data);
+	}
+
+	// gyro
+	for(int i = 0; i < 3; i++){
+		smp->gyro[i] = read16(&data);
 	}
 }
 
