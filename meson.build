@@ -167,6 +167,13 @@ if _drivers.contains('external')
 	c_args += '-DDRIVER_EXTERNAL'
 endif
 
+if _drivers.contains('file')
+	sources += [
+		'src/drv_file/file.c',
+	]
+	c_args += '-DDRIVER_FILE'
+endif
+
 if _drivers.contains('android')
 	sources += [
 		'src/drv_android/android.c',
