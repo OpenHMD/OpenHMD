@@ -21,7 +21,7 @@
 // returns non-zero on error
 int ohmd_file_drv_read_file(FILE * file, ohmd_file_data_latest* out)
 {
-	ohmd_file_header header = {};
+	ohmd_file_header header;
 	memset(out, 0, sizeof(*out));
 	if (fread(&header, sizeof(header), 1, file) != 1)
 		return OHMD_FILE_DRV_ERROR_NOHEAD;
@@ -40,9 +40,13 @@ int ohmd_file_drv_read_file(FILE * file, ohmd_file_data_latest* out)
 
 static quatf do_euler2quat(float pitch, float yaw, float roll)
 {
-	vec3f pitcher_axis = {{1, 0, 0}};
-	vec3f yawer_axis =   {{0, 1, 0}};
-	vec3f roller_axis =  {{0, 0, 1}};
+	vec3f pitcher_axis;
+	vec3f yawer_axis;
+	vec3f roller_axis;
+
+	pitcher_axis.x = 1; pitcher_axis.y = 0; pitcher_axis.z = 0;
+	yawer_axis.x   = 0; yawer_axis.y   = 1; yawer_axis.z   = 0;
+	roller_axis.x  = 0; roller_axis.y  = 0; roller_axis.z  = 1;
 
 	quatf pitcher, yawer, roller;
 	quatf interm1, interm2;
