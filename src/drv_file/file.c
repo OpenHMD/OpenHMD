@@ -9,56 +9,26 @@
 
 /* File Driver (based off of External Driver) */
 
-// Environment variable OPENHMD_FILEDEV_HMD specifies a binary file.
+// Environment variable OPENHMD_FILEDEV_(0,1,2...) specify binary files.
 // This file is dynamically updated to control HMD rotation (as Euler angles) and position.
 // It also contains the initial projection/setup information.
 // Using this interface, it is possible to connect homebrew setups to OpenHMD and OpenXR.
 
 #include "../openhmdi.h"
 #include "string.h"
+#include "drv_file_fmt.h"
 
-// This struct is effectively ABI!
-// It defines the binding between an external HMD daemon and OpenHMD.
-// In practice, this would be driven by a helper script written in, say, Python.
-typedef struct {
-	// projection/setup info
-	uint32_t hres;
-	uint32_t vres;
-	float hsize;
-	float vsize;
-	float lens_sep;
-	float lens_vpos;
-	float fov;
-	float ratio;
-	// dynamic data
-	float pitch, yaw, roll;
-	vec3f position_vector;
-} file_data;
+// returns non-zero on error
+int ohmd_file_drv_read_file(FILE * file, ohmd_file_data_latest* out);
+quatf ohmd_file_drv_rotation2quat(ohmd_file_rotation rot);
 
 typedef struct {
 	ohmd_device base;
-	FILE * fd;
-	file_data data;
+	FILE* fd;
+	// latest version (reader module will port)
+	ohmd_file_data_latest data;
 	quatf rotation_quat;
 } file_priv;
-
-static quatf do_euler2quat(float pitch, float yaw, float roll)
-{
-	vec3f pitcher_axis = {{1, 0, 0}};
-	vec3f yawer_axis =   {{0, 1, 0}};
-	vec3f roller_axis =  {{0, 0, 1}};
-
-	quatf pitcher, yawer, roller;
-	quatf interm1, interm2;
-
-	oquatf_init_axis(&pitcher, &pitcher_axis, pitch);
-	oquatf_init_axis(&yawer, &yawer_axis, yaw);
-	oquatf_init_axis(&roller, &roller_axis, roll);
-
-	oquatf_mult(&yawer, &pitcher, &interm1);
-	oquatf_mult(&interm1, &roller, &interm2);
-	return interm2;
-}
 
 static void update_device(ohmd_device* device)
 {
@@ -66,8 +36,8 @@ static void update_device(ohmd_device* device)
 
 	rewind(priv->fd);
 	fflush(priv->fd);
-	fread(&priv->data, sizeof(file_data), 1, priv->fd);
-	priv->rotation_quat = do_euler2quat(priv->data.pitch, priv->data.yaw, priv->data.roll);
+	if (ohmd_file_drv_read_file(priv->fd, &priv->data) == 0)
+		priv->rotation_quat = ohmd_file_drv_rotation2quat(priv->data.rotation);
 }
 
 static int getf(ohmd_device* device, ohmd_float_value type, float* out)
@@ -80,7 +50,17 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 			break;
 
 		case OHMD_POSITION_VECTOR:
-			*(vec3f*)out = priv->data.position_vector;
+			memcpy(out, priv->data.position, sizeof(float) * 3);
+			break;
+
+		case OHMD_CONTROLS_STATE:
+			// always copy the initially advertised, fixed, control count
+			for (int i = 0; i < priv->base.properties.control_count; i++)
+				out[i] = priv->data.controls.control[i].state;
+			break;
+
+		case OHMD_DISTORTION_K:
+			memcpy(out, priv->data.hmd_info.distortion_k, sizeof(float) * 6);
 			break;
 
 		default:
@@ -117,26 +97,36 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 		return NULL;
 	}
 
-	if (fread(&priv->data, sizeof(file_data), 1, priv->fd) != 1) {
-		LOGE("file device %s unable to read initial data", desc->path);
+	int err = ohmd_file_drv_read_file(priv->fd, &priv->data);
+	if (err != 0) {
+		LOGE("file device %s unable to read initial data, code %i", desc->path, err);
 		fclose(priv->fd);
 		free(priv);
 		return NULL;
 	}
-	priv->rotation_quat = do_euler2quat(priv->data.pitch, priv->data.yaw, priv->data.roll);
+	priv->rotation_quat = ohmd_file_drv_rotation2quat(priv->data.rotation);
 
-	// Set device properties
-	priv->base.properties.hsize = priv->data.hsize;
-	priv->base.properties.vsize = priv->data.vsize;
-	priv->base.properties.hres = priv->data.hres;
-	priv->base.properties.vres = priv->data.vres;
-	priv->base.properties.lens_sep = priv->data.lens_sep;
-	priv->base.properties.lens_vpos = priv->data.lens_vpos;
-	priv->base.properties.fov = priv->data.fov;
-	priv->base.properties.ratio = priv->data.ratio;
+	// Set device HMD properties
+	if (priv->data.hmd_info.hres != 0) {
+		priv->base.properties.hsize = priv->data.hmd_info.hsize;
+		priv->base.properties.vsize = priv->data.hmd_info.vsize;
+		priv->base.properties.hres = priv->data.hmd_info.hres;
+		priv->base.properties.vres = priv->data.hmd_info.vres;
+		priv->base.properties.lens_sep = priv->data.hmd_info.lens_sep;
+		priv->base.properties.lens_vpos = priv->data.hmd_info.lens_vpos;
+		priv->base.properties.fov = priv->data.hmd_info.fov;
+		priv->base.properties.ratio = priv->data.hmd_info.ratio;
+	}
 
 	// calculate projection eye projection matrices from the device properties
 	ohmd_calc_default_proj_matrices(&priv->base.properties);
+
+	// Set device controls
+	priv->base.properties.control_count = priv->data.controls.count;
+	for (int i = 0; i < priv->data.controls.count; i++) {
+		priv->base.properties.controls_hints[i] = priv->data.controls.control[i].hint;
+		priv->base.properties.controls_types[i] = priv->data.controls.control[i].type;
+	}
 
 	// set up device callbacks
 	priv->base.update = update_device;
@@ -146,27 +136,47 @@ static ohmd_device* open_device(ohmd_driver* driver, ohmd_device_desc* desc)
 	return (ohmd_device*)priv;
 }
 
-static void get_device_list_attach(ohmd_driver* driver, ohmd_device_list* list, const char * path, ohmd_device_class dev_class, ohmd_device_flags dev_flags)
+static void get_device_list_attach(ohmd_driver* driver, ohmd_device_list* list, const char * path, const ohmd_file_data_latest* data)
 {
 	ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
 	strcpy(desc->driver, "OpenHMD File-Backed Port");
 	strcpy(desc->vendor, "OpenHMD");
-	strcpy(desc->product, "File-Backed Port");
+	// Null terminator is added by ohmd_file_drv_read_file
+	strcpy(desc->product, data->name);
 
 	strcpy(desc->path, path);
 
-	desc->device_class = dev_class;
-	desc->device_flags = dev_flags;
+	desc->device_class = data->device_class;
+	desc->device_flags = data->device_flags;
 
 	desc->driver_ptr = driver;
 }
 
 static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 {
-	const char * devhmd = getenv("OPENHMD_FILEDEV_HMD");
-	if (devhmd)
-		get_device_list_attach(driver, list, devhmd, OHMD_DEVICE_CLASS_HMD, OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING | OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING);
+	char envname[20];
+	for (int i = 0; i < 32; i++) {
+		sprintf(envname, "OPENHMD_FILEDEV_%i", i);
+		const char * devhmd = getenv(envname);
+		if (devhmd) {
+			// we don't want to list devices that won't work, so let's run a "pre-check"
+			// still report missing files as errors so users know what's up
+			FILE * f = fopen(devhmd, "rb");
+			if(!f) {
+				LOGE("file device %s cannot be opened", devhmd);
+			} else {
+				ohmd_file_data_latest data;
+				int err = ohmd_file_drv_read_file(f, &data);
+				fclose(f);
+				if (!err) {
+					get_device_list_attach(driver, list, devhmd, &data);
+				} else {
+					LOGE("file device %s is invalid, code %i", devhmd, err);
+				}
+			}
+		}
+	}
 }
 
 static void destroy_driver(ohmd_driver* drv)

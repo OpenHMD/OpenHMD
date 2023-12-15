@@ -170,6 +170,7 @@ endif
 if _drivers.contains('file')
 	sources += [
 		'src/drv_file/file.c',
+		'src/drv_file/file_reader.c',
 	]
 	c_args += '-DDRIVER_FILE'
 endif
