@@ -1,3 +1,14 @@
+# UNMAINTAINED ⛔️
+
+OpenHMD is currently NOT ACTIVELY MAINTAINED. If you are interested in maintaining OpenHMD, please open a github issue.
+
+Oculus Rift CV1 positional tracking support is developed in this OpenHMD fork https://github.com/thaytan/OpenHMD.
+
+Open Source XR driver development has largely moved to the Monado project:
+
+* https://monado.freedesktop.org/
+* https://gitlab.freedesktop.org/monado/monado
+
 # OpenHMD
 This project aims to provide a Free and Open Source API and drivers for immersive technology, such as head mounted displays with built in head tracking.
 
