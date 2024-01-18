@@ -46,6 +46,7 @@ option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
 option(OPENHMD_DRIVER_VRTEK "VR-Tek HMD" ON)
 option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
+option(OPENHMD_COMMUNITY_DRIVER_T265 "General t265 driver" OFF)
 
 option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
 option(OPENHMD_EXAMPLE_SDL "SDL OpenGL test (outdated)" OFF)
@@ -180,6 +181,16 @@ if (OPENHMD_DRIVER_ANDROID)
 	)
 	add_definitions(-DDRIVER_ANDROID)
 endif(OPENHMD_DRIVER_ANDROID)
+
+if (OPENHMD_COMMUNITY_DRIVER_T265)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_t265/t265.c
+	)
+	add_definitions(-DDRIVER_COMMUNITY_T265)
+
+	find_library(realsense2_lib realsense2)
+	set(LIBS ${LIBS} ${realsense2_lib})
+endif(OPENHMD_DRIVER_T265)
 
 if (OPENHMD_EXAMPLE_SIMPLE)
 	add_subdirectory(./examples/simple)
