@@ -25,6 +25,7 @@ option(
 		'xgvr',
 		'vrtek',
 		'external',
+		'file',
 		'android',
 	],
 	value: [
@@ -38,6 +39,7 @@ option(
 		'xgvr',
 		'vrtek',
 		'external',
+		'file',
 	],
 )
 
