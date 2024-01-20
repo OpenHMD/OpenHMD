@@ -28,18 +28,38 @@ static drv_priv* drv_priv_get(ohmd_device* device)
 	return (drv_priv*)device;
 }
 
-static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+//accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro, type);
+static void accel_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 {
-	out_vec->x = (float)smp[0];
-	out_vec->y = (float)smp[1];
-	out_vec->z = -(float)smp[2];
+	switch(type) {
+		case 0:
+			out_vec->x = (float)smp[0];
+			out_vec->y = (float)smp[1];
+			out_vec->z = -(float)smp[2];
+			break;
+		case 1:
+			out_vec->x = (float)smp[0];
+			out_vec->z = -(float)smp[1];
+			out_vec->y = (float)smp[2];
+			break;
+	}
 }
 
-static void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec)
+//gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel, type);
+static void gyro_from_nolo_vec(const int16_t* smp, vec3f* out_vec, int type)
 {
-	out_vec->x = (float)smp[0];
-	out_vec->y = (float)smp[1];
-	out_vec->z = -(float)smp[2];
+	switch(type) {
+		case 0:
+			out_vec->x = (float)smp[0];
+			out_vec->y = (float)smp[1];
+			out_vec->z = -(float)smp[2];
+			break;
+		case 1:
+			out_vec->x = (float)smp[0];
+			out_vec->z = -(float)smp[1];
+			out_vec->y = (float)smp[2];
+			break;
+	}
 }
 
 static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int size, int type)
@@ -62,8 +82,8 @@ static void handle_tracker_sensor_msg(drv_priv* priv, unsigned char* buffer, int
 	float dt = (tick_delta/(float)priv->base.ctx->monotonic_ticks_per_sec)/1000.0f;
 
 	vec3f mag = {{0.0f, 0.0f, 0.0f}};
-	accel_from_nolo_vec(priv->sample.accel, &priv->raw_gyro);
-	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_accel);
+	accel_from_nolo_vec(priv->sample.accel, &priv->raw_accel, type);
+	gyro_from_nolo_vec(priv->sample.gyro, &priv->raw_gyro, type);
 	ofusion_update(&priv->sensor_fusion, dt, &priv->raw_gyro, &priv->raw_accel, &mag);
 }
 
@@ -174,7 +194,12 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 	case OHMD_CONTROLS_STATE:
 		if(priv->id > 0) {
 			for (int i = 0; i < 8; i++){
-				out[i] = priv->controller_values[i];
+				//nolo reports values from 0 to 255 for touchpad, normalize to [-1, 1]
+				if(i == 6 || i == 7){
+					out[i] = (127.5f - priv->controller_values[i])/127.5f;
+				}else{
+					out[i] = priv->controller_values[i];
+				}
 			}
 		}
 		break;
@@ -366,61 +391,62 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
 		struct hid_device_info* cur_dev = devs;
 
 		int id = 0;
-		while (cur_dev && is_nolo_device(cur_dev)) {
-			ohmd_device_desc* desc = &list->devices[list->num_devices++];
+		while(cur_dev){
+			if(is_nolo_device(cur_dev)){
+				ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
-			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, rd[i].name);
+				strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+				strcpy(desc->vendor, "LYRobotix");
+				strcpy(desc->product, rd[i].name);
 
-			desc->revision = is_nolo_device(cur_dev);
+				desc->revision = is_nolo_device(cur_dev);
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->device_flags = OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
-			desc->device_class = OHMD_DEVICE_CLASS_GENERIC_TRACKER;
+				desc->device_flags = OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING | OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
+				desc->device_class = OHMD_DEVICE_CLASS_GENERIC_TRACKER;
 
-			desc->driver_ptr = driver;
-			desc->id = id++;
+				desc->driver_ptr = driver;
+				desc->id = id++;
 
-			//Controller 0
-			desc = &list->devices[list->num_devices++];
+				//Controller 0
+				desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
-			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, "NOLO CV1: Controller 0");
+				strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+				strcpy(desc->vendor, "LYRobotix");
+				strcpy(desc->product, "NOLO CV1: Controller 0");
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->device_flags =
-				OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
+				desc->device_flags =
+					OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_RIGHT_CONTROLLER;
 
-			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+				desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 
-			desc->driver_ptr = driver;
-			desc->id = id++;
+				desc->driver_ptr = driver;
+				desc->id = id++;
 
-			// Controller 1
-			desc = &list->devices[list->num_devices++];
+				// Controller 1
+				desc = &list->devices[list->num_devices++];
 
-			strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
-			strcpy(desc->vendor, "LYRobotix");
-			strcpy(desc->product, "NOLO CV1: Controller 1");
+				strcpy(desc->driver, "OpenHMD NOLO VR CV1 driver");
+				strcpy(desc->vendor, "LYRobotix");
+				strcpy(desc->product, "NOLO CV1: Controller 1");
 
-			strcpy(desc->path, cur_dev->path);
+				strcpy(desc->path, cur_dev->path);
 
-			desc->device_flags =
-				OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
-				OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
+				desc->device_flags =
+					OHMD_DEVICE_FLAGS_POSITIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING |
+					OHMD_DEVICE_FLAGS_LEFT_CONTROLLER;
 
-			desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
+				desc->device_class = OHMD_DEVICE_CLASS_CONTROLLER;
 
-			desc->driver_ptr = driver;
-			desc->id = id++;
-
+				desc->driver_ptr = driver;
+				desc->id = id++;
+			}
 			cur_dev = cur_dev->next;
 		}
 		hid_free_enumeration(devs);
