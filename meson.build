@@ -211,7 +211,7 @@ if _examples.contains('simple')
 endif
 
 # OpenGL
-if _examples.contains('opengl')
+if _examples.contains('opengl2')
 
 	dep_sdl2 = dependency('sdl2')
 	dep_gl = dependency('gl')
@@ -234,6 +234,32 @@ if _examples.contains('opengl')
 		link_with: [openhmd_lib],
 		dependencies: deps,
 		install: true,
+	)
+endif
+
+if _examples.contains('opengl3')
+	# math_3d.h requires math dep for sqrtf()
+	cc = meson.get_compiler('c')
+	dep_m = cc.find_library('m', required : false)
+	dep_sdl2 = dependency('sdl2')
+	dep_gl = dependency('gl')
+	dep_glew = dependency('glew')
+	deps = [dep_m, dep_sdl2, dep_gl, dep_glew, dep_threads]
+
+	opengl3_sources = [
+		'examples/opengl3/main.c',
+		'examples/opengl3/gl.c',
+	]
+	sdldep = dependency('sdl2')
+	executable(
+		'openhmd_opengl3_example',
+		opengl3_sources,
+		include_directories : include_directories([
+			'./include',
+			'examples/opengl3']),
+		link_with: [openhmd_lib],
+		dependencies : [deps],
+		install : true
 	)
 endif
 
