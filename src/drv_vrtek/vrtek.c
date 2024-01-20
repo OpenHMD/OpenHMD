@@ -635,7 +635,6 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
                         ohmd_wstring_match(cur_dev->product_string, L"HID")) {
             ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-            strcpy(desc->driver, "OpenHMD VR-Tek Driver");
             strcpy(desc->vendor, "VR-Tek");
             strcpy(desc->product, "VR-Tek WVR");
 
@@ -643,7 +642,7 @@ static void get_device_list(ohmd_driver* driver, ohmd_device_list* list)
             desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 
             strcpy(desc->path, cur_dev->path);
-            desc->driver_ptr = driver;
+            desc->driver = driver;
         }
         cur_dev = cur_dev->next;
     }
@@ -664,6 +663,7 @@ ohmd_driver* ohmd_create_vrtek_drv(ohmd_context* ctx)
     if (drv == NULL)
         return NULL;
 
+    strcpy(drv->name, "OpenHMD VR-Tek Driver");
     drv->get_device_list = get_device_list;
     drv->open_device = open_device;
     drv->destroy = destroy_driver;
