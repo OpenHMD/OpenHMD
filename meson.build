@@ -151,12 +151,22 @@ if _drivers.contains('xgvr')
 	deps += dep_hidapi
 endif
 
+
 if _drivers.contains('vrtek')
 	sources += [
 		'src/drv_vrtek/vrtek.c',
 		'src/drv_vrtek/packet.c',
 	]
 	c_args += '-DDRIVER_VRTEK'
+	deps += dep_hidapi
+endif
+
+if _drivers.contains('lgr')
+	sources += [
+		'src/drv_lgr100/lgr100.c',
+		'src/drv_lgr100/packet.c',
+	]
+	c_args += '-DDRIVER_LGR'
 	deps += dep_hidapi
 endif
 

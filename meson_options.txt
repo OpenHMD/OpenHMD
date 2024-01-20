@@ -24,6 +24,7 @@ option(
 		'wmr',
 		'xgvr',
 		'vrtek',
+		'lgr',
 		'external',
 		'android',
 	],
@@ -37,6 +38,7 @@ option(
 		'wmr',
 		'xgvr',
 		'vrtek',
+		'lgr',
 		'external',
 	],
 )
