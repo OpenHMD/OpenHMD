@@ -237,6 +237,26 @@ if _examples.contains('opengl')
 	)
 endif
 
+### imu visualizer
+# math_3d.h requires math dep for sqrtf()
+cc = meson.get_compiler('c')
+m_dep = cc.find_library('m', required : false)
+sdl_dep = dependency('sdl2', required : false)
+gl_dep = dependency('gl', required : false)
+glew_dep = dependency('glew', required : false)
+
+imu_viewer_sources = [
+	'examples/imu_viewer/imu_viewer.c',
+]
+
+if sdl_dep.found() and gl_dep.found() and glew_dep.found() and m_dep.found()
+	executable('imu_viewer',
+	           imu_viewer_sources,
+	           include_directories : include_directories(['./include', 'examples/ext_deps']),
+	           link_with: [openhmd_lib],
+	           dependencies : [sdl_dep, gl_dep, glew_dep, m_dep], install : true)
+endif
+
 
 #
 # Install and pkg-config export file
