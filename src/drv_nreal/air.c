@@ -922,7 +922,10 @@ teardown(struct na_hmd *hmd)
 		hmd->hid_sensor = NULL;
 	}
 
-	ohmd_destroy_thread(hmd->oth);
+	// Teardown could happen before thread init, so check it initialized.
+	if (hmd->oth) {
+		ohmd_destroy_thread(hmd->oth);
+	}
 	ohmd_destroy_mutex(hmd->thread_mutex);
 	ohmd_destroy_mutex(hmd->device_mutex);
 }
@@ -1036,8 +1039,9 @@ na_hmd_create_device(
 	hmd->wants.display_mode = 0x00;
 
 
-	// Do mutex and thread init before any call to teardown happens.
+	// Do mutex init before any call to teardown happens.
 	hmd->device_mutex = ohmd_create_mutex(hmd->base.ctx);
+	hmd->thread_mutex = ohmd_create_mutex(hmd->base.ctx);
 
 	if (!sensor_device) {
 		goto cleanup;
@@ -1057,8 +1061,10 @@ na_hmd_create_device(
 	// Empty the queue
 	control_clear_queue(hmd);
 
-	hmd->oth = ohmd_create_thread(hmd->base.ctx, read_thread, (void *)hmd);
+	// Thread init and start
 	hmd->thread_running = true;
+	hmd->oth = ohmd_create_thread(hmd->base.ctx, read_thread, (void *)hmd);
+
 	if (hmd->oth == 0) {
 		goto cleanup;
 	}
