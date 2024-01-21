@@ -999,7 +999,7 @@ na_hmd_update_inputs(struct ohmd_device *xdev)
 static void
 na_hmd_destroy(struct ohmd_device *xdev)
 {
-	struct na_hmd *hmd = na_hmd(xdev);
+	struct na_hmd *hmd = (struct na_hmd*)xdev;
 	teardown(hmd);
 
 	free(&hmd->base);
@@ -1136,7 +1136,10 @@ static int getf(ohmd_device* device, ohmd_float_value type, float* out)
 static void close_device(ohmd_device* device)
 {
 	LOGD("closing Nreal Air device");
-	free(device);
+	struct na_hmd *hmd = (struct na_hmd*)device;
+	teardown(hmd);
+
+	free(&hmd->base);
 }
 
 static hid_device* open_device_idx(int manufacturer, int product, int iface, int device_index)
