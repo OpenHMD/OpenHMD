@@ -160,6 +160,15 @@ if _drivers.contains('vrtek')
 	deps += dep_hidapi
 endif
 
+if _drivers.contains('nreal')
+	sources += [
+		'src/drv_nreal/air.c',
+		'src/drv_nreal/packet.c',
+	]
+	c_args += '-DDRIVER_NREAL'
+	deps += dep_hidapi
+endif
+
 if _drivers.contains('external')
 	sources += [
 		'src/drv_external/external.c',
