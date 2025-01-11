@@ -72,17 +72,18 @@ else
 endif
 
 _drivers = get_option('drivers')
+
 if _drivers.contains('rift')
 	sources += [
 		'src/drv_oculus_rift/rift.c',
 		'src/drv_oculus_rift/rift-hmd-radio.c',
 		'src/drv_oculus_rift/packet.c',
+		'src/ext_deps/nxjson.c',
 	]
 	c_args += '-DDRIVER_OCULUS_RIFT'
 	deps += dep_hidapi
 endif
 
-_drivers = get_option('drivers')
 if _drivers.contains('rift-s')
 	sources += [
 		'src/drv_oculus_rift_s/rift-s.c',
