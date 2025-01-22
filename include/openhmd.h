@@ -55,6 +55,7 @@ typedef enum {
 	OHMD_VENDOR    = 0,
 	OHMD_PRODUCT   = 1,
 	OHMD_PATH      = 2,
+	OHMD_DRIVER    = 3,
 } ohmd_string_value;
 
 /** A collection of string descriptions, used for getting strings with ohmd_gets(). */
