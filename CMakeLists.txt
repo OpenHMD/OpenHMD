@@ -45,6 +45,7 @@ option(OPENHMD_DRIVER_NOLO "NOLO VR CV1" ON)
 option(OPENHMD_DRIVER_XGVR "3Glasses HMD" ON)
 option(OPENHMD_DRIVER_VRTEK "VR-Tek HMD" ON)
 option(OPENHMD_DRIVER_EXTERNAL "External sensor driver" ON)
+option(OPENHMD_DRIVER_FILE "File transit driver" ON)
 option(OPENHMD_DRIVER_ANDROID "General Android driver" OFF)
 
 option(OPENHMD_EXAMPLE_SIMPLE "Simple test binary" ON)
@@ -173,6 +174,14 @@ if (OPENHMD_DRIVER_EXTERNAL)
 	)
 	add_definitions(-DDRIVER_EXTERNAL)
 endif(OPENHMD_DRIVER_EXTERNAL)
+
+if (OPENHMD_DRIVER_FILE)
+	set(openhmd_source_files ${openhmd_source_files}
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_file/file.c
+	${CMAKE_CURRENT_LIST_DIR}/src/drv_file/file_reader.c
+	)
+	add_definitions(-DDRIVER_FILE)
+endif(OPENHMD_DRIVER_FILE)
 
 if (OPENHMD_DRIVER_ANDROID)
 	set(openhmd_source_files ${openhmd_source_files}
