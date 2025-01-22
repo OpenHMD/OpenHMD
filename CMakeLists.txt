@@ -24,6 +24,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
 option(BUILD_BOTH_STATIC_SHARED_LIBS OFF)
 
+include(GNUInstallDirs)
+
 #source files set just for Android
 set(openhmd_source_files
 	${CMAKE_CURRENT_LIST_DIR}/src/openhmd.c
@@ -248,7 +250,8 @@ CONFIGURE_FILE(
   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
 )
 
-install(TARGETS ${TARGETS} DESTINATION lib)
+install(TARGETS ${TARGETS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES include/openhmd.h DESTINATION include)
 install(FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc"
-        DESTINATION lib/pkgconfig)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
