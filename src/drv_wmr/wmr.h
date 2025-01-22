@@ -38,7 +38,8 @@ static const unsigned char hololens_sensors_imu_on[64] = {
 };
 
 typedef struct {
-        uint32_t json_start;
+        uint16_t json_start;
+        uint16_t header_version;
         uint32_t json_size;
         char manufacturer[0x40];
         char device[0x40];
