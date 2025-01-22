@@ -52,7 +52,7 @@ before_script:
 script:
   - mkdir build && cd build
   - if [[ "$BUILD" == "meson" ]]; then
-      meson .. . -Dexamples=simple,opengl;
+      meson .. . -Dexamples=simple,opengl2,opengl3;
     else
-      cmake -G Ninja .. -DOPENHMD_EXAMPLE_SDL=1;
+      cmake -G Ninja .. -DOPENHMD_EXAMPLE_SDL_OPENGL2=1 -DOPENHMD_EXAMPLE_SDL_OPENGL3=1;
     fi && ninja
