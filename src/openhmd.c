@@ -225,7 +225,7 @@ OHMD_APIENTRYDLL ohmd_device* OHMD_APIENTRY ohmd_list_open_device_s(ohmd_context
 	if(index >= 0 && index < ctx->list.num_devices){
 
 		ohmd_device_desc* desc = &ctx->list.devices[index];
-		ohmd_driver* driver = (ohmd_driver*)desc->driver_ptr;
+		ohmd_driver* driver = (ohmd_driver*)desc->driver;
 		ohmd_device* device = driver->open_device(driver, desc);
 
 		if (device == NULL) {
@@ -648,4 +648,12 @@ ohmd_status ohmd_require_version(int major, int minor, int patch)
 	}
 
 	return OHMD_S_OK;
+}
+
+void ohmd_print_available_drivers(ohmd_context* ctx)
+{
+	printf("available drivers:\n");
+	for (int i = 0; i < ctx->num_drivers; ++i) {
+		printf("  %s\n", ctx->drivers[i]->name);
+	}
 }

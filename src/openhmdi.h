@@ -35,7 +35,6 @@
 typedef struct ohmd_driver ohmd_driver;
 
 typedef struct {
-	char driver[OHMD_STR_SIZE];
 	char vendor[OHMD_STR_SIZE];
 	char product[OHMD_STR_SIZE];
 	char path[OHMD_STR_SIZE];
@@ -43,7 +42,7 @@ typedef struct {
 	int id;
 	ohmd_device_flags device_flags;
 	ohmd_device_class device_class;
-	ohmd_driver* driver_ptr;
+	ohmd_driver* driver;
 } ohmd_device_desc;
 
 typedef struct {
@@ -52,6 +51,7 @@ typedef struct {
 } ohmd_device_list;
 
 struct ohmd_driver {
+	char name[OHMD_STR_SIZE];
 	void (*get_device_list)(ohmd_driver* driver, ohmd_device_list* list);
 	ohmd_device* (*open_device)(ohmd_driver* driver, ohmd_device_desc* desc);
 	void (*destroy)(ohmd_driver* driver);

@@ -260,7 +260,6 @@ static void _get_device_list(ohmd_driver* driver, ohmd_device_list* list)
         while (cur_dev) {
             ohmd_device_desc* desc = &list->devices[list->num_devices++];
 
-            strcpy(desc->driver, "OpenHMD 3Glasses Driver");
             strcpy(desc->vendor, "3Glasses");
             strcpy(desc->product, platform_sku[i].desc);
 
@@ -270,7 +269,7 @@ static void _get_device_list(ohmd_driver* driver, ohmd_device_list* list)
             desc->device_flags = OHMD_DEVICE_FLAGS_ROTATIONAL_TRACKING;
 
             strcpy(desc->path, cur_dev->path);
-            desc->driver_ptr = driver;
+            desc->driver = driver;
             cur_dev = cur_dev->next;
         }
 
@@ -291,6 +290,7 @@ ohmd_driver* ohmd_create_xgvr_drv(ohmd_context* ctx)
     if (drv == NULL)
         return NULL;
 
+    strcpy(drv->name, "OpenHMD 3Glasses Driver");
     drv->get_device_list = _get_device_list;
     drv->open_device = _open_device;
     drv->destroy = _destroy_driver;
